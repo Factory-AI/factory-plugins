@@ -1,0 +1,16 @@
+{
+  "name": "factory-plugins",
+  "description": "Official Factory plugins marketplace",
+  "owner": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  },
+  "plugins": [
+    {
+      "name": "security-toolkit",
+      "description": "Security review, threat modeling, and vulnerability validation skills",
+      "source": "./plugins/security-toolkit",
+      "category": "security"
+    }
+  ]
+}
