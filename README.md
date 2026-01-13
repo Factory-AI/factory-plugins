@@ -13,7 +13,7 @@ droid plugin marketplace add https://github.com/Factory-AI/factory-plugins
 Then install plugins:
 
 ```bash
-droid plugin install security-toolkit@factory-plugins
+droid plugin install security-engineer@factory-plugins
 ```
 
 Or browse available plugins via the UI:
@@ -24,7 +24,7 @@ Or browse available plugins via the UI:
 
 ## Available Plugins
 
-### security-toolkit
+### security-engineer
 
 Security review, threat modeling, and vulnerability validation skills.
 

@@ -7,9 +7,9 @@
   },
   "plugins": [
     {
-      "name": "security-toolkit",
+      "name": "security-engineer",
       "description": "Security review, threat modeling, and vulnerability validation skills",
-      "source": "./plugins/security-toolkit",
+      "source": "./plugins/security-engineer",
       "category": "security"
     }
   ]
