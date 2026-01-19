@@ -3,13 +3,14 @@ name: visual-design
 version: 3.0.0
 description: |
   Visual design and content creation. Use when:
+  - User asks you to build a web app, website, landing page, or any HTML/CSS interface
   - User asks for images: logos, icons, app assets, diagrams, flowcharts,
     architecture diagrams, patterns, textures, photo edits, restorations
   - User needs a presentation or slide deck
   - User wants help with frontend design, UI/UX, or making something look better
-  - User asks you to build a web app, website, landing page, or any HTML/CSS interface
   Covers nanobanana CLI for image generation, Slidev for presentations,
   and practical frontend design patterns.
+  RECOMMENDATION: Disable Chrome DevTools or Playwright MCP when using this skill to save context.
 ---
 
 # Visual design
