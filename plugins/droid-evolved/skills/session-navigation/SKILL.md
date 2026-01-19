@@ -1,6 +1,6 @@
 ---
 name: session-navigation
-version: 1.0.0
+version: 1.1.0
 description: |
   Navigate, search, and manage Droid sessions. Use when the user wants to:
   - List recent sessions
@@ -16,30 +16,46 @@ Find your way around past Droid sessions. Maybe you want to pick up where you le
 
 ## Where sessions live
 
-Everything's in `~/.factory/sessions/`. Two types of files per session:
+Sessions are in `~/.factory/sessions/`, organized by project folder. Each project gets its own directory with the path encoded (slashes become dashes):
+
+```
+~/.factory/sessions/
+├── -Users-enoreyes-code-work-myapp/
+│   ├── <uuid>.jsonl
+│   └── <uuid>.settings.json
+├── -Users-enoreyes-code-projects-api/
+│   ├── <uuid>.jsonl
+│   └── <uuid>.settings.json
+└── ...
+```
+
+Two files per session:
 
 **The conversation** (`.jsonl`): Each line is a JSON object. First line has metadata (session id, title, working directory). Rest is the back-and-forth: user messages, assistant responses, tool calls.
 
 **The settings** (`.settings.json`): Stats about the session. Which model, how long it ran, token counts, autonomy mode.
 
-Sessions are organized by project path. A session from `/Users/me/code/myapp` ends up in:
-
-```
-~/.factory/sessions/-Users-me-code-myapp/<uuid>.jsonl
-```
-
-Sessions without a specific project just go in the root sessions folder.
-
 ## Finding sessions
 
-### Recent stuff
+### List project folders
 
 ```bash
-# What's been happening lately?
-ls -lt ~/.factory/sessions/*.jsonl | head -20
+# See all project folders with sessions
+ls ~/.factory/sessions/
 
-# Get the titles
-for f in $(ls -t ~/.factory/sessions/*.jsonl | head -10); do
+# Find folders for a specific project (partial match)
+ls ~/.factory/sessions/ | grep "myapp"
+```
+
+### Recent sessions in a project
+
+```bash
+# List sessions by date for a project
+ls -lt ~/.factory/sessions/-Users-enoreyes-code-work-myapp/
+
+# Get titles of recent sessions
+for f in $(ls -t ~/.factory/sessions/-Users-enoreyes-code-work-myapp/*.jsonl | head -10); do
+  echo "=== $f ==="
   head -1 "$f" | jq -r '.title // "Untitled"'
 done
 ```
@@ -47,21 +63,21 @@ done
 ### Search by content
 
 ```bash
-# Find sessions that mention something
-rg -l "authentication" ~/.factory/sessions/*.jsonl
+# Search across ALL sessions
+rg "authentication" ~/.factory/sessions/
 
-# See the matches in context
-rg -C 2 "authentication" ~/.factory/sessions/*.jsonl
+# Search within a specific project
+rg "bug fix" ~/.factory/sessions/-Users-enoreyes-code-work-myapp/
+
+# See matches in context
+rg -C 2 "login" ~/.factory/sessions/-Users-enoreyes-code-projects-api/
 ```
 
-### For a specific project
+### Find which project has sessions about something
 
 ```bash
-# Just that project's sessions
-ls ~/.factory/sessions/-Users-me-code-myapp/
-
-# Search within them
-rg "bug fix" ~/.factory/sessions/-Users-me-code-myapp/*.jsonl
+# Which projects have sessions mentioning "redis"?
+rg -l "redis" ~/.factory/sessions/ | cut -d'/' -f1-5 | sort -u
 ```
 
 ## Reading a session
@@ -69,41 +85,38 @@ rg "bug fix" ~/.factory/sessions/-Users-me-code-myapp/*.jsonl
 Once you've found a session file:
 
 ```bash
-# The metadata
-head -1 ~/.factory/sessions/<uuid>.jsonl | jq .
+# The metadata (title, working directory)
+head -1 ~/.factory/sessions/-Users-enoreyes-code-work-myapp/<uuid>.jsonl | jq .
 
 # Session stats (model, tokens, duration)
-cat ~/.factory/sessions/<uuid>.settings.json | jq .
+cat ~/.factory/sessions/-Users-enoreyes-code-work-myapp/<uuid>.settings.json | jq .
 
 # How long was this conversation?
-wc -l ~/.factory/sessions/<uuid>.jsonl
+wc -l ~/.factory/sessions/-Users-enoreyes-code-work-myapp/<uuid>.jsonl
 ```
 
-To dig into the content, read the `.jsonl` file. User messages have `"role": "user"`, assistant responses have `"role": "assistant"`. Tool calls show what commands ran and what files got touched.
+User messages have `"role": "user"`, assistant responses have `"role": "assistant"`. Tool calls show what commands ran and what files got touched.
 
 ## Common situations
 
-**"What did I do yesterday?"**
-List recent sessions, check the timestamps, read the ones from yesterday.
+**"What did I work on in this project?"**
+List that project's session folder, check dates, read through the conversation files.
 
 **"Find that session where we fixed the login bug"**
-Search for "login" or "auth" or whatever you remember about it. Once you find it, skim the conversation.
+Search for "login" or "auth" across sessions. Once you find it, read the conversation.
 
 **"Resume what I was doing"**
-Find the session, read through what happened, and pick up from there. You might want to summarize the key decisions or the state of things before continuing.
-
-**"What's been going on in this project?"**
-List that project's session folder, maybe grep for specific features or issues.
+Find the session, read through what happened, summarize the key decisions before continuing.
 
 **"How much have I been using Droid?"**
-The settings files have token counts and active time. You could sum those up across sessions if you wanted.
+The settings files have token counts and active time. Sum across sessions if needed.
 
 ## Tips
 
-Use `rg` (ripgrep) instead of grep. It's faster and handles the sessions folder better.
+Use `rg` (ripgrep) instead of grep. It's faster and handles nested folders better.
+
+Project paths have slashes replaced with dashes. `/Users/me/code/app` becomes `-Users-me-code-app`.
+
+The session title isn't always helpful. Sometimes you need to read the conversation to know what it was about.
 
 Sessions can contain sensitive stuff. Be careful about what you surface.
-
-The session title in the first line of the jsonl isn't always helpful. Sometimes you need to actually read the conversation to know what it was about.
-
-Project paths in folder names have slashes replaced with dashes. `/Users/me/code/app` becomes `-Users-me-code-app`. Takes a second to get used to reading them.
