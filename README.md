@@ -44,7 +44,8 @@ Skills for continuous learning and improvement.
 - `session-navigation` - Search and navigate past Droid sessions
 - `human-writing` - Remove AI writing patterns, make text sound human
 - `skill-creation` - Create and improve Droid skills
-- `visual-design` - Image generation (nanobanana CLI), presentations (Slidev), frontend design
+- `visual-design` - Image generation (nanobanana CLI) and presentations (Slidev)
+- `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
 
 ## Plugin Structure

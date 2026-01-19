@@ -1,21 +1,17 @@
 ---
 name: visual-design
-version: 3.0.0
+version: 4.0.0
 description: |
-  Visual design and content creation. Use when:
-  - User asks you to build a web app, website, landing page, or any HTML/CSS interface
+  Image generation and presentations. Use when:
   - User asks for images: logos, icons, app assets, diagrams, flowcharts,
     architecture diagrams, patterns, textures, photo edits, restorations
   - User needs a presentation or slide deck
-  - User wants help with frontend design, UI/UX, or making something look better
-  Covers nanobanana CLI for image generation, Slidev for presentations,
-  and practical frontend design patterns.
-  RECOMMENDATION: Disable Chrome DevTools or Playwright MCP when using this skill to save context.
+  Covers nanobanana CLI for image generation and Slidev for presentations.
 ---
 
 # Visual design
 
-This skill covers visual and design work. Three areas, each with its own doc.
+Image generation and presentations.
 
 ## Image generation
 
@@ -49,9 +45,3 @@ slidev build              # build as hostable SPA
 Write slides in markdown, get code highlighting, animations, diagrams, and Vue components.
 
 See: [presentations.md](./presentations.md) and [reference-slide-example.md](./reference-slide-example.md)
-
-## Frontend design
-
-Tactics for building good-looking interfaces. Covers the creative side (tone, aesthetics, inspiration) and the technical side (spacing scales, type hierarchy, color systems, responsive patterns).
-
-See: [frontend-design.md](./frontend-design.md)

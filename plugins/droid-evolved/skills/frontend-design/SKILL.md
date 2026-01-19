@@ -1,3 +1,17 @@
+---
+name: frontend-design
+version: 1.0.0
+description: |
+  Build good-looking web interfaces. Use when:
+  - User asks you to build a web app, website, landing page, or HTML page
+  - User asks for a one-off tool, utility, or demo app
+  - User is starting a new frontend project
+  - User wants to improve how something looks
+  - User mentions UI, design, styling, or making something look better
+  This applies to ANY frontend work, not just "design" tasks. Even simple
+  apps benefit from basic design principles.
+---
+
 # Frontend design
 
 Practical tactics for designing and building frontend interfaces. This is about making things look good and work well, not about frameworks or tooling.
