@@ -356,6 +356,19 @@ agent-browser find nth 2 "a" text
 - Verifying UI functionality
 - Filling out forms programmatically
 
-## Context Saving Tip
+## Disable conflicting MCPs
 
-When using this skill, disable other browser-related MCPs (Chrome DevTools, Playwright) to reduce context usage. agent-browser provides comprehensive functionality for most browser automation needs.
+If you have Chrome DevTools or Playwright MCP enabled, disable them to save context. This skill covers the same functionality.
+
+Check what's enabled:
+```
+/mcp
+```
+
+Remove the conflicting MCP:
+```
+/mcp remove chrome-devtools
+/mcp remove playwright
+```
+
+agent-browser handles everything those MCPs do, so there's no reason to have them loaded at the same time.
