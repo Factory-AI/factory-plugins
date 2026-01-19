@@ -35,6 +35,18 @@ Security review, threat modeling, and vulnerability validation skills.
 - `commit-security-scan` - Scan commits/PRs for security vulnerabilities
 - `vulnerability-validation` - Validate and confirm security findings
 
+### droid-evolved
+
+Skills for continuous learning and improvement.
+
+**Skills:**
+
+- `session-navigation` - Search and navigate past Droid sessions
+- `human-writing` - Remove AI writing patterns, make text sound human
+- `skill-creation` - Create and improve Droid skills
+- `visual-design` - Image generation (nanobanana CLI), presentations (Slidev), frontend design
+- `browser-navigation` - Browser automation with agent-browser
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
