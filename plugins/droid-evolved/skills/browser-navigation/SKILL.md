@@ -358,17 +358,17 @@ agent-browser find nth 2 "a" text
 
 ## Disable conflicting MCPs
 
-If you have Chrome DevTools or Playwright MCP enabled, disable them to save context. This skill covers the same functionality.
+If Chrome DevTools or Playwright MCP is enabled, ask the user if they want to disable it to save context. This skill covers the same functionality.
 
-Check what's enabled:
+Ask them to run:
 ```
 /mcp
 ```
 
-Remove the conflicting MCP:
+If they see chrome-devtools or playwright listed, suggest they remove it:
 ```
 /mcp remove chrome-devtools
 /mcp remove playwright
 ```
 
-agent-browser handles everything those MCPs do, so there's no reason to have them loaded at the same time.
+Don't run these commands yourself. Let the user decide whether to disable the MCP.
