@@ -11,6 +11,12 @@
       "description": "Security review, threat modeling, and vulnerability validation skills",
       "source": "./plugins/security-engineer",
       "category": "security"
+    },
+    {
+      "name": "droid-evolved",
+      "description": "Skills for continuous learning and improvement: session navigation, human writing, skill creation, visual design, and browser automation",
+      "source": "./plugins/droid-evolved",
+      "category": "productivity"
     }
   ]
 }
