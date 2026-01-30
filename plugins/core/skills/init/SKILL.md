@@ -1,3 +1,13 @@
+---
+name: init
+version: 1.0.0
+description: |
+  Initialize a new repository with contributor guidelines. Use when:
+  - User asks to create a contributor guide, AGENTS.md, or repo guidelines
+  - User wants to set up documentation for AI assistants working on the repo
+  - Starting a new project that needs repository documentation
+---
+
 Generate a file named AGENTS.md that serves as a contributor guide for this repository.
 Your goal is to produce a clear, concise, and well-structured document with descriptive headings and actionable explanations for each section.
 Follow the outline below, but adapt as needed — add sections if relevant, and omit those that do not apply to this project.
