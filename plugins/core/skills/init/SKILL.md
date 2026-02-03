@@ -6,6 +6,7 @@ description: |
   - User asks to create a contributor guide, AGENTS.md, or repo guidelines
   - User wants to set up documentation for AI assistants working on the repo
   - Starting a new project that needs repository documentation
+disable-model-invocation: true
 ---
 
 Generate a file named AGENTS.md that serves as a contributor guide for this repository.
