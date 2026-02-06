@@ -1,11 +1,7 @@
 ---
 name: init
 version: 1.0.0
-description: |
-  Initialize a new repository with contributor guidelines. Use when:
-  - User asks to create a contributor guide, AGENTS.md, or repo guidelines
-  - User wants to set up documentation for AI assistants working on the repo
-  - Starting a new project that needs repository documentation
+description: Initialize a new repository with AGENTS.md
 disable-model-invocation: true
 ---
 
