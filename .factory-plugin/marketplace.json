@@ -14,7 +14,7 @@
     },
     {
       "name": "droid-evolved",
-      "description": "Skills for continuous learning and improvement: session navigation, human writing, skill creation, visual design, and browser automation",
+      "description": "Skills for continuous learning and improvement: session navigation, human writing, skill creation, visual design, browser automation, and TUI automation",
       "source": "./plugins/droid-evolved",
       "category": "productivity"
     },
@@ -23,6 +23,12 @@
       "description": "Core Skills for essential functionalities and integrations",
       "source": "./plugins/core",
       "category": "core"
+    },
+    {
+      "name": "mission-playbooks",
+      "description": "Mission playbooks for multi-agent orchestration: full-stack web apps, TUI applications, and refactoring missions",
+      "source": "./plugins/mission-playbooks",
+      "category": "productivity"
     }
   ]
 }

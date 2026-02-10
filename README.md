@@ -47,6 +47,17 @@ Skills for continuous learning and improvement.
 - `visual-design` - Image generation (nanobanana CLI) and presentations (Slidev)
 - `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
+- `tuistory` - TUI automation with tuistory
+
+### mission-playbooks
+
+Mission playbooks for multi-agent orchestration.
+
+**Skills:**
+
+- `full-stack-playbook` - Playbook for full-stack web application missions
+- `tui-application-playbook` - Playbook for TUI application missions
+- `refactoring-playbook` - Playbook for code modernization and migration missions
 
 ## Plugin Structure
 

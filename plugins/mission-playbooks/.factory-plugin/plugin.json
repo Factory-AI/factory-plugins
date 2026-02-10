@@ -1,0 +1,8 @@
+{
+  "name": "mission-playbooks",
+  "description": "Mission playbooks for multi-agent orchestration: full-stack web apps, TUI applications, and refactoring missions",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  }
+}
