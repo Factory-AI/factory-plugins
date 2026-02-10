@@ -176,6 +176,7 @@ description: Migrate components from old to new implementation incrementally.
 
 ## Example Handoff
 
+```
 {
   "salientSummary": "Migrated UserService to the functional pattern and updated 12 call sites; ran `npm test` (47 passing) and updated `.factory/library/migration-status.md` with the MIGRATED status + commit.",
   "whatWasImplemented": "Migrated UserService from class-based to functional pattern. Updated 12 call sites. All 47 existing tests pass.",
@@ -186,6 +187,7 @@ description: Migrate components from old to new implementation incrementally.
     ]
   }
 }
+```
 
 ## Return to Orchestrator When
 

@@ -5,7 +5,7 @@ description: |
   walking skeleton, frontend/backend workers, and quality enforcement.
   Use for CRUD apps, dashboards, e-commerce sites, and similar projects with distinct frontend and backend layers.
 ---
- 
+
 # Full-Stack Web Application Playbook
 
 This playbook guides you through executing a full-stack web application mission. Use this for CRUD apps, dashboards, e-commerce sites, and similar projects with distinct frontend and backend layers.
