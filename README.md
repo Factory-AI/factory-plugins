@@ -48,6 +48,14 @@ Skills for continuous learning and improvement.
 - `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
 
+### rfspec
+
+Request for Spec -- fan out a prompt to multiple AI models in parallel and pick or synthesize the best implementation spec.
+
+**Commands:**
+
+- `/rfspec` - Send a prompt to Opus 4.6, GPT-5.4, and Gemini 3.1 Pro simultaneously, compare the resulting specs, and choose or synthesize the best one
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
