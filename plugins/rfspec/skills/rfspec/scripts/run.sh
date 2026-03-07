@@ -27,11 +27,11 @@ MODEL_B="gpt-5.4";          LABEL_B="GPT-5.4";        RE_B="xhigh"
 MODEL_C="gemini-3.1-pro-preview"; LABEL_C="Gemini 3.1 Pro"; RE_C="high"
 
 # ── fire all three in parallel ───────────────────────────────────────
-droid exec -m "$MODEL_A" -r "$RE_A" -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/a.json" &
+droid exec -m "$MODEL_A" -r "$RE_A" --auto medium -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/a.json" &
 PID_A=$!
-droid exec -m "$MODEL_B" -r "$RE_B" -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/b.json" &
+droid exec -m "$MODEL_B" -r "$RE_B" --auto medium -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/b.json" &
 PID_B=$!
-droid exec -m "$MODEL_C" -r "$RE_C" -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/c.json" &
+droid exec -m "$MODEL_C" -r "$RE_C" --auto medium -f "$TMPDIR/prompt.md" -o json 2>/dev/null > "$TMPDIR/c.json" &
 PID_C=$!
 
 FAIL=""
@@ -85,5 +85,9 @@ echo "- Use Option B (${LABEL_B}) as-is"
 echo "- Use Option C (${LABEL_C}) as-is"
 echo "- Synthesize a refined spec combining the best of all three"
 echo "- No -- none of these work (explain why)"
-echo "If the user picks synthesis, combine the strongest elements and save"
-echo "to specs/active/YYYY-MM-DD-<slug>.md. If rejected, gather feedback."
+echo ""
+echo "CRITICAL: Do NOT save the spec directly. After the user picks an option"
+echo "or requests synthesis, use the ExitSpecMode tool to present the final"
+echo "spec content for review. Only save to specs/active/YYYY-MM-DD-<slug>.md"
+echo "AFTER the user approves the spec in spec mode. If rejected, gather"
+echo "feedback and revise."

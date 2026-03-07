@@ -29,11 +29,13 @@ Fan out a prompt to multiple models, compare their responses, and help the user 
 1. Run `/rfspec <user's prompt>` -- fires parallel model calls, returns labeled options (A, B, C).
 2. Evaluate the results -- see [references/evaluation-guide.md](references/evaluation-guide.md).
 3. Present the choice to the user via AskUser.
-4. Save the selected or synthesized result.
+4. Present the selected or synthesized spec via ExitSpecMode for user review.
+5. Save to `specs/active/` only after the user approves in spec mode.
 
 ## Saving
 
-Save the final result (picked or synthesized) to:
+**Do not save immediately.** After the user picks or synthesis is complete, present the
+final spec via ExitSpecMode for review. Only after approval, save to:
 
 ```
 specs/active/YYYY-MM-DD-<slug>.md
