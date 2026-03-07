@@ -1,0 +1,9 @@
+{
+  "name": "rfspec",
+  "description": "Request for Spec: fan out a prompt to multiple AI models in parallel and pick or synthesize the best implementation spec",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andy Taylor",
+    "email": "andrew.taylor@factory.ai"
+  }
+}

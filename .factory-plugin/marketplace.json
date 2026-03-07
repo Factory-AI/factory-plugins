@@ -23,6 +23,12 @@
       "description": "Core Skills for essential functionalities and integrations",
       "source": "./plugins/core",
       "category": "core"
+    },
+    {
+      "name": "rfspec",
+      "description": "Request for Spec: fan out a prompt to multiple AI models in parallel and pick or synthesize the best implementation spec",
+      "source": "./plugins/rfspec",
+      "category": "productivity"
     }
   ]
 }
