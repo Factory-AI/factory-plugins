@@ -1,6 +1,6 @@
 ---
 name: rfspec
-version: 1.2.0
+version: 1.3.0
 description: |
   Multi-model spec generation and synthesis. Use when the user wants to:
   - Get competing proposals from different AI models
@@ -17,20 +17,63 @@ Fan out a prompt to multiple models, compare their responses, and help the user 
 
 ## Quick Reference
 
-| Task | Action |
-|------|--------|
-| Generate competing specs | `/rfspec <prompt>` |
-| Pick one result | Select via AskUser after comparison |
-| Synthesize results | Combine strongest elements when user chooses synthesis |
-| Save final spec | Write to `specs/active/YYYY-MM-DD-<slug>.md` |
+| Task                     | Action                                                 |
+| ------------------------ | ------------------------------------------------------ |
+| Generate competing specs | `/rfspec <prompt>` (background)                        |
+| Poll for results         | Check `<run_dir>/done` sentinel                        |
+| Pick one result          | Select via AskUser after comparison                    |
+| Synthesize results       | Combine strongest elements when user chooses synthesis |
+| Save final spec          | Write to `specs/active/YYYY-MM-DD-<slug>.md`           |
 
 ## Workflow
 
-1. Run `/rfspec <user's prompt>` -- fires parallel model calls, returns labeled options (A, B, C).
-2. Evaluate the results -- see [references/evaluation-guide.md](references/evaluation-guide.md).
-3. Present the choice to the user via AskUser.
-4. Present the selected or synthesized spec via ExitSpecMode for user review.
-5. Save to `specs/active/` only after the user approves in spec mode.
+The `/rfspec` command spawns three `droid exec` calls in parallel. These take
+several minutes, far exceeding the Execute tool timeout. You MUST use the
+fire-and-forget + poll pattern.
+
+### Step 1 -- Launch (background)
+
+Run the command with `fireAndForget=true`:
+
+```
+Execute: /rfspec <user's prompt>
+  fireAndForget: true
+```
+
+The script immediately prints `RFSPEC_RUN_DIR=<path>` to its log file.
+Read the log file (path printed by Execute) to capture the run directory.
+
+### Step 2 -- Poll for completion
+
+Tell the user the models are running and you will check back. Then poll:
+
+```
+Execute: cat <run_dir>/done 2>/dev/null || echo "PENDING"
+```
+
+Poll every 30-60 seconds. The sentinel contains `STATUS=complete` or
+`STATUS=failed`. While waiting, you can do other work or let the user know
+progress.
+
+### Step 3 -- Read results
+
+Once `done` exists, read the results:
+
+```
+Read: <run_dir>/results.md
+```
+
+This file contains all three model outputs as markdown sections (Option A, B, C).
+
+### Step 4 -- Evaluate and present
+
+Evaluate the results -- see [references/evaluation-guide.md](references/evaluation-guide.md).
+Present the choice to the user via AskUser.
+
+### Step 5 -- Finalize
+
+Present the selected or synthesized spec via ExitSpecMode for user review.
+Save to `specs/active/` only after the user approves in spec mode.
 
 ## Saving
 
@@ -42,6 +85,19 @@ specs/active/YYYY-MM-DD-<slug>.md
 ```
 
 Where `<slug>` is a short kebab-case name derived from the topic.
+
+## Resuming from slash command
+
+If you are loading this skill after `/rfspec` already ran (the slash command told
+you to invoke `Skill: rfspec`), you already have the run directory. Pick up from
+Step 3:
+
+1. Read `<run_dir>/results.md` to get the model outputs.
+2. Follow Step 4 (evaluate and present) and Step 5 (finalize) below.
+
+The `results.md` file includes embedded agent instructions as a fallback, but
+prefer the full workflow in this document -- it covers the evaluation guide,
+saving rules, and rejection handling that the embedded version omits.
 
 ## Pitfalls
 
@@ -63,21 +119,23 @@ Example 1: User wants competing specs
 User says: "Get me specs from multiple models for adding a dark mode toggle"
 Actions:
 
-1. Run `/rfspec add a dark mode toggle to the settings page with persistent user preference`
-2. Read Options A, B, C
-3. Compare: "Option A uses CSS variables with a React context, Option B uses Tailwind's dark class with localStorage, Option C uses a theme provider with system preference detection."
-4. Present choice via AskUser
-Result: User picks Option B, saved to `specs/active/2026-03-06-dark-mode-toggle.md`
+1. Execute `/rfspec add a dark mode toggle ...` with `fireAndForget=true`
+2. Read the background log to get `RFSPEC_RUN_DIR`
+3. Tell user: "Models are running, I'll check back shortly."
+4. Poll `<run_dir>/done` until `STATUS=complete`
+5. Read `<run_dir>/results.md`, compare Options A, B, C
+6. Present choice via AskUser
+   Result: User picks Option B, saved to `specs/active/2026-03-06-dark-mode-toggle.md`
 
 Example 2: User wants synthesis
 User says: "rfspec this: refactor the auth module to use JWT"
 Actions:
 
-1. Run `/rfspec refactor the auth module to use JWT`
-2. Compare results, noting Option A has better token rotation but Option C has cleaner middleware
+1. Launch background, poll for completion
+2. Read results, compare -- Option A has better token rotation, Option C has cleaner middleware
 3. User selects "Synthesize"
 4. Combine Option A's rotation logic with Option C's middleware structure
-Result: Synthesized spec saved to `specs/active/2026-03-06-auth-jwt-refactor.md`
+   Result: Synthesized spec saved to `specs/active/2026-03-06-auth-jwt-refactor.md`
 
 Example 3: All options rejected
 User says: "None of these work, they all miss the caching layer"
@@ -85,7 +143,7 @@ Actions:
 
 1. Ask what's missing -- user explains the Redis caching requirement
 2. Offer to re-run: `/rfspec refactor auth module to use JWT with Redis session caching`
-Result: New round of specs generated with caching addressed
+   Result: New round of specs generated with caching addressed
 
 ## References
 
