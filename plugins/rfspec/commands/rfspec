@@ -1,2 +1,40 @@
 #!/usr/bin/env bash
-exec "$(dirname "$0")/../skills/rfspec/scripts/run.sh" "$@"
+# Launch rfspec in background and return polling instructions immediately.
+# This avoids the Execute tool timeout killing the long-running model calls.
+
+SCRIPT_DIR="$(dirname "$0")"
+RUN_SH="${SCRIPT_DIR}/../skills/rfspec/scripts/run.sh"
+
+if [ $# -eq 0 ]; then
+  exec "$RUN_SH"
+fi
+
+# Run the script in background, capturing output to its own log.
+# run.sh prints RFSPEC_RUN_DIR=<path> as its first line, so we wait
+# just long enough to capture that, then return control to the agent.
+BGLOG=$(mktemp /tmp/rfspec-bg-XXXXXX.log)
+nohup "$RUN_SH" "$@" >"$BGLOG" 2>&1 &
+BG_PID=$!
+
+# Wait briefly for run.sh to create the output dir and print the path
+sleep 2
+
+# Extract the run dir from the early output
+RUN_DIR=$(grep -m1 'RFSPEC_RUN_DIR=' "$BGLOG" 2>/dev/null | cut -d= -f2-)
+
+if [ -z "$RUN_DIR" ]; then
+  echo "rfspec launched (PID ${BG_PID}), but run dir not yet available."
+  echo "Check log: ${BGLOG}"
+else
+  echo "RFSPEC_RUN_DIR=${RUN_DIR}"
+fi
+
+echo ""
+echo "rfspec is running in background (PID ${BG_PID})."
+echo "Background log: ${BGLOG}"
+echo ""
+echo "Poll for completion:"
+echo "  cat ${RUN_DIR:-<run_dir>}/done 2>/dev/null || echo PENDING"
+echo ""
+echo "Read results when done:"
+echo "  cat ${RUN_DIR:-<run_dir>}/results.md"
