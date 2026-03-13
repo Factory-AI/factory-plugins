@@ -14,7 +14,9 @@ Read a repository, then produce a set of interconnected documentation pages that
 
 ## 1. Survey the repository
 
-Before writing anything, build a mental model of the codebase.
+Before writing anything, build a mental model of the codebase. The survey has two passes: a structural scan and a deep code scan.
+
+### Pass 1: Structural scan
 
 Read these files (when they exist):
 
@@ -35,9 +37,22 @@ Build a map of:
 - **External dependencies** — databases, APIs, message queues, third-party services
 - **Build and test commands** — how to build, test, and run the project
 
+### Pass 2: Deep code scan
+
+The structural scan catches what's visible from directory names and config files. The deep scan catches features, domains, and capabilities that are only visible in the code itself. Probe the codebase for signals that reveal topics the structural scan missed:
+
+- Grep for feature flag names in constants files — each flag often represents a distinct capability worth documenting
+- Scan frontend route definitions and page components — each route group is a user-facing feature
+- Scan API endpoint groups — each controller or router file represents a domain area
+- Look inside `src/features/`, `src/modules/`, `src/domains/`, or equivalent directories — the names and contents reveal product capabilities
+- Scan for service classes, event handlers, and job/worker definitions — these reveal background systems
+- Check for domain-specific directories that don't map to obvious top-level names
+
+The goal is to discover the **complete list of topics** the wiki should cover. The structural scan gives you the skeleton; the deep scan fills in the muscle. A feature like "Analytics" might not have its own top-level directory but lives inside `src/features/analytics/` or is revealed by a set of feature flags and API endpoints.
+
 ### Exhaustive subsystem discovery
 
-After listing the major subsystems, walk every top-level source directory (and one level below) to check for subsystems you missed. For each directory that contains its own service, module, or feature, decide:
+After both passes, walk every top-level source directory (and one level below) to check for subsystems you missed. For each directory that contains its own service, module, or feature, decide:
 
 - **Tier 1** — core subsystems most contributors will encounter. Full dedicated page.
 - **Tier 2** — important but specialized. Shorter dedicated page.
@@ -56,6 +71,39 @@ After scanning the source tree, check for these commonly overlooked areas:
 - **Multi-language components** — if the repo has code in a second language (e.g., Rust CLI in a TypeScript project), document it
 
 If any of these are non-trivial, they deserve coverage — either as their own page or as a section in a related page.
+
+### Survey output
+
+At the end of the survey, produce a **survey context document** — a compact summary that will be shared with sub-agents. This document should include:
+
+- **Repo summary** — 3-5 sentences: what the project is, its tech stack, and high-level structure
+- **Architecture overview** — major components and how they connect
+- **Discovered topics** — the complete list of features, systems, apps, packages, and primitives found during both scan passes
+- **Key patterns** — coding conventions, error handling patterns, testing patterns
+- **Glossary seeds** — project-specific terms encountered during the scan
+- **Directory-to-purpose map** — which source directories map to which topics
+
+### Coverage cross-check
+
+Before moving to planning, reconcile two independent topic sources to ensure nothing is missed:
+
+**Source A: Discovered topics.** The topics found during Pass 1 (structural scan) and Pass 2 (deep code scan). These include cross-cutting features that don't map to a single directory (e.g., "LLM integration" spanning multiple packages, "authentication" touching frontend, backend, and CLI).
+
+**Source B: Directory enumeration.** For each lens that applies to the repo, run `ls` on the corresponding source directories and list every subdirectory:
+
+- For apps: list every directory under `apps/` (or the repo's equivalent)
+- For packages: list every workspace package directory
+- For features: list every subdirectory under the feature directory (e.g., `src/features/`, `packages/frontend/src/features/`, or wherever the repo organizes features)
+- For systems: list the top-level source directories that contain service or module code
+
+**Reconciliation:** Merge both lists. For every item on either list, decide:
+
+1. **Wiki page** — the item becomes a planned page (or section within a page)
+2. **Skip with reason** — the item is intentionally excluded, with a specific reason (e.g., "empty directory — 0 source files", "deprecated — only test fixtures remain", "thin wrapper — covered in parent package page", "internal tooling — 3 files, not worth a standalone page")
+
+The discovered topics catch things that directories miss (cross-cutting concerns, emergent patterns). The directory enumeration catches things that discovery misses (features the agent didn't encounter in the files it read). Together they produce comprehensive coverage.
+
+Silent omissions are not acceptable. If a source directory exists with non-trivial code and has no wiki topic, that's a gap that must be justified.
 
 ## 2. Plan the table of contents
 
@@ -231,6 +279,8 @@ These appear at the end of every wiki:
 
 ### Page ordering
 
+The sidebar ordering is critical for navigation. Every page must appear in its defined position — do NOT group childless pages together at the top or bottom.
+
 The full ordering in the wiki is:
 
 1. overview/ (index, architecture, getting-started, glossary)
@@ -243,12 +293,19 @@ The full ordering in the wiki is:
 8. reference/
 9. maintainers.md (if applicable, always last)
 
+**Ordering rules:**
+
+- Each page stays in its defined position regardless of whether it has children. `by-the-numbers.md` appears after `overview/` even though it has no children, not at the top with other childless pages.
+- The `pageOrder` array in `.wiki-meta.json` must exactly follow this ordering. It controls the sidebar display order.
+- Within a lens section (e.g., `apps/`), order pages from most important to least important. The `index.md` is always first.
+- Conditional sections appear in the order listed above (api → deployment → security → how-to-monitor → background → cleanup-opportunities), not alphabetically.
+
 ### Nesting rules
 
 - Any page can expand into a directory with sub-pages, except the four pages inside `overview/` (`index.md`, `architecture.md`, `getting-started.md`, `glossary.md`) which are always single files
-- Maximum depth: 3 levels (e.g., `apps/cli/command-structure.md`)
+- Maximum depth: 2 levels from any lens root (e.g., `apps/cli.md` or `apps/cli/index.md` + `apps/cli/tui-rendering.md`). No deeper.
 - Every directory must contain an `index.md`
-- For large repos (50+ source directories or 10+ distinct subsystems), lean toward splitting pages rather than cramming. A 3000-word page covering an entire subsystem is less useful than three focused pages covering its distinct aspects. Use all 3 levels of nesting when the repo's complexity warrants it.
+- For large repos (50+ source directories or 10+ distinct subsystems), lean toward splitting pages rather than cramming. A 3000-word page covering an entire subsystem is less useful than three focused pages covering its distinct aspects. Critical sub-agents decide whether to create sub-pages based on what they find in the code.
 - For small repos, default to single pages and only split when a topic has clearly distinct sub-areas
 - Deployment and security start as single pages; expand to directories only if the repo has enough substance
 
@@ -257,82 +314,169 @@ The full ordering in the wiki is:
 - Use lowercase filenames with hyphens: `getting-started.md`, not `GettingStarted.md`
 - File names use lowercase with hyphens. No spaces, no uppercase.
 
-## 3. Generate pages (with parallelization)
+### Page title rules
 
-Page generation uses sub-agents to parallelize independent work. The top-level agent orchestrates the overall flow and writes pages that require accumulated context. Sub-agents handle sections that are self-contained.
+Page titles (the `# Heading` at the top of each `.md` file) should be concise noun phrases that match how the team refers to the thing. The section hierarchy already provides context, so titles should not repeat it.
+
+- **Don't prepend directory paths.** Title is "CLI", not "apps/cli — CLI Architecture".
+- **Don't append generic suffixes.** Title is "Apps", not "Apps Overview". Title is "Packages", not "Packages — Overview". The only exception is `overview/index.md` which may include the project name (e.g., "Factory platform overview").
+- **Don't repeat the parent section name.** A page at `features/sessions.md` is titled "Sessions", not "Features — Sessions".
+- **Match the team's vocabulary.** If the team calls it "the daemon", title is "Daemon", not "Background Service Process".
+- **Keep it short.** Aim for 1-3 words. If a title needs more, the page probably covers too much and should be split.
+
+## 3. Generate pages (with sub-agent delegation)
+
+Page generation uses a top-level agent for orchestration and foundation pages, then delegates domain pages to sub-agents for depth and parallelism.
 
 ### Execution DAG
 
 ```
-Survey (top-level, serial)
-  │
-  ▼
-overview/ (top-level, serial — sets tone and vocabulary)
-  │
-  ├────────────────────────────────────┐
-  ▼                                    ▼
-how-to-contribute/ (top-level)   ┌ by-the-numbers ┐
-  │                              │ lore   │ (sub-agents, parallel)
-  ▼                              └ fun-facts ──────┘
-apps/ (top-level, serial)
-  │
-  ▼
-systems/ (top-level, serial — references apps)
-  │
-  ▼
-features/ (top-level, serial — references apps + systems)
-  │
-  ▼
-packages/ (top-level, serial — references all above)
-  │
-  ▼
-primitives/ (top-level, serial — references all above)
-  │
-  ├───────────────────────────────────────────────────┐
-  ▼                                                   ▼
-┌ api/ ──────────────┐                          ┌ reference/ ┐
-│ deployment         │                          └ maintainers┘ (sub-agents)
-│ security           │ (sub-agents, parallel)
-│ how-to-monitor     │
-│ background         │
-└ cleanup-opportunities┘
+1. SURVEY (top-level)
+   Structural scan + deep code scan
+   Produce: survey_context
+        │
+        ▼
+2. PLAN (top-level)
+   Decide lens sections, list all pages, mark criticality
+   Produce: page_plan (JSON with per-page briefs)
+        │
+        ▼
+3. FOUNDATION PAGES (top-level, sequential)
+   Write: overview/*, how-to-contribute/patterns-and-conventions
+   These establish shared vocabulary and conventions
+        │
+        ├────────────────────────────────────────┐
+        ▼                                        ▼
+4a. LENS PAGES (sub-agents, parallel)     4b. DATA PAGES (sub-agents, parallel)
+    Critical pages: 1 agent each               by-the-numbers
+    Normal pages: batched 3-5                  lore
+    Each agent writes its page(s)              fun-facts
+    + sub-pages if warranted
+        │                                        │
+        ├────────────────────────────────────────┘
+        ▼
+5. REMAINING PAGES (sub-agents, parallel)
+   how-to-contribute/ (remaining pages)
+   Conditional sections: api, deployment, security,
+     how-to-monitor, background, cleanup-opportunities
+   reference/ + maintainers.md
+        │
+        ▼
+6. ASSEMBLY (top-level)
+   Cross-link audit, .wiki-meta.json
+        │
+        ▼
+7. UPLOAD
 ```
 
-### What the top-level agent writes (serial)
+### Step 2: Planning and delegation
 
-These pages require accumulated context and cross-referencing:
+After the survey, the top-level agent produces a **page plan** — a structured list of every page the wiki will contain. For each page, the plan includes:
 
-1. `overview/` — project overview, architecture, getting-started, glossary
-2. `how-to-contribute/` — development workflow, testing, debugging, patterns, tooling
-3. Organizational lens pages in order — apps → systems → features → packages → primitives (whichever apply). Each lens builds on the previous.
+- **Path** — the file path (e.g., `apps/cli/index.md`)
+- **Title** — the page heading
+- **Criticality** — `critical` (gets a dedicated sub-agent) or `normal` (batched with related pages)
+- **Content brief** — 2-3 sentences describing what the page should cover and what code paths to read
+- **Relevant source paths** — specific files/directories the sub-agent should read
+- **Related pages** — titles, paths, and one-line summaries of other pages being written, so the agent knows what to link to instead of explaining
 
-### What sub-agents write (parallel)
+**Criticality guidelines:** Pages covering apps, packages, or features with large codebases, high churn, or central architectural roles are strong candidates for dedicated agents. Examples: a CLI with 50+ source files, a core library imported by most other packages, a feature that spans 5+ directories. The agent uses its judgment from the survey — these are guidelines, not hard rules.
 
-**Batch 1** — spawned after overview/ is complete, runs in parallel with how-to-contribute/:
+**Depth guidelines for sub-agents:** A single page should not try to cover a complex subsystem end-to-end. Sub-agents should create sub-pages when:
 
-- `by-the-numbers.md` — codebase statistics snapshot with Mermaid charts
-- `lore.md` — timeline, eras, deprecated features, major rewrites, growth trajectory
-- `fun-facts.md` — pick the most interesting 3-5 topics for the specific repo
+- The subsystem has 3+ clearly distinct internal areas (e.g., a CLI has TUI rendering, exec mode, skills system, session management — each deserves its own page)
+- A single page would exceed ~2000 words to cover the topic adequately
+- The subsystem has multiple entry points or distinct user-facing modes
 
-These only need git history and source file structure. No cross-references to other wiki pages.
+Examples of when to split:
+- A CLI app with 50+ source files and 4000+ line entry points → sub-pages for each major subsystem (e.g., `cli/tui-rendering.md`, `cli/exec-mode.md`, `cli/skills.md`, `cli/session-management.md`)
+- A backend with distinct API groups, auth system, and job runner → sub-pages for each
+- A frontend package with 10+ feature modules → sub-pages for the most complex ones
 
-**Batch 2** — spawned after all lens pages are complete:
+Examples of when NOT to split:
+- A utility package with 5 files and a single purpose → one page
+- A simple microservice with one handler → one page
+- A config or constants package → one page
 
-- Each conditional section as its own sub-agent: api, deployment, security, how-to-monitor, background, cleanup-opportunities (whichever apply)
-- `reference/` + `maintainers.md` as one sub-agent
+### Step 3: Foundation pages
 
-These sections are self-contained and don't cross-reference each other.
+The top-level agent writes these pages sequentially before any sub-agents run:
 
-### Sub-agent context
+1. `overview/index.md` — project overview
+2. `overview/architecture.md` — system architecture with Mermaid diagrams
+3. `overview/getting-started.md` — prerequisites, install, build, test, run
+4. `overview/glossary.md` — project-specific terms
+5. `how-to-contribute/patterns-and-conventions.md` — coding patterns and conventions
 
-Each sub-agent prompt must include:
+These pages establish the shared vocabulary and architectural context that sub-agents reference. They must be complete before delegation begins.
 
-1. **Brief repo summary** — 3-5 sentences about what the repo is, its tech stack, and structure. Extracted from the survey phase.
-2. **Relevant file paths** — the specific source files the sub-agent should read for its section. The top-level agent identifies these during the survey.
-3. **Writing conventions** — the page template (sections 3a-3e below), Mermaid guidelines, and cross-linking rules.
-4. **Output directory** — where to write the generated .md files.
+### Step 4: Sub-agent delegation (parallel)
 
-Sub-agents do NOT need the full survey context. They re-read only the files relevant to their section. This keeps their context window focused on writing quality content.
+Two groups of sub-agents run in parallel:
+
+**4a. Lens pages** — all organizational lens pages (apps, systems, features, packages, primitives):
+
+- **Critical pages** get a dedicated sub-agent each. The sub-agent reads the relevant code, writes the page, and autonomously decides whether sub-pages are warranted. If a topic has clearly distinct sub-areas, the agent creates sub-pages (capped at 2 levels: `section/page.md`). The top-level agent does NOT pre-plan sub-pages for critical pages — the sub-agent explores and decides.
+- **Normal pages** are batched 3-5 per sub-agent, grouped by relatedness (e.g., 3 small packages together, or 2 related features). Batched pages are typically single files without sub-pages.
+
+**4b. Data pages** — run in parallel with lens pages since they only need git history and source file structure:
+
+- `by-the-numbers.md`
+- `lore.md`
+- `fun-facts.md`
+
+### Step 5: Remaining pages (parallel)
+
+After all lens pages complete, spawn sub-agents for:
+
+- `how-to-contribute/` remaining pages (development-workflow, testing, debugging, tooling) as one batch
+- Each conditional section as its own sub-agent or small batch: api, deployment, security, how-to-monitor, background, cleanup-opportunities
+- `reference/` + `maintainers.md` as one batch
+
+These pages can now cross-reference lens pages since they're complete.
+
+### Step 6: Assembly
+
+The top-level agent does a final pass:
+
+- Audit cross-links between pages (fix broken references, add missing links)
+- Write `.wiki-meta.json` with final page list and ordering
+- Verify all directories have `index.md` files
+
+### Sub-agent prompt template
+
+Every sub-agent receives a prompt with this structure:
+
+```
+You are writing wiki page(s) for [repo].
+
+## Shared Context
+[The survey_context document from Step 1 — compact repo overview,
+architecture, key patterns, glossary terms. Same for all agents.]
+
+## Your Assignment
+Pages: [list of pages this agent is responsible for]
+Criticality: [critical or normal]
+Content brief: [2-3 sentences per page describing what to cover]
+Relevant source paths: [specific files/directories to read]
+
+## Related Pages (link to these, don't duplicate their content)
+- apps/cli (apps/cli/index.md): "CLI architecture, entry points, and TUI rendering"
+- features/llm-integration (features/llm-integration.md): "LLM provider abstraction and streaming"
+- ...
+
+## Rules
+- Follow the page template (sections 3a-3e in the skill)
+- Maximum nesting: 2 levels (section/page.md)
+- For critical pages: explore the code and create sub-pages if the topic
+  has clearly distinct sub-areas. Write both the index.md and sub-pages.
+- For normal pages: write single-file pages unless complexity demands splitting
+- Use Mermaid diagrams when they help explain data flows or component relationships
+- Cross-link to related pages listed above instead of re-explaining their topics
+- Write output to [wiki_dir path]
+```
+
+The **shared context** is the same for all agents — the compact survey document. The **per-page brief** is tailored by the top-level agent during planning. This ensures no sub-agent re-discovers what the survey already found, and no sub-agent explains what another page covers.
 
 For each page:
 
@@ -686,6 +830,6 @@ droid-wiki/
 - File names use lowercase with hyphens. No spaces, no uppercase.
 - The `.wiki-meta.json` file is for tracking purposes and is not uploaded as a page.
 - The four pages inside `overview/` (`index.md`, `architecture.md`, `getting-started.md`, `glossary.md`) are always single files. All other pages can expand into directories with sub-pages.
-- Maximum tree depth: 3 levels (e.g., `apps/cli/command-structure.md`).
-- For large repos, use all 3 levels. A complex subsystem like an editor core or extension host should have its own directory with focused sub-pages, not a single monolithic page.
+- Maximum tree depth: 2 levels from any lens root (e.g., `apps/cli/command-structure.md`). No deeper.
+- For large repos, critical sub-agents decide whether to split into sub-pages. A complex subsystem like an editor core or extension host should have its own directory with focused sub-pages, not a single monolithic page.
 - Maximum 200 pages per wiki run. If a project needs more, prioritize the most important subsystems.
