@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Launch rfspec in background and return polling instructions immediately.
+# This avoids the Execute tool timeout killing the long-running model calls.
+
+SCRIPT_DIR="$(dirname "$0")"
+RUN_SH="${SCRIPT_DIR}/../skills/rfspec/scripts/run.sh"
+
+if [ $# -eq 0 ]; then
+  exec "$RUN_SH"
+fi
+
+# Run the script in background, capturing output to its own log.
+# run.sh prints RFSPEC_RUN_DIR=<path> as its first line, so we wait
+# just long enough to capture that, then return control to the agent.
+BGLOG=$(mktemp /tmp/rfspec-bg-XXXXXXXX)
+nohup "$RUN_SH" "$@" >"$BGLOG" 2>&1 &
+BG_PID=$!
+
+# Wait briefly for run.sh to create the output dir and print the path
+sleep 2
+
+# Extract the run dir from the early output
+RUN_DIR=$(grep -m1 'RFSPEC_RUN_DIR=' "$BGLOG" 2>/dev/null | cut -d= -f2-)
+
+echo "User prompt: $*"
+echo ""
+
+if [ -z "$RUN_DIR" ]; then
+  echo "rfspec launched (PID ${BG_PID}), but run dir not yet available."
+  echo "Check log: ${BGLOG}"
+else
+  echo "RFSPEC_RUN_DIR=${RUN_DIR}"
+fi
+
+echo ""
+echo "rfspec is running in background (PID ${BG_PID})."
+echo "Background log: ${BGLOG}"
+echo ""
+cat <<'WORKFLOW'
+=== RFSPEC WORKFLOW ===
+
+Three models (Opus, GPT-5.4, Gemini) are generating competing spec proposals.
+
+STEP 1: Tell the user the models are running and results will be ready
+in a few minutes.
+
+STEP 2: Poll for completion every 30-60 seconds:
+WORKFLOW
+echo "  cat ${RUN_DIR:-<run_dir>}/done 2>/dev/null || echo PENDING"
+cat <<'WORKFLOW'
+
+STEP 3: When done, read the results file:
+WORKFLOW
+echo "  Read: ${RUN_DIR:-<run_dir>}/results.md"
+cat <<'WORKFLOW'
+
+STEP 4: EVALUATE -- compare the three specs against each other:
+  - Architectural choices (patterns, libraries, data flow)
+  - Scope differences (what each included or excluded)
+  - Concrete vs. vague (which named actual files, functions, steps)
+  - Risk areas (where one flagged something the others missed)
+Write a 2-4 sentence comparison per option. Compare, don't summarize.
+
+STEP 5: PRESENT the choice using AskUser with these options:
+  - Use Option A as-is
+  - Use Option B as-is
+  - Use Option C as-is
+  - Synthesize a refined spec combining the best of all three
+  - None of these work
+
+STEP 6: FINALIZE based on user's choice:
+  - If user picks one option: present it via ExitSpecMode for review.
+  - If user picks synthesis: start from the strongest option as base,
+    pull specific elements from others (name what and why), resolve
+    contradictions. The result must be a single coherent document.
+  - If user rejects all: ask what's missing, refine prompt, re-run.
+
+  Only save to specs/active/YYYY-MM-DD-<slug>.md AFTER user approves
+  the spec in spec mode. Do NOT save without approval.
+WORKFLOW
