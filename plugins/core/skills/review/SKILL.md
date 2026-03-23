@@ -1,6 +1,6 @@
 ---
 name: review
-version: 1.0.0
+version: 2.0.0
 description: |
   Review code changes and identify high-confidence, actionable bugs. Use when the user wants to:
   - Review a pull request or branch diff
@@ -142,6 +142,18 @@ Each finding should include:
 - File path and line number
 - Optional: code snippet (<=3 lines) or suggested fix
 
+If you have **high confidence** a fix will address the issue and won't break CI, include a suggestion block:
+
+```suggestion
+<replacement code>
+```
+
+Suggestion rules:
+- Keep suggestion blocks <= 100 lines
+- Preserve exact leading whitespace of replaced lines
+- Use RIGHT-side anchors only; do not include removed/LEFT-side lines
+- For insert-only suggestions, repeat the anchor line unchanged, then append new lines
+
 ## Deduplication
 
 - Never flag the same issue twice (same root cause, even at different locations)
@@ -149,8 +161,91 @@ Each finding should include:
 
 <!-- END_SHARED_METHODOLOGY -->
 
+## Two-Pass Review Pipeline
+
+The review process uses two passes: candidate generation and validation.
+
+### Pass 1: Candidate Generation
+
+#### Step 0: Understand the PR intent
+
+1. Read the PR description to understand the purpose and scope of the changes.
+2. If the PR description contains a ticket URL (e.g., Jira, Linear, GitHub issue link) or a ticket ID, **always fetch it** to understand the full requirements and acceptance criteria.
+
+#### Step 1: Triage and group modified files
+
+Before reviewing, triage the PR to enable parallel review:
+
+1. Read the diff to identify ALL modified files
+2. Group files into logical clusters based on:
+   - **Related functionality**: Files in the same module or feature area
+   - **File relationships**: A component and its tests, a class and its interface
+   - **Risk profile**: Security-sensitive files together, database/migration files together
+   - **Dependencies**: Files that import each other or share types
+
+3. Document your grouping briefly, for example:
+   - Group 1 (Auth): src/auth/login.ts, src/auth/session.ts, tests/auth.test.ts
+   - Group 2 (API handlers): src/api/users.ts, src/api/orders.ts
+   - Group 3 (Database): src/db/migrations/001.ts, src/db/schema.ts
+
+Guidelines for grouping:
+- Aim for 3-6 groups to balance parallelism with context coherence
+- Keep related files together so reviewers have full context
+- Each group should be reviewable independently
+
+#### Step 2: Spawn parallel subagents to review each group
+
+Use the Task tool to spawn parallel `file-group-reviewer` subagents. Each subagent reviews one group of files independently.
+
+**IMPORTANT**: Spawn ALL subagents in a single response to enable parallel execution.
+
+For each group, invoke the Task tool with:
+- `subagent_type`: "file-group-reviewer"
+- `description`: Brief label (e.g., "Review auth module")
+- `prompt`: Must include the PR context, the list of assigned files, the relevant diff sections, and instructions to return a JSON array of findings
+
+#### Step 3: Aggregate subagent results
+
+After all subagents complete, collect and merge their findings:
+
+1. **Collect results**: Each subagent returns a JSON array of comment objects
+2. **Merge arrays**: Combine all arrays into a single comments array
+3. **Deduplicate**: If multiple subagents flagged the same location (same path + line), keep only one comment (prefer higher priority: P0 > P1 > P2)
+4. **Filter existing**: Remove any comments that duplicate issues already reported
+5. **Write reviewSummary**: Synthesize a 1-3 sentence overall assessment based on all findings
+
+### Pass 2: Validation
+
+The validator independently re-examines each candidate against the diff and codebase.
+
+#### Validation rules
+
+Apply the same Reporting Gate as above, plus reject if ANY of these are true:
+
+- It's speculative / "might" without a concrete trigger
+- It's stylistic / naming / formatting
+- It's not anchored to a valid changed line
+- It's already reported (dedupe against existing comments)
+- The anchor (path/side/line/startLine) would need to change to make the suggestion work
+- It flags missing error handling / try-catch for a code path that won't crash in practice
+- It describes a hypothetical race condition without identifying the specific concurrent access pattern
+- It's about code that appears in the diff but is not part of the PR's primary change
+
+#### Confidence-based filtering
+
+- **P0 findings**: Approve if the trigger path checks out. These should be definite crashes/exploits.
+- **P1 findings**: Approve if you can verify the logic error or security issue is real.
+- **P2 findings**: Reject by default. Only approve if ALL of these are true: (1) you can independently verify the bug exists, (2) the bug has a concrete trigger a user or caller could realistically hit, and (3) the finding is NOT about edge cases, defensive coding, or style. When in doubt about a P2, reject it.
+
+#### Strict deduplication
+
+Before approving a candidate:
+1. **Among candidates**: If two or more candidates describe the same underlying bug (same root cause, even if anchored to different lines), approve only the ONE with the best anchor and clearest explanation. Reject the rest with reason "duplicate of candidate N".
+2. **Against existing comments**: If a candidate repeats an issue already covered by an existing PR comment, reject it.
+3. Same file + overlapping line range + same issue = duplicate, even if the body text differs.
+
 ## Output
 
-Analyze the changes and provide a structured summary of findings. List each finding with its priority, file, line, and description.
+When invoked locally (TUI/CLI), analyze the changes and provide a structured summary of findings. List each finding with its priority, file, line, and description.
 
 Do **not** post inline comments to the PR or submit a GitHub review unless the user explicitly asks for it.
