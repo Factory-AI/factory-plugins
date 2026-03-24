@@ -24,6 +24,14 @@ Or browse available plugins via the UI:
 
 ## Available Plugins
 
+### core
+
+Core skills for essential functionalities and integrations. Pre-installed by the Droid CLI.
+
+**Skills:**
+
+- `review` - Review code changes and identify high-confidence, actionable bugs. Includes systematic analysis patterns for null safety, async/await, security, concurrency, API contracts, and more. Used by both the CLI `/review` command and the CI action.
+
 ### security-engineer
 
 Security review, threat modeling, and vulnerability validation skills.
