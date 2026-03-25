@@ -56,6 +56,14 @@ Skills for continuous learning and improvement.
 - `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
 
+### rfspec
+
+Fan out a prompt to multiple AI models in parallel and pick or synthesize the best result.
+
+**Skills:**
+
+- `rfspec` - Multi-model spec generation and synthesis workflow
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
