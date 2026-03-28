@@ -41,7 +41,7 @@ Ask the user (or infer from context) for:
 ### Step 2: Create Branch and State Files
 
 ```bash
-git checkout -b autoresearch/<goal>-<date>
+git checkout autoresearch/<goal>-<date> 2>/dev/null || git checkout -b autoresearch/<goal>-<date>
 ```
 
 Read the source files thoroughly. Understand the workload deeply before writing anything.
@@ -115,16 +115,41 @@ pnpm test --run --reporter=dot 2>&1 | tail -50
 pnpm typecheck 2>&1 | grep -i error || true
 ```
 
-### Step 3: Commit State Files
+### Step 3: Initialize JSONL and Commit State Files
+
+Initialize the experiment log:
 
 ```bash
-git add autoresearch.md autoresearch.sh
+python3 autoresearch_helper.py init --jsonl autoresearch.jsonl --name '<goal>' --metric-name '<metric_name>' --direction <lower|higher>
+```
+
+Commit all state files:
+
+```bash
+git add autoresearch.md autoresearch.sh autoresearch.jsonl
 git commit -m "autoresearch: initialize experiment session"
 ```
 
 ### Step 4: Run Baseline
 
-Run the experiment command and record the baseline result. This is experiment #1 — it establishes the starting point.
+Run the benchmark and record the baseline result:
+
+```bash
+bash autoresearch.sh
+```
+
+Parse the METRIC lines from the output, then log the baseline as a keep:
+
+```bash
+python3 autoresearch_helper.py log --jsonl autoresearch.jsonl \
+  --commit $(git rev-parse --short=7 HEAD) \
+  --metric <baseline_value> \
+  --status keep \
+  --description "baseline" \
+  --asi '{"hypothesis": "baseline measurement"}'
+```
+
+This is experiment #1 — it establishes the starting point for all future comparisons.
 
 ## The Experiment Loop
 
@@ -163,7 +188,7 @@ If checks fail, log as `checks_failed` and revert.
 
 #### 4. Evaluate Results
 
-Compare the primary metric against the baseline using the helper script:
+Compare the primary metric against the current best (or baseline if no keeps yet) using the helper script:
 
 ```bash
 python3 autoresearch_helper.py evaluate --jsonl autoresearch.jsonl --metric <value> --direction <lower|higher>
@@ -182,42 +207,56 @@ Decision rules:
 
 **On keep:**
 
-```bash
-# Commit the changes
-git add -A
-git commit -m "<description>
-
-Result: {\"status\": \"keep\", \"<metric_name>\": <value>}"
-```
-
-Append to `autoresearch.jsonl`:
+Log to JSONL first (so the entry is included in the commit):
 ```bash
 python3 autoresearch_helper.py log --jsonl autoresearch.jsonl \
   --commit $(git rev-parse --short=7 HEAD) \
   --metric <value> \
   --status keep \
   --description "<what was tried>" \
+  --asi '{"hypothesis": "<what you tried>"}' \
+  # --metrics '{"compile_us": <value>, "render_us": <value>}'  # optional secondary metrics
   --direction <lower|higher>
+```
+
+Then commit all changes (including the JSONL entry):
+```bash
+git add -A
+git commit -m "<description>
+
+Result: {\"status\": \"keep\", \"<metric_name>\": <value>}"
 ```
 
 **On discard/crash/checks_failed:**
 
-```bash
-# Revert changes (preserve autoresearch state files)
-git checkout -- .
-git clean -fd 2>/dev/null
-# Re-stage state files in case they were unstaged
-git add autoresearch.jsonl autoresearch.md autoresearch.ideas.md autoresearch.sh autoresearch.checks.sh 2>/dev/null || true
-```
-
-Append to `autoresearch.jsonl`:
+Log to JSONL first (before reverting, so the entry is preserved):
 ```bash
 python3 autoresearch_helper.py log --jsonl autoresearch.jsonl \
   --commit "0000000" \
   --metric <value_or_0> \
   --status <discard|crash|checks_failed> \
   --description "<what was tried>" \
+  --asi '{"hypothesis": "<what you tried>", "rollback_reason": "<why it failed>"}' \
+  # --metrics '{"compile_us": <value>, "render_us": <value>}'  # optional secondary metrics
   --direction <lower|higher>
+```
+
+Then revert changes, backing up state files so `git clean -fd` doesn't destroy them:
+```bash
+# Backup state files
+cp autoresearch.jsonl autoresearch.jsonl.bak 2>/dev/null || true
+cp autoresearch.md autoresearch.md.bak 2>/dev/null || true
+cp autoresearch.ideas.md autoresearch.ideas.md.bak 2>/dev/null || true
+
+# Revert all changes
+git checkout -- .
+git clean -fd 2>/dev/null
+
+# Restore state files
+cp autoresearch.jsonl.bak autoresearch.jsonl 2>/dev/null || true
+cp autoresearch.md.bak autoresearch.md 2>/dev/null || true
+cp autoresearch.ideas.md.bak autoresearch.ideas.md 2>/dev/null || true
+rm -f autoresearch.jsonl.bak autoresearch.md.bak autoresearch.ideas.md.bak
 ```
 
 #### 6. Update Research Journal
@@ -296,7 +335,10 @@ Droid sessions have finite context. To handle this gracefully:
 1. **Track experiment count** in the current session. After ~15 experiments, context is getting heavy.
 2. **Save state proactively** — all state lives in files (jsonl, md), so a new session can resume immediately.
 3. **When context is getting exhausted**: update `autoresearch.md` with current findings, commit state files, and stop. The next session reads the files and continues.
-4. **On resume**: read `autoresearch.md`, `autoresearch.jsonl`, and `git log --oneline -20` to understand where things stand.
+4. **On resume**: read `autoresearch.md`, `autoresearch.jsonl`, and `git log --oneline -20` to understand where things stand. Check current status:
+```bash
+python3 autoresearch_helper.py status --jsonl autoresearch.jsonl
+```
 
 ## Loop Rules Summary
 
@@ -347,7 +389,7 @@ Group 2: "Switch to cosine LR schedule"
   Experiments: #15, #18
 ```
 
-Wait for user confirmation before proceeding.
+Wait for user confirmation before proceeding. In mission worker mode, proceed with the best grouping without waiting for confirmation.
 
 ### Step 3: Resolve File Conflicts
 

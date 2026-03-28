@@ -76,7 +76,7 @@ def compute_confidence(results, segment, direction):
 
     Returns None if fewer than 3 data points or MAD is 0.
     """
-    cur = [r for r in current_segment_results(results, segment) if r.get("metric", 0) > 0]
+    cur = [r for r in current_segment_results(results, segment) if r.get("status") not in ("crash", "checks_failed")]
     if len(cur) < 3:
         return None
 
@@ -85,11 +85,13 @@ def compute_confidence(results, segment, direction):
     if mad == 0:
         return None
 
-    baseline = cur[0]["metric"]
+    baseline = find_baseline(results, segment)
+    if baseline is None:
+        return None
 
     best_kept = None
     for r in cur:
-        if r.get("status") == "keep" and r.get("metric", 0) > 0:
+        if r.get("status") == "keep":
             val = r["metric"]
             if best_kept is None:
                 best_kept = val
@@ -116,7 +118,7 @@ def find_best_kept(results, segment, direction):
     cur = current_segment_results(results, segment)
     best = None
     for r in cur:
-        if r.get("status") == "keep" and r.get("metric", 0) > 0:
+        if r.get("status") == "keep":
             val = r["metric"]
             if best is None:
                 best = val
@@ -149,6 +151,10 @@ def cmd_init(args):
 def cmd_log(args):
     """Append an experiment result to the JSONL file."""
     config, results = read_jsonl(args.jsonl)
+
+    if config is None:
+        print("Error: No config found. Run 'init' first.", file=sys.stderr)
+        sys.exit(1)
 
     segment = config.get("_segment", 0) if config else 0
     direction = args.direction or (config.get("bestDirection", "lower") if config else "lower")
