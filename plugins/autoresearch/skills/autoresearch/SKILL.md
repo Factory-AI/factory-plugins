@@ -7,7 +7,7 @@ description: |
   - Run an automated research loop: try an idea, measure it, keep improvements, revert regressions, repeat
   - Set up autoresearch for any codebase with a measurable optimization target
   Implements the autoresearch pattern with MAD-based confidence scoring, git branch isolation,
-  and structured experiment logging. Works standalone or as a mission worker skill.
+  and structured experiment logging.
 ---
 
 # Autoresearch
@@ -17,6 +17,8 @@ Autonomous experiment loop: try ideas, keep what works, discard what doesn't, ne
 ## Overview
 
 You are running an autonomous optimization loop. Your job is to systematically improve a measurable metric by making changes, running experiments, and keeping only the improvements. You maintain structured state files so that any session — including a fresh one with no memory — can resume exactly where you left off.
+
+**Tip for the user:** For longer optimization campaigns with better tracking and multi-session continuity, consider running this inside a mission (`/enter-mission`). Missions give you milestone validation, structured handoffs, and orchestrator-managed sequencing — useful when autoresearch is part of a larger workflow.
 
 ## Setup
 
@@ -308,31 +310,19 @@ Droid sessions have finite context. To handle this gracefully:
 - **Think longer when stuck.** Re-read source files, study the data, reason about what's actually happening. The best ideas come from deep understanding.
 - **Resuming:** read autoresearch.md + git log, continue looping.
 
-## Mission Worker Mode
+## Running with Missions
 
-When used as a mission worker skill (via the `autoresearch-experimenter` droid), the feature description specifies:
-- The optimization goal
-- The termination condition (experiment count, time budget, or target metric)
-- Any additional constraints
+For longer or more structured optimization campaigns, consider using Droid's mission system for better tracking, milestone validation, and multi-session continuity. Start with:
 
-Read the feature description carefully and follow the same loop procedure above, but respect the termination condition specified in the feature. When the termination condition is met, stop and report results in the handoff.
-
-### Handoff (Mission Mode)
-
-When returning results to the orchestrator, include:
-
-```json
-{
-  "salientSummary": "Ran 20 experiments optimizing val_bpb. Best result: 1.05 (-8.7% from baseline 1.15). Key wins: reduced depth from 8 to 6, switched to cosine schedule.",
-  "whatWasImplemented": "Optimized train.py through 20 experiments. Best configuration: DEPTH=6, cosine LR schedule, batch size 2^17. val_bpb improved from 1.15 to 1.05 (-8.7%).",
-  "whatWasLeftUndone": "",
-  "verification": {
-    "commandsRun": [
-      {"command": "bash autoresearch.sh", "exitCode": 0, "observation": "Final best val_bpb=1.05"}
-    ],
-    "interactiveChecks": []
-  },
-  "tests": {"added": []},
-  "discoveredIssues": []
-}
 ```
+/enter-mission
+```
+
+The orchestrator can assign optimization features to this skill as a worker, specifying:
+- The optimization goal and target metric
+- Termination condition (experiment count, time budget, or target metric)
+- Files in scope and constraints
+
+When running as a mission worker, read the feature description carefully, follow the same loop procedure above, and respect the termination condition specified in the feature. When the condition is met, stop and report results in the handoff.
+
+This is especially useful when autoresearch is part of a larger workflow — e.g., optimize a model, then evaluate it against a test set, then package the results.
