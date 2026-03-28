@@ -18,7 +18,7 @@ Autonomous experiment loop: try ideas, keep what works, discard what doesn't, ne
 
 You are running an autonomous optimization loop. Your job is to systematically improve a measurable metric by making changes, running experiments, and keeping only the improvements. You maintain structured state files so that any session — including a fresh one with no memory — can resume exactly where you left off.
 
-**Tip for the user:** For longer optimization campaigns with better tracking and multi-session continuity, consider running this inside a mission (`/enter-mission`). Missions give you milestone validation, structured handoffs, and orchestrator-managed sequencing — useful when autoresearch is part of a larger workflow.
+If the user is asking you to do this and you are not currently in mission mode, suggest that they might want to run this inside a mission (`/enter-mission`) for better progress tracking, milestone validation, and multi-session continuity. Don't block on it — just mention it once during setup.
 
 ## Setup
 
@@ -310,19 +310,6 @@ Droid sessions have finite context. To handle this gracefully:
 - **Think longer when stuck.** Re-read source files, study the data, reason about what's actually happening. The best ideas come from deep understanding.
 - **Resuming:** read autoresearch.md + git log, continue looping.
 
-## Running with Missions
+## Mission Worker Mode
 
-For longer or more structured optimization campaigns, consider using Droid's mission system for better tracking, milestone validation, and multi-session continuity. Start with:
-
-```
-/enter-mission
-```
-
-The orchestrator can assign optimization features to this skill as a worker, specifying:
-- The optimization goal and target metric
-- Termination condition (experiment count, time budget, or target metric)
-- Files in scope and constraints
-
-When running as a mission worker, read the feature description carefully, follow the same loop procedure above, and respect the termination condition specified in the feature. When the condition is met, stop and report results in the handoff.
-
-This is especially useful when autoresearch is part of a larger workflow — e.g., optimize a model, then evaluate it against a test set, then package the results.
+When running as a mission worker, the feature description specifies the optimization goal, termination condition, files in scope, and constraints. Read it carefully, follow the same loop procedure above, and respect the termination condition. When the condition is met, stop and report results in the handoff.
