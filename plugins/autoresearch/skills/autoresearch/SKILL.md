@@ -20,6 +20,8 @@ You are running an autonomous optimization loop. Your job is to systematically i
 
 If the user is asking you to do this and you are not currently in mission mode, suggest that they might want to run this inside a mission (`/enter-mission`) for better progress tracking, milestone validation, and multi-session continuity. Don't block on it — just mention it once during setup.
 
+If you are already in mission mode, invoke the mission planning skills first (`mission-planning` and `define-mission-skills`) before diving into this skill's procedure. Use the mission system's planning, decomposition, and worker design to structure the autoresearch work — then combine that guidance with this skill's experiment loop procedure. This skill defines *how* to run experiments; the mission system defines *how to plan, track, and validate* them.
+
 ## Setup
 
 Before the loop starts, you need to establish the experiment.
