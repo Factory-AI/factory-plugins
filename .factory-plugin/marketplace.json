@@ -23,6 +23,12 @@
       "description": "Core Skills for essential functionalities and integrations",
       "source": "./plugins/core",
       "category": "core"
+    },
+    {
+      "name": "autoresearch",
+      "description": "Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.",
+      "source": "./plugins/autoresearch",
+      "category": "research"
     }
   ]
 }

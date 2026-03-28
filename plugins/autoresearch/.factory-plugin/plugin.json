@@ -1,0 +1,10 @@
+{
+  "name": "autoresearch",
+  "description": "Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  },
+  "license": "MIT"
+}
