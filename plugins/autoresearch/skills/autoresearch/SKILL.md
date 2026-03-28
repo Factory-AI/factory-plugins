@@ -310,6 +310,92 @@ Droid sessions have finite context. To handle this gracefully:
 - **Think longer when stuck.** Re-read source files, study the data, reason about what's actually happening. The best ideas come from deep understanding.
 - **Resuming:** read autoresearch.md + git log, continue looping.
 
+## Finalization
+
+When the experiment loop ends (termination condition met, user interrupts, or context exhausted), finalize the results into clean, reviewable branches. This is the last phase of an autoresearch session.
+
+### Step 1: Summarize Results
+
+```bash
+python3 autoresearch_helper.py summary --jsonl autoresearch.jsonl
+```
+
+Review the git log for actual commits:
+
+```bash
+git log --oneline --stat $(git merge-base HEAD main)..HEAD
+```
+
+### Step 2: Group Changes
+
+Group kept experiments into **logical changesets**. Each group should:
+- Represent a single coherent optimization or change
+- Not share modified files with other groups (so branches can merge independently)
+- Have a clear description of what it achieves and the metric improvement
+
+Present the proposed grouping to the user for approval:
+
+```
+Group 1: "Reduce model depth from 8 to 6"
+  Files: train.py (DEPTH, HEAD_DIM, N_EMBED)
+  Metric improvement: val_bpb 1.15 -> 1.08 (-6.1%)
+  Experiments: #3, #7, #12
+
+Group 2: "Switch to cosine LR schedule"
+  Files: train.py (lr_schedule, warmup_steps)
+  Metric improvement: val_bpb 1.08 -> 1.05 (-2.8%)
+  Experiments: #15, #18
+```
+
+Wait for user confirmation before proceeding.
+
+### Step 3: Resolve File Conflicts
+
+If groups share files, resolve before creating branches:
+- Merge the groups into one (if changes are related)
+- Split the file changes more carefully (if they're truly independent modifications to different parts)
+- Ask the user which group gets priority
+
+Groups **must not share files** — each branch must be independently mergeable. If all changes touch the same file and can't be separated, create a single finalized branch with all improvements combined.
+
+### Step 4: Create Clean Branches
+
+For each group:
+
+```bash
+merge_base=$(git merge-base HEAD main)
+git checkout -b autoresearch/finalize/<group-name> $merge_base
+git checkout autoresearch/<session-branch> -- <file1> <file2> ...
+git commit -m "<group description>
+
+Autoresearch results:
+- Metric: <name> improved from <baseline> to <best> (<delta>%)
+- Confidence: <score>x noise floor
+- Experiments: <count> total, <kept> kept"
+```
+
+### Step 5: Verify and Report
+
+For each finalized branch, run the benchmark to confirm the improvement holds, run any checks if applicable, and verify it merges cleanly with main.
+
+Present a summary to the user:
+
+```
+Created 2 clean branches from 20 experiments:
+
+  autoresearch/finalize/reduce-depth
+    val_bpb: 1.15 -> 1.08 (-6.1%)
+    Ready for review
+
+  autoresearch/finalize/cosine-schedule
+    val_bpb: 1.08 -> 1.05 (-2.8%)
+    Ready for review
+
+Original experiment branch preserved: autoresearch/<session-branch>
+```
+
+The original experiment branch is always preserved — finalization creates new branches.
+
 ## Mission Worker Mode
 
-When running as a mission worker, the feature description specifies the optimization goal, termination condition, files in scope, and constraints. Read it carefully, follow the same loop procedure above, and respect the termination condition. When the condition is met, stop and report results in the handoff.
+When running as a mission worker, the feature description specifies the optimization goal, termination condition, files in scope, and constraints. Read it carefully, follow the same loop procedure above, and respect the termination condition. When the condition is met, run finalization and report results in the handoff.
