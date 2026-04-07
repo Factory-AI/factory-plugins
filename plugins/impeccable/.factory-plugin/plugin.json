@@ -1,0 +1,10 @@
+{
+  "name": "impeccable",
+  "description": "Design skills, commands, and anti-patterns for impeccable frontend design. 1 comprehensive skill, 20 steering commands, and curated anti-patterns to fight generic AI aesthetics. Based on Impeccable by Paul Bakaus.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  },
+  "license": "Apache-2.0"
+}
