@@ -44,7 +44,7 @@ Walk through each commitment from the parse step:
 | Side-by-side layout | Video shows two panels with a divider |
 | Showcase polish | Resolution is 1920x1080, window chrome and rounded corners visible |
 | Keystroke overlay | Pill overlays appear at interaction points |
-| Effects | Declared effects are visually present |
+| Effects | Effects matching the committed tier are present (utilitarian: zoom/keystroke; full: spotlight, zoom, callout, keystroke) |
 | Speed note | Title card mentions playback speed |
 
 ### Content checks

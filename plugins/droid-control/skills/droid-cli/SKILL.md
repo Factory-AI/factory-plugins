@@ -123,7 +123,7 @@ Non-interactive single-shot execution:
 
 ```bash
 droid exec "analyze this file"
-droid exec --auto medium "run the tests in packages/logging"
+droid exec --auto medium "run the tests"
 ```
 
 ## Logging

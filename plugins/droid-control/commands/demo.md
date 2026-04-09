@@ -18,7 +18,17 @@ Determine the deliverable requirements from the arguments. These are **commitmen
 - [ ] **Layout**: side-by-side (if "compare" / "before and after" or default for fixes) OR single-branch (if "single branch" / "new feature")
 - [ ] **Showcase wrapping**: YES if "showcase", "polished", "hero", "landing page", "social", or "marketing" appears
 - [ ] **Keystroke overlay**: YES if "keys", "keystrokes", or "key combos" appears (implies showcase wrapping)
-- [ ] **Effects**: YES if "zoom", "spotlight", "effects", or "cinematic" appears
+- [ ] **Effects tier**: one of three tiers (default to **utilitarian** for demos, **full** for showcase; only **none** if user explicitly opts out)
+
+Effects tiers:
+
+| Tier | What's included | When |
+|---|---|---|
+| **utilitarian** | Zoom for readability, keystroke overlay for user actions | Default for all demos |
+| **full** | All effect types -- spotlight, zoom, callout, keystroke overlay | Default when showcase wrapping is committed |
+| **none** | No effects | Only if user explicitly says "no effects" |
+
+Do not plan specific effects here -- that's a compose-time decision made after capture, when you have actual recordings to work with.
 
 If showcase wrapping is committed, resolve the **preset** using the first matching rule:
 
@@ -101,11 +111,11 @@ Hand compose a hybrid handoff:
 - clips: [/tmp/before.cast, /tmp/after.cast]
 - keys: /tmp/keys.tsv (if committed)
 - preset: hero | macos | minimal | presentation | factory | factory-hero (if committed)
-- effects: /tmp/effects.json (if committed)
+- effects tier: utilitarian | full | none
 - output: /tmp/demo-pr-11386.mp4
 
 ### Creative (natural language)
-What the viewer should take away. Which moments to hold. How to frame the story. Whether phase cards are warranted. The compose atom uses this for editorial decisions -- title card phrasing, trim points, emphasis.
+What the viewer should take away. Which moments to hold. How to frame the story. Whether phase cards are warranted. The compose atom uses this -- along with the effects tier -- for editorial decisions: title card phrasing, trim points, emphasis, and choosing specific effects to apply.
 
 ## Verify
 

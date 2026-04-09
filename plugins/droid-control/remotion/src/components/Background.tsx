@@ -3,6 +3,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
+  staticFile,
 } from 'remotion';
 import type { Palette } from '../lib/palettes';
 import type { PresetConfig } from '../lib/presets';
@@ -95,10 +96,10 @@ export const Background: React.FC<{
           }}
         />
 
-        {/* Halftone texture overlay from brand guidelines */}
+        {/* Halftone texture overlay */}
         <AbsoluteFill
           style={{
-            backgroundImage: `url(https://factory-brand-guide.vercel.app/images/bg-halftone-rotor.jpg)`,
+            backgroundImage: `url(${staticFile('bg-halftone-rotor.jpg')})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             opacity: 0.15,

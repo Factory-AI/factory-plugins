@@ -25,12 +25,12 @@ The command or capture stage should have provided a handoff with two sections:
 - **sections**: text banners for chapters `[{t, title}]` (optional)
 - **keys**: keystroke events `[{t, label, dur?}]` (if overlay requested)
 - **showcase**: preset name -- `macos`, `minimal`, `hero`, `presentation`, `factory`, `factory-hero`
-- **effects**: effects array `[{fx, t, dur, ...}]` (if effects requested)
+- **effects tier**: `utilitarian` | `full` | `none` (see "Choosing effects at compose time" below)
 - **output**: desired output path
 
 ### Creative (natural language)
 
-Free-text guidance on what to emphasize: which moments to hold, what the title card should convey, whether phase cards are warranted, how to trim dead time. Use this to make editorial decisions.
+Free-text guidance on what to emphasize: which moments to hold, what the title card should convey, whether phase cards are warranted, how to trim dead time. Use this -- along with the effects tier -- for editorial decisions, including choosing specific effects to apply.
 
 ## Pipeline
 
@@ -57,10 +57,18 @@ Both use the same Remotion pipeline but target different visual registers.
 |---|---|---|
 | **Goal** | Cinematic, high-polish marketing material | Clear, utilitarian before/after comparison |
 | **Preset** | `factory`, `factory-hero`, or `hero` | `macos`, `minimal`, or `presentation` |
-| **Effects** | Spotlight, zoom, keystroke overlay encouraged | Keystroke overlay only (if needed) |
+| **Effects tier** | **Full** -- spotlight, zoom, callout, keystroke overlay. Go all out. | **Utilitarian** -- zoom for readability, keystroke overlay for user actions |
 | **Audience** | External — landing pages, social, marketing | Internal — PR reviews, docs, QA |
 
 **Decision rule**: If the video will be seen outside the eng team, use Showcase mode. If it's for a PR description, internal demo, or documentation embed, use Demo mode. The visual polish layers (warm glow, particles, color grade, motion blur) are always present but their intensity is palette-driven — Factory presets produce rich cinematic warmth while Catppuccin presets stay subtle and cool.
+
+### Choosing effects at compose time
+
+The command stage committed an **effects tier** (utilitarian, full, or none). Now that you have actual recordings, choose specific effects:
+
+- **Utilitarian**: Add zoom effects for any small or hard-to-read text. Add keystroke overlay if user actions were captured. Skip spotlight and callout unless something is genuinely hard to find on screen.
+- **Full**: Use the full palette. Spotlight the key proof points. Zoom into details. Add callout annotations where the UI isn't self-explanatory. Layer keystroke overlay throughout. Aim for cinematic -- the viewer should feel guided, not left to scan.
+- **None**: Pass `"effects": []` in props. Keystroke overlay is still allowed if committed separately.
 
 ## Step 1: Choose fidelity and pacing
 

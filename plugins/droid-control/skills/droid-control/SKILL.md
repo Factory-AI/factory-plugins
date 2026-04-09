@@ -30,7 +30,7 @@ Three independent lookups. Do all three, then load the union of skills they prod
 
 | Target | Load these skills |
 |---|---|
-| Droid CLI (`droid-dev`, `droid exec`, PR touching `apps/cli/`) | **droid-cli** + tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
+| Droid CLI (`droid-dev`, `droid exec`) | **droid-cli** + tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
 | Droid CLI (real terminal proof) | **true-input** + **droid-cli** |
 | Other terminal TUI | tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
 | Other terminal TUI (real terminal proof) | **true-input** |
@@ -146,9 +146,9 @@ Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-br
 
 ## Prerequisites
 
-| Driver | Platform | Required | Optional |
+| Stage | Platform | Required | Optional |
 |---|---|---|---|
-| tuistory | All | `tuistory` | `tmux`, `asciinema`, `agg` |
+| tuistory | All | `tuistory`, `asciinema`, `agg` | `tmux` |
 | true-input | Linux/Wayland | `cage`, `wtype`, Wayland terminal, `/dev/dri/*` | `grim`, `wf-recorder` |
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SPICE + SSH, `DROID_VM_*` env vars | `virt-manager` |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH, `DROID_MAC_*` env vars | — |
@@ -156,9 +156,23 @@ Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-br
 | compose | All | `ffmpeg`, `ffprobe`, `agg` | — |
 | showcase | All | Node.js (>= 18), Chrome/Chromium | — |
 
+### Install commands
+
 ```bash
-npm install -g tuistory                              # tuistory
-sudo apt-get install -y cage wtype grim wf-recorder  # true-input (Linux)
-agent-browser install                                # agent-browser
-cd ${DROID_PLUGIN_ROOT}/remotion && npm install       # showcase (Remotion)
+# tuistory driver + recording
+npm install -g tuistory                              # virtual PTY driver
+pip install asciinema                                # terminal recording (tctl wraps this)
+cargo install agg                                    # .cast -> .gif converter (compose needs this)
+
+# true-input driver (Linux/Wayland)
+sudo apt-get install -y cage wtype                   # required: headless compositor + keystroke injection
+sudo apt-get install -y grim wf-recorder             # optional: screenshots + video recording
+
+# agent-browser driver
+agent-browser install                                # one-time: downloads bundled Chromium
+
+# compose + showcase (video rendering)
+sudo apt-get install -y ffmpeg                       # video processing (includes ffprobe)
+cd ${DROID_PLUGIN_ROOT}/remotion && npm install       # Remotion dependencies
+# Chrome or Chromium must be installed for Remotion rendering
 ```
