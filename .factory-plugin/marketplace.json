@@ -25,6 +25,12 @@
       "category": "core"
     },
     {
+      "name": "droid-control",
+      "description": "Terminal and browser automation for testing, demos, QA, and computer-use tasks",
+      "source": "./plugins/droid-control",
+      "category": "automation"
+    },
+    {
       "name": "autoresearch",
       "description": "Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.",
       "source": "./plugins/autoresearch",

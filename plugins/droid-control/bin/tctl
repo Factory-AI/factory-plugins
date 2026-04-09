@@ -1,0 +1,1119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="/tmp/tctl-sessions"
+mkdir -p "$ROOT_DIR"
+
+print_help() {
+  cat <<'HELP'
+tctl -- unified terminal control wrapper
+
+Usage:
+  tctl launch <command> [options]
+  tctl -s <session> <action> [args...]
+  tctl sessions
+
+Actions:
+  type <text>                Send literal text
+  press <key> [keys...]      Send a key chord (e.g. press shift enter)
+  wait <pattern> [--timeout] Block until text or /regex/ appears
+  wait-idle [--timeout]      Block until output stabilizes
+  snapshot [--trim]          Print cleaned text from the session
+  screenshot [-o <path>]     Capture compositor PNG (true-input only)
+  provenance                 Print launch repo root, branch, and commit
+  record start <path>        Start video recording (true-input only)
+  record stop                Stop video recording
+  close                      Tear down the session
+
+Launch options:
+  -s, --session <name>       Session name (default: default)
+  --backend <name>           tuistory | true-input | ghostty | kitty | alacritty
+  --terminal <name>          Override terminal for true-input
+  --cols <n>                 Columns (default: 120)
+  --rows <n>                 Rows (default: 36)
+  --cwd <path>               Working directory (tuistory)
+  --repo-root <path>         Git worktree root for provenance + droid-dev launches
+  --env <KEY=VALUE>          Environment variable (repeatable)
+  --tmux                     Wrap the command in tmux with RGB-safe tuistory defaults
+  --record <path>            Record from launch (.cast or .mp4)
+
+Notes:
+  tuistory recording wraps the PTY so it must be set at launch.
+  true-input auto-selects: ghostty > kitty > alacritty.
+  Each true-input session gets an isolated Wayland runtime directory.
+HELP
+}
+
+die() {
+  echo "tctl: $*" >&2
+  exit 1
+}
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+runtime_dir_value() {
+  if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
+    printf '%s\n' "$XDG_RUNTIME_DIR"
+  else
+    printf '/run/user/%s\n' "$(id -u)"
+  fi
+}
+
+session_slug() {
+  printf '%s\n' "${1//[^[:alnum:]]/-}"
+}
+
+session_runtime_dir() {
+  printf '%s/tctl/%s\n' "$(runtime_dir_value)" "$(session_slug "$1")"
+}
+
+wait_for_wayland_socket() {
+  local pid="$1"
+  local socket_path="$2"
+  local timeout_ms="$3"
+  local deadline=$(( $(date +%s%3N) + timeout_ms ))
+
+  while (( $(date +%s%3N) <= deadline )); do
+    [[ -S "$socket_path" ]] && return 0
+    kill -0 "$pid" >/dev/null 2>&1 || return 1
+    sleep 0.05
+  done
+
+  return 1
+}
+
+quote_sh() {
+  printf '%q' "$1"
+}
+
+session_dir() {
+  printf '%s/%s\n' "$ROOT_DIR" "$1"
+}
+
+command_file() {
+  printf '%s/command.txt\n' "$(session_dir "$1")"
+}
+
+runner_file() {
+  printf '%s/run-child.sh\n' "$(session_dir "$1")"
+}
+
+tmux_config_file() {
+  printf '%s/tmux.conf\n' "$(session_dir "$1")"
+}
+
+tmux_runner_file() {
+  printf '%s/run-tmux-child.sh\n' "$(session_dir "$1")"
+}
+
+logged_runner_file() {
+  printf '%s/run-logged-child.sh\n' "$(session_dir "$1")"
+}
+
+tuistory_recording_runner_file() {
+  printf '%s/run-tuistory-recording.sh\n' "$(session_dir "$1")"
+}
+
+asciinema_pid_file() {
+  printf '%s/asciinema.pid\n' "$(session_dir "$1")"
+}
+
+provenance_file() {
+  printf '%s/provenance\n' "$(session_dir "$1")"
+}
+
+meta_file() {
+  printf '%s/meta\n' "$(session_dir "$1")"
+}
+
+load_meta() {
+  local session="$1"
+  local meta
+  meta="$(meta_file "$session")"
+  [[ -f "$meta" ]] || die "unknown session: $session"
+  # shellcheck disable=SC1090
+  source "$meta"
+}
+
+write_meta() {
+  local session="$1"
+  local dir
+  dir="$(session_dir "$session")"
+  mkdir -p "$dir"
+  cat > "$(meta_file "$session")" <<META
+SESSION=$(quote_sh "${SESSION:-$session}")
+BACKEND=$(quote_sh "${BACKEND:-}")
+TERMINAL=$(quote_sh "${TERMINAL:-}")
+COMMAND=$(quote_sh "${COMMAND:-}")
+COLS=$(quote_sh "${COLS:-120}")
+ROWS=$(quote_sh "${ROWS:-36}")
+CWD=$(quote_sh "${CWD:-}")
+WAYLAND_DISPLAY_NAME=$(quote_sh "${WAYLAND_DISPLAY_NAME:-}")
+RUNTIME_DIR=$(quote_sh "${RUNTIME_DIR:-}")
+RUNNER_FILE=$(quote_sh "${RUNNER_FILE:-}")
+LOGGED_RUNNER_FILE=$(quote_sh "${LOGGED_RUNNER_FILE:-}")
+LOG_FILE=$(quote_sh "${LOG_FILE:-}")
+TMUX_SOCKET_NAME=$(quote_sh "${TMUX_SOCKET_NAME:-}")
+RECORD_PATH=$(quote_sh "${RECORD_PATH:-}")
+RECORDER_PID=$(quote_sh "${RECORDER_PID:-}")
+CAGE_PID=$(quote_sh "${CAGE_PID:-}")
+WARMED_UP=$(quote_sh "${WARMED_UP:-0}")
+REPO_ROOT=$(quote_sh "${REPO_ROOT:-}")
+META
+}
+
+command_uses_droid_dev() {
+  local command="$1"
+  local token normalized tokens=()
+  read -r -a tokens <<< "$command"
+  for token in "${tokens[@]}"; do
+    if [[ "$token" == "env" ]]; then
+      continue
+    fi
+    if [[ "$token" == *=* && "$token" != */*=* ]]; then
+      continue
+    fi
+    normalized="${token##*/}"
+    normalized="${normalized//\"/}"
+    normalized="${normalized//\'/}"
+    normalized="${normalized%%[;&|()<>]*}"
+    if [[ "$normalized" == "droid-dev" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+launch_env_value() {
+  local expected_key="$1"
+  shift
+  local kv
+  for kv in "$@"; do
+    if [[ "${kv%%=*}" == "$expected_key" ]]; then
+      printf '%s\n' "${kv#*=}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+require_git_worktree_root() {
+  local repo_root="$1"
+  [[ "$repo_root" = /* ]] || die "--repo-root must be an absolute path: $repo_root"
+  [[ -d "$repo_root" ]] || die "--repo-root does not exist: $repo_root"
+  git -C "$repo_root" rev-parse --show-toplevel >/dev/null 2>&1 \
+    || die "--repo-root is not a git worktree: $repo_root"
+}
+
+write_provenance() {
+  local session="$1"
+  local repo_root="$2"
+  local file branch commit
+  file="$(provenance_file "$session")"
+
+  if [[ -z "$repo_root" ]]; then
+    rm -f "$file"
+    return 0
+  fi
+
+  branch="$(git -C "$repo_root" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
+  commit="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+  cat > "$file" <<PROVENANCE
+repo_root=$repo_root
+branch=$branch
+commit=$commit
+PROVENANCE
+}
+
+resolve_backend() {
+  local backend="$1"
+  local terminal_override="$2"
+  case "$backend" in
+    tuistory)
+      BACKEND="tuistory"
+      TERMINAL=""
+      ;;
+    true-input)
+      BACKEND="true-input"
+      if [[ -n "$terminal_override" ]]; then
+        TERMINAL="$terminal_override"
+      elif command -v ghostty >/dev/null 2>&1; then
+        TERMINAL="ghostty"
+      elif command -v kitty >/dev/null 2>&1; then
+        TERMINAL="kitty"
+      elif command -v alacritty >/dev/null 2>&1; then
+        TERMINAL="alacritty"
+      else
+        die "no true-input terminal found (ghostty, kitty, alacritty)"
+      fi
+      ;;
+    ghostty|kitty|alacritty)
+      BACKEND="true-input"
+      TERMINAL="$backend"
+      ;;
+    *)
+      die "unsupported backend: $backend"
+      ;;
+  esac
+}
+
+save_session_state() {
+  SESSION="$1"
+  write_meta "$1"
+}
+
+write_session_runner() {
+  local session="$1"
+  local command="$2"
+  local cwd="$3"
+  shift 3
+  local envs=("$@")
+
+  local dir runner command_path
+  dir="$(session_dir "$session")"
+  runner="$(runner_file "$session")"
+  command_path="$(command_file "$session")"
+  mkdir -p "$dir"
+  printf '%s\n' "$command" > "$command_path"
+
+  {
+    echo '#!/usr/bin/env bash'
+    echo 'set -euo pipefail'
+    printf 'COMMAND_FILE=%q\n' "$command_path"
+    if [[ -n "$cwd" ]]; then
+      printf 'cd %q\n' "$cwd"
+    fi
+
+    local kv name value
+    for kv in "${envs[@]}"; do
+      [[ "$kv" == *=* ]] || die "env must be KEY=VALUE: $kv"
+      name="${kv%%=*}"
+      value="${kv#*=}"
+      [[ "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
+        || die "invalid environment variable name: $name"
+      printf 'export %s=%q\n' "$name" "$value"
+    done
+
+    # shellcheck disable=SC2016
+    echo 'if [[ -z "${TERM:-}" ]] || ! infocmp "$TERM" >/dev/null 2>&1; then'
+    echo '  export TERM=xterm-256color'
+    echo 'fi'
+
+    # Force color output in virtual PTYs: Node.js/chalk suppresses colors
+    # when the PTY doesn't advertise support. FORCE_COLOR=3 = truecolor.
+    # Prepend as env-prefix on exec so they override anything the login
+    # shell profile may have set (e.g. FORCE_COLOR=0 from CI tooling).
+    # shellcheck disable=SC2016
+    echo 'exec env FORCE_COLOR=3 COLORTERM=truecolor bash -lc "$(< "$COMMAND_FILE")"'
+  } > "$runner"
+
+  chmod +x "$runner"
+  RUNNER_FILE="$runner"
+}
+
+write_tmux_runner() {
+  local session="$1"
+  local runner tmux_config tmux_runner tmux_socket_name
+  runner="${RUNNER_FILE:-$(runner_file "$session")}"
+  tmux_config="$(tmux_config_file "$session")"
+  tmux_runner="$(tmux_runner_file "$session")"
+  tmux_socket_name="tctl-$(session_slug "$session")"
+
+  cat > "$tmux_config" <<'TMUX'
+set -g default-terminal "tmux-256color"
+set -qas terminal-features ",xterm-256color:RGB"
+set -as terminal-overrides ",xterm-256color:Tc"
+set-environment -g COLORTERM truecolor
+set -g escape-time 50
+set -g mode-keys vi
+TMUX
+
+  {
+    echo '#!/usr/bin/env bash'
+    echo 'set -euo pipefail'
+    printf 'RUNNER_FILE=%q\n' "$runner"
+    printf 'TMUX_CONFIG=%q\n' "$tmux_config"
+    printf 'TMUX_SOCKET_NAME=%q\n' "$tmux_socket_name"
+    printf 'TMUX_SESSION_NAME=%q\n' "$tmux_socket_name"
+    echo 'export TERM=xterm-256color'
+    echo 'exec tmux -f "$TMUX_CONFIG" -L "$TMUX_SOCKET_NAME" new-session -s "$TMUX_SESSION_NAME" "$RUNNER_FILE"'
+  } > "$tmux_runner"
+
+  chmod +x "$tmux_runner"
+  RUNNER_FILE="$tmux_runner"
+  TMUX_SOCKET_NAME="$tmux_socket_name"
+}
+
+write_logged_runner() {
+  local session="$1"
+  local log_file="$2"
+  local runner logged_runner
+  runner="${RUNNER_FILE:-$(runner_file "$session")}"
+  logged_runner="$(logged_runner_file "$session")"
+
+  {
+    echo '#!/usr/bin/env bash'
+    echo 'set -euo pipefail'
+    printf 'LOG_FILE=%q\n' "$log_file"
+    printf 'RUNNER_FILE=%q\n' "$runner"
+    # shellcheck disable=SC2016
+    echo 'exec script -q -f -O "$LOG_FILE" -c "$RUNNER_FILE"'
+  } > "$logged_runner"
+
+  chmod +x "$logged_runner"
+  LOGGED_RUNNER_FILE="$logged_runner"
+}
+
+write_tuistory_recording_runner() {
+  local session="$1"
+  local record_path="$2"
+  local runner pid_file wrapper
+  runner="${RUNNER_FILE:-$(runner_file "$session")}"
+  pid_file="$(asciinema_pid_file "$session")"
+  wrapper="$(tuistory_recording_runner_file "$session")"
+
+  {
+    echo '#!/usr/bin/env bash'
+    echo 'set -euo pipefail'
+    printf 'RUNNER_FILE=%q\n' "$runner"
+    printf 'RECORD_PATH=%q\n' "$record_path"
+    printf 'PID_FILE=%q\n' "$pid_file"
+    cat <<'SH'
+# IMPORTANT: run asciinema in the foreground so it owns the session TTY.
+# Running it in the background breaks stdin forwarding to interactive TUIs
+# (Ink/React), causing typed keys to be echoed by the outer PTY instead of
+# reaching the child process.
+rm -f "$PID_FILE"
+echo "$$" > "$PID_FILE"
+exec asciinema rec --overwrite --command "$RUNNER_FILE" "$RECORD_PATH"
+SH
+  } > "$wrapper"
+
+  chmod +x "$wrapper"
+  printf '%s\n' "$wrapper"
+}
+
+pid_is_expected_asciinema_recording() {
+  local pid="$1"
+  local expected_record_path="$2"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  local cmdline=""
+  if [[ -r "/proc/$pid/cmdline" ]]; then
+    cmdline="$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)"
+  else
+    cmdline="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+  fi
+  [[ -n "$cmdline" ]] || return 1
+  [[ "$cmdline" == *"asciinema"* ]] || return 1
+  [[ "$cmdline" == *" rec "* ]] || return 1
+  if [[ -n "$expected_record_path" ]]; then
+    [[ "$cmdline" == *"$expected_record_path"* ]] || return 1
+  fi
+  return 0
+}
+
+cleanup_tuistory_asciinema() {
+  local session="$1"
+  local record_path="$2"
+  local pid_file pid
+  pid_file="$(asciinema_pid_file "$session")"
+  pid="$(cat "$pid_file" 2>/dev/null || true)"
+
+  if [[ -n "$pid" ]] && kill -0 "$pid" >/dev/null 2>&1; then
+    if pid_is_expected_asciinema_recording "$pid" "$record_path"; then
+      kill -TERM "$pid" >/dev/null 2>&1 || true
+      local deadline=$(( $(date +%s%3N) + 2000 ))
+      while kill -0 "$pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+        sleep 0.05
+      done
+      if kill -0 "$pid" >/dev/null 2>&1; then
+        kill -KILL "$pid" >/dev/null 2>&1 || true
+      fi
+    fi
+  fi
+
+  rm -f "$pid_file"
+
+  if [[ -z "$record_path" ]]; then
+    return 0
+  fi
+
+  local orphan_pid orphan_ppid orphan_comm orphan_args
+  while read -r orphan_pid orphan_ppid orphan_comm orphan_args; do
+    [[ "$orphan_ppid" == "1" ]] || continue
+    [[ "$orphan_comm" == "asciinema" || "$orphan_args" == *"asciinema"* ]] || continue
+    [[ "$orphan_args" == *" rec "* ]] || continue
+    [[ "$orphan_args" == *"$record_path"* ]] || continue
+
+    kill -TERM "$orphan_pid" >/dev/null 2>&1 || true
+    local deadline=$(( $(date +%s%3N) + 2000 ))
+    while kill -0 "$orphan_pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+      sleep 0.05
+    done
+    if kill -0 "$orphan_pid" >/dev/null 2>&1; then
+      kill -KILL "$orphan_pid" >/dev/null 2>&1 || true
+    fi
+  done < <(ps -eo pid=,ppid=,comm=,args= 2>/dev/null || true)
+}
+
+launch_tuistory() {
+  local session="$1"
+  local cols="$2"
+  local rows="$3"
+  local record_path="$4"
+  require_cmd tuistory
+  local launch_cmd="$RUNNER_FILE"
+  if [[ -n "$record_path" ]]; then
+    require_cmd asciinema
+    cleanup_tuistory_asciinema "$session" "$record_path"
+    launch_cmd="$(write_tuistory_recording_runner "$session" "$record_path")"
+  fi
+  local args=(launch "$launch_cmd" -s "$session" --cols "$cols" --rows "$rows")
+  tuistory "${args[@]}"
+}
+
+launch_true_input() {
+  local session="$1"
+  local record_path="$2"
+
+  require_cmd cage
+  require_cmd wtype
+  require_cmd script
+  require_cmd "$TERMINAL"
+
+  local dir log_file terminal_cmd runtime_dir socket_path
+  dir="$(session_dir "$session")"
+  runtime_dir="$(session_runtime_dir "$session")"
+  socket_path="$runtime_dir/wayland-0"
+  log_file="$dir/pty.log"
+  mkdir -p "$dir"
+  : > "$log_file"
+  rm -rf "$runtime_dir"
+  mkdir -p "$runtime_dir"
+  chmod 700 "$runtime_dir"
+  write_logged_runner "$session" "$log_file"
+
+  case "$TERMINAL" in
+    ghostty)
+      terminal_cmd=(ghostty --window-decoration=false --confirm-close-surface=false -e "$LOGGED_RUNNER_FILE")
+      ;;
+    kitty)
+      terminal_cmd=(kitty "$LOGGED_RUNNER_FILE")
+      ;;
+    alacritty)
+      terminal_cmd=(alacritty -e "$LOGGED_RUNNER_FILE")
+      ;;
+    *)
+      die "unsupported true-input terminal: $TERMINAL"
+      ;;
+  esac
+
+  WAYLAND_DISPLAY_NAME="wayland-0"
+  RUNTIME_DIR="$runtime_dir"
+  LOG_FILE="$log_file"
+  RECORD_PATH="$record_path"
+  RECORDER_PID=""
+  CAGE_PID=""
+  WARMED_UP="0"
+  save_session_state "$session"
+
+  XDG_RUNTIME_DIR="$runtime_dir" \
+  WLR_BACKENDS="${WLR_BACKENDS:-headless}" \
+  WLR_LIBINPUT_NO_DEVICES="${WLR_LIBINPUT_NO_DEVICES:-1}" \
+  cage -- "${terminal_cmd[@]}" >/dev/null 2>&1 &
+  CAGE_PID="$!"
+  wait_for_wayland_socket "$CAGE_PID" "$socket_path" 5000 \
+    || die "true-input compositor did not create $socket_path"
+
+  if [[ -n "$record_path" ]]; then
+    start_true_input_recording "$session" "$record_path"
+  else
+    save_session_state "$session"
+  fi
+}
+
+strip_log() {
+  local log_file="$1"
+  python3 - "$log_file" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.exists():
+    raise SystemExit(0)
+text = path.read_bytes().decode('utf-8', 'replace')
+text = text.replace('\r\n', '\n').replace('\r', '\n')
+text = re.sub(r'^Script started on .*$\n?', '', text, flags=re.M)
+text = re.sub(r'^Script done on .*$\n?', '', text, flags=re.M)
+text = re.sub(r'\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)', '', text)
+text = re.sub(r'\x1bP.*?\x1b\\', '', text, flags=re.S)
+text = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', text)
+text = re.sub(r'\x1b[@-_]', '', text)
+text = text.replace('\x08', '')
+text = ''.join(ch for ch in text if ch in ('\n', '\t') or ord(ch) >= 32)
+print(text, end='')
+PY
+}
+
+trim_text() {
+  python3 -c 'import sys
+text = sys.stdin.read()
+lines = text.splitlines()
+while lines and not lines[-1].strip():
+    lines.pop()
+print("\\n".join(line.rstrip() for line in lines))'
+}
+
+wait_for_pattern_in_log() {
+  local log_file="$1"
+  local pattern="$2"
+  local timeout_ms="$3"
+  local deadline=$(( $(date +%s%3N) + timeout_ms ))
+  while (( $(date +%s%3N) <= deadline )); do
+    local snapshot
+    snapshot="$(strip_log "$log_file")"
+    if SNAPSHOT_TEXT="$snapshot" python3 - "$pattern" <<'PY'
+import re
+import sys
+import os
+pattern = sys.argv[1]
+text = os.environ.get("SNAPSHOT_TEXT", "")
+if len(pattern) >= 2 and pattern.startswith('/') and pattern.rfind('/') > 0:
+    last = pattern.rfind('/')
+    body = pattern[1:last]
+    flags_str = pattern[last+1:]
+    flags = 0
+    if 'i' in flags_str:
+        flags |= re.I
+    matched = re.search(body, text, flags) is not None
+else:
+    matched = pattern in text
+raise SystemExit(0 if matched else 1)
+PY
+    then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+wait_for_idle_in_log() {
+  local log_file="$1"
+  local timeout_ms="$2"
+  local deadline=$(( $(date +%s%3N) + timeout_ms ))
+  local stable_for=0
+  local last_size=-1
+  while (( $(date +%s%3N) <= deadline )); do
+    local size=0
+    [[ -f "$log_file" ]] && size=$(stat -c %s "$log_file")
+    if [[ "$size" == "$last_size" ]]; then
+      stable_for=$(( stable_for + 100 ))
+      if (( stable_for >= 500 )); then
+        return 0
+      fi
+    else
+      stable_for=0
+      last_size="$size"
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+true_input_env() {
+  export WAYLAND_DISPLAY="$WAYLAND_DISPLAY_NAME"
+  export XDG_RUNTIME_DIR="${RUNTIME_DIR:-$(runtime_dir_value)}"
+  export WLR_BACKENDS="${WLR_BACKENDS:-headless}"
+  export WLR_LIBINPUT_NO_DEVICES="${WLR_LIBINPUT_NO_DEVICES:-1}"
+}
+
+ensure_true_input_warmup() {
+  local session="$1"
+  if [[ "${WARMED_UP:-0}" != "1" ]]; then
+    true_input_env
+    wtype -M shift -m shift >/dev/null 2>&1 || true
+    WARMED_UP="1"
+    save_session_state "$session"
+  fi
+}
+
+translate_key_name() {
+  case "$1" in
+    enter|return) printf 'Return' ;;
+    esc|escape) printf 'Escape' ;;
+    tab) printf 'Tab' ;;
+    space) printf 'space' ;;
+    backspace) printf 'BackSpace' ;;
+    delete) printf 'Delete' ;;
+    insert) printf 'Insert' ;;
+    up) printf 'Up' ;;
+    down) printf 'Down' ;;
+    left) printf 'Left' ;;
+    right) printf 'Right' ;;
+    home) printf 'Home' ;;
+    end) printf 'End' ;;
+    pageup) printf 'Page_Up' ;;
+    pagedown) printf 'Page_Down' ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+is_modifier() {
+  case "$1" in
+    ctrl|control|alt|shift|meta|super) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+true_input_press() {
+  local keys=("$@")
+  true_input_env
+  if [[ ${#keys[@]} -eq 1 ]]; then
+    local key="${keys[0]}"
+    if [[ ${#key} -eq 1 ]]; then
+      wtype "$key"
+      return
+    fi
+  fi
+
+  local mods=()
+  local nonmods=()
+  local k
+  for k in "${keys[@]}"; do
+    if is_modifier "$k"; then
+      case "$k" in
+        control) mods+=(ctrl) ;;
+        super) mods+=(meta) ;;
+        *) mods+=("$k") ;;
+      esac
+    else
+      nonmods+=("$k")
+    fi
+  done
+
+  if [[ ${#nonmods[@]} -eq 0 ]]; then
+    die "press requires at least one non-modifier key"
+  fi
+  if [[ ${#nonmods[@]} -gt 1 ]]; then
+    die "true-input press currently supports one key chord at a time"
+  fi
+
+  local key_name="${nonmods[0]}"
+  if [[ ${#mods[@]} -eq 0 && ${#key_name} -eq 1 ]]; then
+    wtype "$key_name"
+    return
+  fi
+
+  local args=()
+  for k in "${mods[@]}"; do
+    args+=(-M "$k")
+  done
+  args+=(-k "$(translate_key_name "$key_name")")
+  local idx=$(( ${#mods[@]} - 1 ))
+  while (( idx >= 0 )); do
+    args+=(-m "${mods[$idx]}")
+    idx=$(( idx - 1 ))
+  done
+  wtype "${args[@]}"
+}
+
+start_true_input_recording() {
+  local session="$1"
+  local output="$2"
+  load_meta "$session"
+  [[ "$BACKEND" == "true-input" ]] || die "record start is only supported for true-input sessions; for tuistory, relaunch with --record"
+  [[ -z "$RECORDER_PID" ]] || die "recording already active for session: $session"
+  require_cmd wf-recorder
+  true_input_env
+  mkdir -p "$(dirname "$output")"
+  WAYLAND_DISPLAY="$WAYLAND_DISPLAY_NAME" wf-recorder -f "$output" >/dev/null 2>&1 &
+  RECORDER_PID="$!"
+  RECORD_PATH="$output"
+  save_session_state "$session"
+}
+
+stop_true_input_recording() {
+  local session="$1"
+  load_meta "$session"
+  [[ "$BACKEND" == "true-input" ]] || die "tuistory recordings stop when the session exits; use close to finalize the cast"
+  [[ -n "$RECORDER_PID" ]] || die "no active recorder for session: $session"
+  kill -INT "$RECORDER_PID" >/dev/null 2>&1 || true
+  wait "$RECORDER_PID" 2>/dev/null || true
+  RECORDER_PID=""
+  save_session_state "$session"
+}
+
+cmd_launch() {
+  [[ $# -ge 1 ]] || die "launch requires a command string"
+  local command="$1"
+  shift
+  local session="default"
+  local backend="tuistory"
+  local terminal_override=""
+  local cols="120"
+  local rows="36"
+  local cwd=""
+  local repo_root=""
+  local tmux_enabled="0"
+  local record_path=""
+  local envs=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -s|--session)
+        session="$2"
+        shift 2
+        ;;
+      --backend)
+        backend="$2"
+        shift 2
+        ;;
+      --terminal)
+        terminal_override="$2"
+        shift 2
+        ;;
+      --cols)
+        cols="$2"
+        shift 2
+        ;;
+      --rows)
+        rows="$2"
+        shift 2
+        ;;
+      --cwd)
+        cwd="$2"
+        shift 2
+        ;;
+      --repo-root)
+        repo_root="$2"
+        shift 2
+        ;;
+      --env)
+        envs+=("$2")
+        shift 2
+        ;;
+      --tmux)
+        tmux_enabled="1"
+        shift
+        ;;
+      --record)
+        record_path="$2"
+        shift 2
+        ;;
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+      *)
+        die "unknown launch option: $1"
+        ;;
+    esac
+  done
+
+  if [[ -z "$repo_root" ]]; then
+    repo_root="$(launch_env_value DROID_DEV_REPO_ROOT "${envs[@]}" || true)"
+  fi
+
+  if [[ -n "$repo_root" ]]; then
+    require_git_worktree_root "$repo_root"
+    if [[ -n "$cwd" && "$cwd" != "$repo_root" ]]; then
+      die "--cwd must match --repo-root when --repo-root is set"
+    fi
+    cwd="$repo_root"
+  fi
+
+  if command_uses_droid_dev "$command"; then
+    [[ -n "$repo_root" ]] \
+      || die "droid-dev launches require --repo-root <worktree> or --env DROID_DEV_REPO_ROOT=<worktree>"
+    if ! launch_env_value DROID_DEV_REPO_ROOT "${envs[@]}" >/dev/null 2>&1; then
+      envs+=("DROID_DEV_REPO_ROOT=$repo_root")
+    fi
+  fi
+
+  [[ ! -e "$(session_dir "$session")/meta" ]] || die "session already exists: $session"
+  resolve_backend "$backend" "$terminal_override"
+  if [[ "$tmux_enabled" == "1" && "$BACKEND" != "tuistory" ]]; then
+    die "--tmux is only supported with --backend tuistory"
+  fi
+  write_session_runner "$session" "$command" "$cwd" "${envs[@]}"
+  TMUX_SOCKET_NAME=""
+  if [[ "$tmux_enabled" == "1" ]]; then
+    require_cmd tmux
+    write_tmux_runner "$session"
+  fi
+  SESSION="$session"
+  COMMAND="$command"
+  COLS="$cols"
+  ROWS="$rows"
+  CWD="$cwd"
+  WAYLAND_DISPLAY_NAME=""
+  LOG_FILE=""
+  LOGGED_RUNNER_FILE=""
+  RECORD_PATH="$record_path"
+  RECORDER_PID=""
+  CAGE_PID=""
+  RUNTIME_DIR=""
+  WARMED_UP="0"
+  REPO_ROOT="$repo_root"
+  save_session_state "$session"
+  write_provenance "$session" "$repo_root"
+
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    launch_tuistory "$session" "$cols" "$rows" "$record_path"
+  else
+    launch_true_input "$session" "$record_path"
+  fi
+}
+
+cmd_sessions() {
+  find "$ROOT_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
+}
+
+cmd_provenance() {
+  local session="$1"
+  load_meta "$session"
+  local file
+  file="$(provenance_file "$session")"
+  [[ -f "$file" ]] || die "no launch provenance recorded for session: $session"
+  cat "$file"
+}
+
+cmd_type() {
+  local session="$1"
+  shift
+  [[ $# -ge 1 ]] || die "type requires text"
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    tuistory -s "$session" type "$1"
+  else
+    ensure_true_input_warmup "$session"
+    true_input_env
+    wtype "$1"
+  fi
+}
+
+cmd_press() {
+  local session="$1"
+  shift
+  [[ $# -ge 1 ]] || die "press requires at least one key"
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    tuistory -s "$session" press "$@"
+  else
+    ensure_true_input_warmup "$session"
+    true_input_press "$@"
+  fi
+}
+
+cmd_wait() {
+  local session="$1"
+  shift
+  [[ $# -ge 1 ]] || die "wait requires a pattern"
+  local pattern="$1"
+  shift
+  local timeout_ms="5000"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --timeout)
+        timeout_ms="$2"
+        shift 2
+        ;;
+      *)
+        die "unknown wait option: $1"
+        ;;
+    esac
+  done
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    tuistory -s "$session" wait "$pattern" --timeout "$timeout_ms"
+  else
+    wait_for_pattern_in_log "$LOG_FILE" "$pattern" "$timeout_ms" || die "timeout waiting for pattern: $pattern"
+    echo OK
+  fi
+}
+
+cmd_wait_idle() {
+  local session="$1"
+  shift
+  local timeout_ms="500"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --timeout)
+        timeout_ms="$2"
+        shift 2
+        ;;
+      *)
+        die "unknown wait-idle option: $1"
+        ;;
+    esac
+  done
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    tuistory -s "$session" wait-idle --timeout "$timeout_ms"
+  else
+    wait_for_idle_in_log "$LOG_FILE" "$timeout_ms" || die "timeout waiting for idle state"
+  fi
+}
+
+cmd_snapshot() {
+  local session="$1"
+  shift
+  local trim=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --trim)
+        trim=1
+        shift
+        ;;
+      *)
+        die "unknown snapshot option: $1"
+        ;;
+    esac
+  done
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    local args=(-s "$session" snapshot)
+    (( trim )) && args+=(--trim)
+    tuistory "${args[@]}"
+  else
+    local output
+    output="$(strip_log "$LOG_FILE")"
+    if (( trim )); then
+      printf '%s' "$output" | trim_text
+    else
+      printf '%s' "$output"
+    fi
+  fi
+}
+
+cmd_screenshot() {
+  local session="$1"
+  shift
+  local output=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -o|--output)
+        output="$2"
+        shift 2
+        ;;
+      *)
+        die "unknown screenshot option: $1"
+        ;;
+    esac
+  done
+  load_meta "$session"
+  if [[ -z "$output" ]]; then
+    output="$(session_dir "$session")/screenshot-$(date +%s).png"
+  fi
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    tuistory -s "$session" screenshot -o "$output"
+  else
+    require_cmd grim
+    true_input_env
+    WAYLAND_DISPLAY="$WAYLAND_DISPLAY_NAME" grim "$output"
+    printf '%s\n' "$output"
+  fi
+}
+
+cmd_record() {
+  local session="$1"
+  shift
+  [[ $# -ge 1 ]] || die "record requires start or stop"
+  case "$1" in
+    start)
+      [[ $# -ge 2 ]] || die "record start requires an output path"
+      start_true_input_recording "$session" "$2"
+      ;;
+    stop)
+      stop_true_input_recording "$session"
+      ;;
+    *)
+      die "unknown record subcommand: $1"
+      ;;
+  esac
+}
+
+cmd_close() {
+  local session="$1"
+  load_meta "$session"
+  if [[ "$BACKEND" == "tuistory" ]]; then
+    local close_status=0
+    tuistory -s "$session" close || close_status=$?
+    cleanup_tuistory_asciinema "$session" "${RECORD_PATH:-}"
+    if [[ -n "${TMUX_SOCKET_NAME:-}" ]]; then
+      tmux -L "$TMUX_SOCKET_NAME" kill-server >/dev/null 2>&1 || true
+    fi
+    (( close_status == 0 )) || die "failed to close tuistory session: $session"
+  else
+    if [[ -n "$RECORDER_PID" ]]; then
+      kill -INT "$RECORDER_PID" >/dev/null 2>&1 || true
+      wait "$RECORDER_PID" 2>/dev/null || true
+    fi
+    if [[ -n "$CAGE_PID" ]]; then
+      kill "$CAGE_PID" >/dev/null 2>&1 || true
+      wait "$CAGE_PID" 2>/dev/null || true
+    fi
+    if [[ -n "$RUNTIME_DIR" ]]; then
+      rm -rf "$RUNTIME_DIR"
+    fi
+  fi
+  rm -rf "$(session_dir "$session")"
+}
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    print_help
+    exit 0
+  fi
+
+  case "$1" in
+    -h|--help|help)
+      print_help
+      exit 0
+      ;;
+    launch)
+      shift
+      cmd_launch "$@"
+      exit 0
+      ;;
+    sessions)
+      cmd_sessions
+      exit 0
+      ;;
+  esac
+
+  local session="default"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -s|--session)
+        session="$2"
+        shift 2
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  [[ $# -ge 1 ]] || die "missing command"
+  local subcommand="$1"
+  shift
+  case "$subcommand" in
+    type) cmd_type "$session" "$@" ;;
+    press) cmd_press "$session" "$@" ;;
+    wait) cmd_wait "$session" "$@" ;;
+    wait-idle) cmd_wait_idle "$session" "$@" ;;
+    snapshot) cmd_snapshot "$session" "$@" ;;
+    screenshot) cmd_screenshot "$session" "$@" ;;
+    provenance) cmd_provenance "$session" ;;
+    record) cmd_record "$session" "$@" ;;
+    close) cmd_close "$session" ;;
+    *) die "unknown command: $subcommand" ;;
+  esac
+}
+
+main "$@"
