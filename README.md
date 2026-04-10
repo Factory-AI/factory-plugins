@@ -56,6 +56,20 @@ Skills for continuous learning and improvement.
 - `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
 
+### droid-control
+
+Terminal, browser, and computer automation for Droids. Record demos, verify behavior claims, and run QA flows.
+
+**Commands:** `/demo`, `/verify`, `/qa-test`
+
+**Skills:** `droid-control` (orchestrator), `tuistory`, `true-input`, `agent-browser`, `droid-cli`, `pty-capture`, `capture`, `compose`, `verify`, `showcase`
+
+See [plugins/droid-control/README.md](plugins/droid-control/README.md) for details.
+
+### autoresearch
+
+Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

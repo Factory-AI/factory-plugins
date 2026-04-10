@@ -40,7 +40,8 @@ droid plugin marketplace add https://github.com/Factory-AI/factory-plugins
 droid plugin install droid-control@factory-plugins --scope user
 
 # Install Remotion dependencies (one-time, only needed for video rendering)
-cd ~/.factory/plugins/cache/factory-plugins/droid-control/*/remotion && npm install
+# Find the plugin install path with: droid plugin list --scope user
+cd <plugin-path>/remotion && npm install
 ```
 
 Or use the `/plugins` UI: Browse tab, select droid-control, install.
@@ -92,7 +93,7 @@ The `render-showcase.sh` helper handles the full pipeline: `.cast` conversion vi
 ```bash
 npm install -g tuistory                              # virtual PTY driver
 pip install asciinema                                 # terminal recording
-cargo install agg                                     # .cast → .gif converter
+cargo install --git https://github.com/asciinema/agg   # .cast → .gif converter
 sudo apt-get install -y ffmpeg                        # video processing
 agent-browser install                                 # browser automation (downloads Chromium)
 cd plugins/droid-control/remotion && npm install       # Remotion (video rendering)

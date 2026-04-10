@@ -26,7 +26,7 @@
     },
     {
       "name": "droid-control",
-      "description": "Terminal and browser automation for testing, demos, QA, and computer-use tasks",
+      "description": "Terminal, browser, and computer automation for testing, demos, QA, and computer-use tasks",
       "source": "./plugins/droid-control",
       "category": "automation"
     },

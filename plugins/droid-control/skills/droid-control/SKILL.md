@@ -162,7 +162,7 @@ Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-br
 # tuistory driver + recording
 npm install -g tuistory                              # virtual PTY driver
 pip install asciinema                                # terminal recording (tctl wraps this)
-cargo install agg                                    # .cast -> .gif converter (compose needs this)
+cargo install --git https://github.com/asciinema/agg  # .cast -> .gif converter (compose needs this)
 
 # true-input driver (Linux/Wayland)
 sudo apt-get install -y cage wtype                   # required: headless compositor + keystroke injection
