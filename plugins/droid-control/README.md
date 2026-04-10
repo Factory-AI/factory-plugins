@@ -2,7 +2,7 @@
 
 Terminal, browser, and computer automation plugin for Droids.
 
-Droids can read and write code. This plugin teaches them to *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished video evidence of it. No human hands required (they don't have any).
+Droids can read and write code. This plugin enables them to *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished video evidence of it. No human hands required (they don't have any).
 
 ## What you get
 
@@ -98,4 +98,4 @@ agent-browser install                                 # browser automation (down
 cd plugins/droid-control/remotion && npm install       # Remotion (video rendering)
 ```
 
-Only install what you need. tuistory + asciinema + agg + ffmpeg covers the most common demo workflow.
+Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser.
