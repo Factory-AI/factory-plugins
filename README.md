@@ -32,6 +32,16 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 
 - `review` - Review code changes and identify high-confidence, actionable bugs. Includes systematic analysis patterns for null safety, async/await, security, concurrency, API contracts, and more. Used by both the CLI `/review` command and the CI action.
 
+### droid-control
+
+Terminal, browser, and computer automation for Droids. Record demos, verify behavior claims, and run QA flows.
+
+**Commands:** `/demo`, `/verify`, `/qa-test`
+
+**Skills:** `droid-control` (orchestrator), `tuistory`, `true-input`, `agent-browser`, `droid-cli`, `pty-capture`, `capture`, `compose`, `verify`, `showcase`
+
+See [plugins/droid-control/README.md](plugins/droid-control/README.md) for details.
+
 ### security-engineer
 
 Security review, threat modeling, and vulnerability validation skills.
@@ -55,16 +65,6 @@ Skills for continuous learning and improvement.
 - `visual-design` - Image generation (nanobanana CLI) and presentations (Slidev)
 - `frontend-design` - Build web apps, websites, HTML pages with good design
 - `browser-navigation` - Browser automation with agent-browser
-
-### droid-control
-
-Terminal, browser, and computer automation for Droids. Record demos, verify behavior claims, and run QA flows.
-
-**Commands:** `/demo`, `/verify`, `/qa-test`
-
-**Skills:** `droid-control` (orchestrator), `tuistory`, `true-input`, `agent-browser`, `droid-cli`, `pty-capture`, `capture`, `compose`, `verify`, `showcase`
-
-See [plugins/droid-control/README.md](plugins/droid-control/README.md) for details.
 
 ### autoresearch
 
