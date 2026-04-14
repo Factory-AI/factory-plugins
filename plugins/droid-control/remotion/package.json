@@ -1,0 +1,27 @@
+{
+  "name": "droid-control-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx remotion studio",
+    "render": "npx remotion render",
+    "still": "npx remotion still"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.445",
+    "@remotion/layout-utils": "4.0.445",
+    "@remotion/light-leaks": "4.0.445",
+    "@remotion/media": "4.0.445",
+    "@remotion/tailwind": "4.0.445",
+    "@remotion/transitions": "4.0.445",
+    "react": "^19",
+    "react-dom": "^19",
+    "remotion": "4.0.445",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5.7"
+  }
+}
