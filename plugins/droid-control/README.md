@@ -64,8 +64,6 @@ Runs automated QA against terminal CLIs, web apps, or Electron apps. Accepts a U
 
 ## How it works
 
-![droid-control routing architecture](diagrams/architecture-routing.svg)
-
 `droid-control` is a composition system for agent attention:
 
 1. **Commands** parse user intent into commitments.

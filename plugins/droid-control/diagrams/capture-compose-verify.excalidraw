@@ -1447,9 +1447,9 @@
       "type": "rectangle",
       "id": "guardrail",
       "x": 760,
-      "y": 150,
+      "y": 138,
       "width": 365,
-      "height": 115
+      "height": 142
     },
     {
       "type": "text",
@@ -1473,19 +1473,19 @@
       "link": null,
       "locked": false,
       "fontFamily": 1,
-      "fontSize": 17,
+      "fontSize": 16,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "guardrail",
-      "originalText": "Concurrency guardrail\n\nNever use bare session names or global /tmp paths.\nEverything belongs to the run scope.",
+      "originalText": "Concurrency guardrail\nRUN_ID names only.\nOutputs stay in RUN_DIR.\nNo bare sessions.\nNo global /tmp.",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "t_guardrail",
       "x": 768,
-      "y": 158,
+      "y": 146,
       "width": 349,
-      "height": 99,
-      "text": "Concurrency guardrail\n\nNever use bare session names or global /tmp paths.\nEverything belongs to the run scope."
+      "height": 126,
+      "text": "Concurrency guardrail\nRUN_ID names only.\nOutputs stay in RUN_DIR.\nNo bare sessions.\nNo global /tmp."
     }
   ],
   "appState": {
