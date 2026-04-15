@@ -2,29 +2,29 @@
 
 Terminal, browser, and computer automation plugin for Droids.
 
-Droids can read and write code. This plugin enables them to *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished video evidence of it. No human hands required (they don't have any).
+Droids can read and write code. This plugin lets them *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished evidence. No human hands required.
 
 ## What you get
 
 **Record a demo video from a PR:**
 
-```
+```text
 /demo pr-1847
 ```
 
-Droid reads the PR, scripts the interactions that prove the change works, records both branches in parallel, and renders a side-by-side comparison video. Factory preset for cinematic warmth, macos preset for clean and utilitarian.
+Droid reads the PR, scripts the interactions that prove the change works, records both branches in parallel, and renders a side-by-side comparison video. Use Factory presets for cinematic warmth or macos/minimal presets for clean utilitarian demos.
 
 **Verify a behavior claim:**
 
-```
+```text
 /verify "ESC cancels streaming in bash mode"
 ```
 
-Droid launches the app, attempts the claim, and reports what actually happened, with screenshots and text snapshots as evidence. If the claim is false, that's a valid finding, not a failure.
+Droid launches the app, tests the claim, and reports what actually happened with screenshots, snapshots, or byte captures. If the claim is false, that is a valid finding, not a failed run.
 
 **Run a QA flow against a web app:**
 
-```
+```text
 /qa-test https://app.example.com -- login, create a project, invite a member
 ```
 
@@ -52,31 +52,35 @@ Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
 ### `/demo`
 
-Plans and records a demo video. Accepts a PR number, GitHub URL, or free-text description. Comparison PRs get side-by-side layout by default; new features get single-branch. Add "showcase" for cinematic polish, "keys" for keystroke overlay.
+Plans and records a demo video. Accepts a PR number, GitHub URL, or free-text description. Comparison PRs get side-by-side layout by default; new features get single-branch. Add `showcase` for cinematic polish or `keys` for keystroke overlay.
 
 ### `/verify`
 
-Tests a specific behavior claim and reports findings with evidence. Frames the droid as an investigator. Anti-fabrication rules prevent staging evidence to match expected outcomes.
+Tests a specific behavior claim and reports findings with evidence. The droid is an investigator, not an advocate: contradictory evidence is surfaced instead of hidden.
 
 ### `/qa-test`
 
-Automated QA against terminal CLIs or web/Electron apps. Accepts a URL, CLI command, or app description with optional test steps after `--`.
+Runs automated QA against terminal CLIs, web apps, or Electron apps. Accepts a URL, CLI command, app name, PR reference, or free-text flow with optional test steps after `--`.
 
 ## How it works
 
-Three layers:
+![droid-control routing architecture](diagrams/architecture-routing.svg)
 
-- **Orchestrator** -- routes each request through three independent lookups (target, stage, artifact) to determine which skills to load. ~93 lines.
-- **10 atom skills** -- self-contained background knowledge loaded on demand. Driver atoms (tuistory, true-input, agent-browser), target atoms (droid-cli, pty-capture), stage atoms (capture, compose, verify), and a polish atom (showcase).
-- **3 commands** -- thin intent declarations that parse arguments into commitments, then delegate to atoms via hybrid handoffs.
+`droid-control` is a composition system for agent attention:
 
-Every workflow flows through **capture → compose → verify**. Commands declare *what* to produce; atoms own *how*.
+1. **Commands** parse user intent into commitments.
+2. **The orchestrator** routes by target, stage, and artifact needs.
+3. **Atom skills** provide only the mechanics needed right now: drivers, target patterns, capture, compose, verify, and showcase polish.
+4. **Workers** handle mechanical capture/render jobs while the parent droid keeps planning and verification context.
+5. **Verify** checks the final evidence against the original commitments.
+
+For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Video rendering
 
-The compose stage uses [Remotion](https://www.remotion.dev/) (React-based video renderer) for all compositing. 6 visual presets, automatic cinematic layers (warm backgrounds, floating particles, noise overlay, motion blur transitions), and effect-driven layers (spotlight, zoom, keystroke overlay, section headers).
+The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, motion-blur transitions, zooms, spotlights, keystroke overlays, and section headers.
 
-The `render-showcase.sh` helper handles the full pipeline: `.cast` conversion via `agg`, clip staging, duration detection, Remotion render, and cleanup.
+The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, clip staging, duration detection, Remotion rendering, and cleanup.
 
 ## Prerequisites
 
@@ -91,12 +95,12 @@ The `render-showcase.sh` helper handles the full pipeline: `.cast` conversion vi
 | showcase | All | Node.js (>= 18), Chrome/Chromium |
 
 ```bash
-npm install -g tuistory                              # virtual PTY driver
+npm install -g tuistory                               # virtual PTY driver
 pip install asciinema                                 # terminal recording
-cargo install --git https://github.com/asciinema/agg   # .cast → .gif converter
+cargo install --git https://github.com/asciinema/agg  # .cast -> .gif converter
 sudo apt-get install -y ffmpeg                        # video processing
 agent-browser install                                 # browser automation (downloads Chromium)
-cd plugins/droid-control/remotion && npm install       # Remotion (video rendering)
+cd plugins/droid-control/remotion && npm install      # Remotion video rendering
 ```
 
 Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser.
