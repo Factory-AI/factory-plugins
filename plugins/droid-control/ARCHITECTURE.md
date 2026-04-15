@@ -1,59 +1,173 @@
-# Architecture
+# droid-control architecture
 
-## The problem
+`droid-control` is built around one constraint: the agent operating the tool is also the runtime. Architecture is therefore not just code organization. It is information architecture for a droid that must decide what to load, what to ignore, what to delegate, and what evidence proves the work.
 
-Put all driver knowledge, recording lifecycle, video rendering, and verification logic in one skill and two things happen. First, the droid loads 3000 tokens of Windows KVM docs to record a tuistory demo on Linux. Second, and this is the one that actually hurts, the droid gets all the information at once and has to figure out what's relevant *right now*. It makes worse decisions, skips steps it shouldn't, and invents steps it doesn't need to.
+![droid-control routing architecture](diagrams/architecture-routing.svg)
 
-## UX for droids
+Editable source: [`diagrams/architecture-routing.excalidraw`](diagrams/architecture-routing.excalidraw)
 
-Droids aren't exempt from information architecture. They have finite context, they get distracted by irrelevant detail, and they degrade under overload.
+## What the architecture optimizes for
 
-Every skill in this plugin is a surface the droid interacts with at a specific moment in a workflow: scoped to what it needs right now, actionable on first read, with an explicit handoff to the next surface. The same instincts that make a good CLI or a good API apply. Don't dump everything. Sequence the information. Make the next step obvious.
+The plugin is designed to keep a droid focused while it operates real software:
 
-A command like `/demo` doesn't contain Remotion props or driver-specific logic. It parses intent, builds commitments, and tells the droid which skills to load. The droid never sees video rendering details while it's still planning what to record.
+- **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and Remotion internals.
+- **Evidence-first workflows:** every command starts by making commitments, then ends by verifying the artifact against those commitments.
+- **Parallel execution:** before/after captures and render jobs can run in worker droids without sharing session names or output paths.
+- **Clear ownership:** commands decide *what* must be produced; atom skills decide *how* to execute their slice.
+- **Platform specificity:** OS-specific mechanics live in platform subdocuments, not in global instructions.
 
-## Waterfall routing
+## Commands are intent contracts
 
-Skills chain into each other without hardcoding. The orchestrator doesn't call skills or build a pipeline. It tells the droid which skills to load based on three independent lookups. Once loaded, each skill's exit is the next skill's entry:
+The three user-facing commands are deliberately thin:
 
+| Command | Contract |
+|---|---|
+| `/demo` | Turn a PR or feature description into a visible proof story and a video deliverable. |
+| `/verify` | Test a claim as an investigator and report whether the evidence confirms or refutes it. |
+| `/qa-test` | Drive a terminal, browser, or Electron flow and report step-level pass/fail evidence. |
+
+A command parses arguments into **commitments**: layout, comparison mode, evidence type, video/showcase requirements, keystroke overlays, and any user-specified constraints. Those commitments are not suggestions. The `verify` stage later checks them explicitly.
+
+This is the first guardrail against agent drift. The droid does not start with "make something impressive." It starts with a checklist it must satisfy.
+
+## Orchestrator: route, do not execute
+
+`skills/droid-control/SKILL.md` is an orchestrator, not a controller. It does not run a state machine or encode every workflow. It performs three independent routing lookups and tells the droid which atom skills to load.
+
+| Route | Question | Examples |
+|---|---|---|
+| **Target** | What are we driving? | Droid CLI, other terminal TUI, web/Electron app, raw PTY bytes |
+| **Stage** | What does the workflow need? | capture, compose, verify |
+| **Artifact** | Does compose need polish tools? | showcase presets, effects, keystroke overlays |
+
+The routes compose without a cross-product explosion. Adding a new target means writing one target skill and one routing row; capture, compose, and verify can work with it immediately if the handoff shape is respected.
+
+## Atom skills are runtime surfaces
+
+Each atom skill is a self-contained surface the droid reads at a specific point in the workflow:
+
+| Atom type | Skills | Responsibility |
+|---|---|---|
+| Driver atoms | `tuistory`, `true-input`, `agent-browser` | How to drive a class of environment. |
+| Target atoms | `droid-cli`, `pty-capture` | Target-specific shortcuts, launch rules, and byte-capture patterns. |
+| Stage atoms | `capture`, `compose`, `verify` | Lifecycle phases with explicit inputs and outputs. |
+| Polish atom | `showcase` | Visual presets and cinematic layer guidance. |
+
+The important property is not just smaller files. It is temporal relevance: the droid reads the capture rules while capturing, the compose rules while composing, and the verification rules when it has something to check.
+
+## Waterfall by handoff, not framework
+
+The workflow is a waterfall because each skill hands the next skill exactly what it needs:
+
+```text
+command commitments
+  -> routed atom set
+    -> capture outputs clips, screenshots, byte dumps, metadata
+      -> compose outputs a rendered artifact and render metadata
+        -> verify checks technical quality and original commitments
+          -> report summarizes evidence and conclusion
 ```
-/demo parses intent, commits deliverables
-  → orchestrator routes to driver + stage + artifact skills
-    → capture launches the app, records, hands off clips + metadata
-      → compose receives clips, builds Remotion props, renders video
-        → verify checks the output against the original commitments
-```
 
-No state machine or orchestration framework. Just documents whose outputs naturally feed into the next document's inputs. The droid follows the waterfall because each skill makes the next step obvious, not because something forces it to. Complex multi-stage workflows emerge from skill composition rather than control flow.
-
-## Task delegation
-
-Because each stage's inputs and outputs are explicit, mechanical work naturally decomposes into worker tasks. The parent agent retains planning and editorial control; workers execute exact commands and return file paths.
-
-Capture workers for both branches run in parallel. They need tctl commands and worktree paths, not PR context. The render worker gets a props JSON and clip paths. It doesn't need to know what the PR does or why the demo matters. Verification stays with the parent because it requires the original commitments and judgment about whether the evidence holds up.
-
-The skill boundaries are the delegation boundaries. You don't need a separate delegation framework because the decomposition into self-contained stages already defines what can be farmed out, what needs creative judgment, and what's too trivial to be worth the overhead.
-
-## Orthogonal routing
-
-The orchestrator makes three independent lookups:
-
-- **Target**: what are you driving? (droid-cli, other TUI, web app, byte capture)
-- **Stage**: what does the workflow need? (capture, compose, verify)
-- **Artifact**: does compose need polish tools? (showcase)
-
-These compose without cross-product explosion. 6 targets + 3 stages + 1 artifact route = 10 skills, not 18. Adding a new target means writing one skill and adding one row to the routing table. Every existing stage and artifact skill works with it immediately.
+No central engine enforces this order. The documents make the next step obvious enough that the droid follows the flow naturally. This keeps the system easy to extend: new behavior is usually a new atom or a new row, not a new orchestration framework.
 
 ## Hybrid handoffs
 
-Commands hand off to the compose stage with two sections: structured fields for mechanical decisions, natural language for creative ones.
+The compose handoff has two halves:
 
-Structured: layout, speed, preset, fidelity, effects tier. These have correct answers. A side-by-side layout is either `side-by-side` or it isn't.
+- **Mechanical fields:** layout, labels, clip paths, speed, fidelity, preset, output path, effects tier.
+- **Creative intent:** what the viewer should understand, which moments matter, and how to frame the proof.
 
-Natural language: what the viewer should take away, which moments to hold, how to frame the story. These are editorial judgments that benefit from the droid's understanding of the PR context.
+Mechanical fields prevent hallucinated parameters. Creative intent prevents paint-by-numbers output. The effects tier is the pattern in miniature: the command commits `none`, `utilitarian`, or `full`; compose chooses specific zooms, spotlights, and overlays only after it has real recordings to inspect.
 
-Two failure modes this prevents: over-specifying creative decisions up front (the droid produces rigid, paint-by-numbers output) and under-specifying mechanical params (the droid hallucinates presets and layouts). The effects tier is a concrete example. The command commits a single word ("utilitarian" or "full"), and compose makes specific, grounded choices after capture, when it has actual recordings to look at.
+## Delegation boundaries
+
+The parent droid keeps judgment. Workers get exact commands.
+
+| Work | Owner | Reason |
+|---|---|---|
+| Interpret PR / claim / QA goal | Parent | Requires context and judgment. |
+| Write the interaction script | Parent | Defines the proof story. |
+| Capture baseline and candidate branches | Worker droids | Independent, mechanical, parallelizable. |
+| Render Remotion video | Worker droid | Mechanical once props and clips are fixed. |
+| Verify commitments | Parent | Requires the original contract and evidence judgment. |
+
+This boundary follows the stage handoffs. Capture workers need resolved `tctl` commands and worktree paths, not PR context. Render workers need a props JSON and clip paths, not a feature explanation.
+
+## Runtime artifact pipeline
+
+![droid-control capture compose verify pipeline](diagrams/capture-compose-verify.svg)
+
+Editable source: [`diagrams/capture-compose-verify.excalidraw`](diagrams/capture-compose-verify.excalidraw)
+
+Every workflow starts by creating a run scope:
+
+```bash
+RUN_ID="$(date +%s)-$$"
+RUN_DIR="$(mktemp -d /tmp/droid-run-${RUN_ID}-XXXXXX)"
+```
+
+The run scope is not cosmetic. `tctl` sessions share `/tmp/tctl-sessions/`, and many droids may be filming on the same machine. Session names must be prefixed with `RUN_ID`; recordings, props, screenshots, and rendered videos must live under `RUN_DIR`.
+
+## `tctl`: one terminal control boundary
+
+Terminal workflows use `bin/tctl` as the only launch/control boundary. It hides two very different execution paths behind the same command shape:
+
+| Backend | What `tctl` manages | Best for |
+|---|---|---|
+| `tuistory` | Virtual PTY sessions, deterministic waits/snapshots, asciinema recording at launch. | Fast TUI automation and most demo captures. |
+| `true-input` | Headless Wayland compositor, real terminal emulator, native key injection, PTY log/screenshot/video capture. | Real terminal rendering or keyboard-encoding proof. |
+
+`tctl` also enforces Droid CLI launch invariants. `droid-dev` sessions must provide `--repo-root`, which lets `tctl` set `DROID_DEV_REPO_ROOT` and record provenance for the captured branch and commit.
+
+Browser and Electron workflows intentionally do **not** go through `tctl`; they use `agent-browser`, whose persistent Playwright-backed daemon is the right control boundary for DOM snapshots, screenshots, and CDP-connected apps.
+
+## Video composition
+
+The compose stage uses the Remotion project in `remotion/` as a single video engine. The droid writes a `Showcase` props JSON; `scripts/render-showcase.sh` handles the mechanical rendering pipeline:
+
+1. Normalize props and choose fidelity.
+2. Convert `.cast` recordings through `agg` and `ffmpeg`.
+3. Stage clips into Remotion `public/`.
+4. Auto-detect `clipDuration` with `ffprobe` when omitted.
+5. Render the `Showcase` composition.
+6. Clean staged clips and temporary conversion outputs.
+
+This keeps droids out of the common failure modes: stale files in `public/`, mismatched `clipDuration`, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
 
 ## Platform isolation
 
-Platform-specific content lives in `platforms/` subdirs under the relevant skill. A droid on Linux loads `true-input/platforms/linux.md`. It never sees the Windows KVM or macOS QEMU docs. This is a routing decision, not a reading-comprehension test.
+Platform-specific mechanics live below the atom that needs them:
+
+```text
+skills/true-input/platforms/linux.md
+skills/true-input/platforms/windows.md
+skills/true-input/platforms/macos.md
+skills/pty-capture/platforms/linux.md
+skills/pty-capture/platforms/windows.md
+skills/pty-capture/platforms/macos.md
+```
+
+A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
+
+## Extending the plugin
+
+Use the same composition rules when adding capability:
+
+| Change | Preferred shape |
+|---|---|
+| New user workflow | Add a command that parses arguments into commitments, then routes through existing atoms. |
+| New target type | Add one target atom and one target-route row. |
+| New capture backend | Add a driver atom or extend `tctl` only if it belongs behind the same terminal boundary. |
+| New visual treatment | Add Remotion props/schema support and document compose/showcase behavior. |
+| New platform mechanics | Add a `platforms/<os>.md` file under the relevant atom. |
+
+If a change makes every droid read more global instructions, it is probably fighting the architecture. Prefer a new scoped surface over a larger shared surface.
+
+## Mental model
+
+`droid-control` is a small composition system for agent attention:
+
+```text
+intent contract + orthogonal routing + scoped atom surfaces + explicit handoffs
+= real-app automation that stays focused, parallelizable, and verifiable
+```
