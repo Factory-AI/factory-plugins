@@ -26,11 +26,28 @@ The command that invoked you should have provided:
 Before recording anything:
 
 - Terminal size is consistent across all sessions (`--cols 120 --rows 36`)
+- **Browser viewport size matches the composition layout** (see "Browser viewport sizing" below) — mismatched aspects letterbox in the final video
 - Branch/worktree paths and env vars are correct
 - Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser
-- If comparing branches, both sessions use identical terminal dimensions and launch parameters
+- If comparing branches, both sessions use identical terminal / viewport dimensions and launch parameters
 - For `droid-dev` captures, `--repo-root` is **mandatory** — `tctl` will refuse to launch without it
 - **Color env vars are set** (see below)
+
+### Browser viewport sizing
+
+Panel aspect ratio in the final composition is **layout-dependent**. At the default 1920×1080 output with factory preset margins, the window-chrome panels that clips render into come out roughly:
+
+| Layout | Panel aspect | Recommended browser viewport |
+|---|---|---|
+| `single` | ~1760×920 (≈16:9 landscape) | **1280×720** or **1440×810** |
+| `side-by-side` | ~872×920 per panel (≈8:9, near-square / slight portrait) | **960×1000**, **900×1000**, or **1024×1080** |
+
+Feeding a 16:9 landscape recording into a near-square side-by-side panel triggers `objectFit: "contain"` letterboxing — you get a thin strip of content with giant black bars above and below. Two ways to avoid it:
+
+1. **Match aspects at capture time** (preferred) — pick the viewport from the table above based on the committed layout.
+2. **Opt into cropping at compose time** — pass `"objectFit": "cover"` in showcase props. Crops the edges of the clip instead of letterboxing. Use when the relevant UI is centered and the clip's edges are expendable.
+
+If you're unsure of the layout when capturing, default to `960×1000` — it is workable in both layouts (slight horizontal letterbox in `single`, no letterbox in `side-by-side`).
 
 ```bash
 TCTL=${DROID_PLUGIN_ROOT}/bin/tctl
@@ -62,9 +79,15 @@ $TCTL launch "droid-dev" -s ${RUN_ID}-after --backend tuistory \
   --env FORCE_COLOR=3 --env COLORTERM=truecolor
 ```
 
-**Browser:**
+**Browser:** size the viewport to match the composition layout (see table above).
+
 ```bash
-agent-browser open <url>
+# side-by-side layout → near-square panel
+agent-browser open <url> --viewport 960x1000
+agent-browser record start ${RUN_DIR}/demo.webm
+
+# single layout → 16:9 panel
+agent-browser open <url> --viewport 1280x720
 agent-browser record start ${RUN_DIR}/demo.webm
 ```
 
@@ -126,7 +149,8 @@ Hand these to the **compose** stage:
 - screenshots: [/tmp/proof-1.png, /tmp/proof-2.png]
 - keys: /tmp/keys.tsv (if keystroke logging was requested)
 - driver: tuistory | true-input | agent-browser
-- terminal_size: 120x36
+- terminal_size: 120x36          # for tuistory / true-input
+- viewport: 960x1000             # for agent-browser; report so compose knows the clip aspect
 ```
 
 ## Recovery

@@ -46,6 +46,13 @@ export const showcaseSchema = z.object({
   clipDuration: z.number().optional(),
   speed: z.number().positive().optional(),
   fidelity: fidelitySchema.optional(),
+  // How clip video is sized inside its panel.
+  // - "contain" (default): preserve aspect ratio, letterbox if needed. Safe default.
+  // - "cover": fill the panel, crop overflow. Use when the clip aspect doesn't match the
+  //   panel aspect (e.g. 16:9 landscape browser capture in a near-square side-by-side panel)
+  //   and you'd rather crop edges than see giant black bars.
+  // - "fill": stretch to fill the panel (distorts aspect). Rarely what you want.
+  objectFit: z.enum(['contain', 'cover', 'fill']).optional(),
 });
 
 const TITLE_DURATION_S = 4;
@@ -68,7 +75,8 @@ const SingleLayout: React.FC<{
   config: ReturnType<typeof getPresetConfig>;
   palette: ReturnType<typeof getPalette>;
   windowTitle?: string;
-}> = ({ clip, config, palette, windowTitle }) => {
+  objectFit: 'contain' | 'cover' | 'fill';
+}> = ({ clip, config, palette, windowTitle, objectFit }) => {
   const { width, height } = useVideoConfig();
 
   const frameW = width - 2 * config.margin;
@@ -91,7 +99,7 @@ const SingleLayout: React.FC<{
       >
         <Video
           src={staticFile(clip)}
-          objectFit="contain"
+          objectFit={objectFit}
           style={{
             width: '100%',
             height: '100%',
@@ -108,7 +116,8 @@ const SideBySideLayout: React.FC<{
   labels: string[];
   config: ReturnType<typeof getPresetConfig>;
   palette: ReturnType<typeof getPalette>;
-}> = ({ clips, labels, config, palette }) => {
+  objectFit: 'contain' | 'cover' | 'fill';
+}> = ({ clips, labels, config, palette, objectFit }) => {
   const { width, height } = useVideoConfig();
 
   const totalW = width - 2 * config.margin;
@@ -139,7 +148,7 @@ const SideBySideLayout: React.FC<{
             >
               <Video
                 src={staticFile(clip)}
-                objectFit="contain"
+                objectFit={objectFit}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -167,6 +176,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
 
   const titleFrames = TITLE_DURATION_S * fps;
   const clipFrames = Math.ceil((props.clipDuration ?? 60) * fps);
+  const objectFit = props.objectFit ?? 'contain';
 
   const spotlights = useMemo(
     () =>
@@ -220,6 +230,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
                       labels={props.labels}
                       config={config}
                       palette={palette}
+                      objectFit={objectFit}
                     />
                   ) : props.clips[0] ? (
                     <SingleLayout
@@ -227,6 +238,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
                       config={config}
                       palette={palette}
                       windowTitle={props.windowTitle}
+                      objectFit={objectFit}
                     />
                   ) : null}
                 </>

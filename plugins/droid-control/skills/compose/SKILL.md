@@ -108,6 +108,26 @@ Set the `speed` prop to hit the target: if the raw recording is 3 minutes and th
 
 `.mp4`, `.webm`, and `.png` clips are passed through to Remotion unchanged except for staging into `public/`. Re-encode non-`.cast` clips manually only if their pixel format or dimensions are invalid.
 
+### Clip aspect ratio (mandatory check for browser captures)
+
+At the default 1920×1080 output with factory preset margins, panels come out roughly:
+
+| Layout | Panel aspect |
+|---|---|
+| `single` | ~1760×920 (≈16:9 landscape) |
+| `side-by-side` | ~872×920 per panel (≈8:9, near-square / slight portrait) |
+
+`.cast` conversions target panel aspect automatically. **Pre-recorded `.mp4` / `.webm` clips do not** — if the clip aspect doesn't match the panel aspect, the clip will letterbox (with the default `objectFit: "contain"`) or crop (with `"cover"`).
+
+**Common pitfall**: browser captures are typically 16:9 landscape (e.g. 1280×720). Dropped into a `side-by-side` layout they render as a thin band with giant black bars above and below.
+
+Two fixes, in priority order:
+
+1. **Re-capture at a panel-friendly viewport** — go back to the capture stage and set viewport to ~960×1000 for `side-by-side`, ~1280×720 for `single`.
+2. **Pass `"objectFit": "cover"` in props** — crops the clip edges to fill the panel. Acceptable when the relevant UI is centered and edges are expendable. Not acceptable if cropped content matters (e.g. sidebar UI cut off).
+
+`.cast` clips rarely need this since their rendered aspect is derived from cols/rows; it's almost always a browser-capture concern.
+
 ### Duration checkpoint (mandatory, before proceeding)
 
 Check whether the planned speed factor produces a final duration within the pacing table's target range:
@@ -182,6 +202,7 @@ Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-
 | `windowTitle` | `string` | no | Text in the window title bar |
 | `width` | `number` | no | Output width (default: 2560 for inspect, else 1920) |
 | `height` | `number` | no | Output height (default: 1440 for inspect, else 1080) |
+| `objectFit` | `"contain" \| "cover" \| "fill"` | no | How each clip fits its panel. Default `"contain"` (letterbox to preserve aspect). Use `"cover"` when clip aspect doesn't match panel aspect and you'd rather crop than see black bars. See "Clip aspect ratio" below. |
 
 ### Preset quick reference
 
