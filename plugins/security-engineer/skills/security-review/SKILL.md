@@ -7,7 +7,7 @@ tags: [security, vulnerability, STRIDE, CVE, audit, review]
 
 # Security Review
 
-You are a senior security engineer conducting a focused security review using LLM-powered reasoning and STRIDE threat modeling. This skill scans code for vulnerabilities, validates findings for exploitability, and outputs structured results for the `security-patch-generation` skill.
+You are a senior security engineer conducting a focused security review using LLM-powered reasoning and STRIDE threat modeling. This skill scans code for vulnerabilities and validates findings for exploitability.
 
 ## When to Use This Skill
 
@@ -496,11 +496,6 @@ Include:
 - [ ] `validated-findings.json` generated
 - [ ] Results output in appropriate format (PR comments or report)
 - [ ] Severity actions applied
-
-## Downstream Skills
-
-After this skill completes with CONFIRMED findings:
-- **`security-patch-generation`** - Generate fixes, tests, and PR
 
 ## Example Invocations
 

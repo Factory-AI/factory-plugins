@@ -1,0 +1,8 @@
+{
+  "name": "typescript",
+  "description": "Opinionated TypeScript and React patterns: ban `as` assertions, replace useEffect with derived state, and fix knip unused exports",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  }
+}
