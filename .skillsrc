@@ -1,0 +1,13 @@
+# Skills listed here are excluded from the top-level skills/ directory.
+# One skill path per line, relative to the repo root (plugin/skills/skill-name).
+# Lines starting with # are comments. Blank lines are ignored.
+droid-control/skills/agent-browser
+droid-control/skills/capture
+droid-control/skills/compose
+droid-control/skills/droid-cli
+droid-control/skills/droid-control
+droid-control/skills/pty-capture
+droid-control/skills/showcase
+droid-control/skills/true-input
+droid-control/skills/tuistory
+droid-control/skills/verify
