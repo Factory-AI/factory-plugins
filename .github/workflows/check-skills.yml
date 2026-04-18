@@ -1,0 +1,85 @@
+name: Check skills directory
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  check-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all skills are exposed or explicitly skipped
+        run: |
+          set -euo pipefail
+
+          # Collect skipped skills from .skillsrc
+          skipped=()
+          if [[ -f .skillsrc ]]; then
+            while IFS= read -r line; do
+              line="${line%%#*}"       # strip inline comments
+              line="${line// /}"       # trim whitespace
+              [[ -z "$line" ]] && continue
+              skipped+=("$line")
+            done < .skillsrc
+          fi
+
+          is_skipped() {
+            local skill="$1"
+            for s in "${skipped[@]+"${skipped[@]}"}"; do
+              [[ "$s" == "$skill" ]] && return 0
+            done
+            return 1
+          }
+
+          errors=()
+
+          # Find every skill directory (contains a SKILL.md)
+          while IFS= read -r skill_md; do
+            skill_dir="$(dirname "$skill_md")"
+            # e.g. plugins/core/skills/init -> extract plugin-relative path: core/skills/init
+            rel="${skill_dir#plugins/}"
+            skill_name="$(basename "$skill_dir")"
+
+            if is_skipped "$rel"; then
+              # Ensure skipped skills do NOT have a symlink
+              if [[ -L "skills/$skill_name" ]]; then
+                errors+=("Skill '$skill_name' is in .skillsrc but also symlinked in skills/")
+              fi
+              continue
+            fi
+
+            # Non-skipped skills MUST have a symlink
+            if [[ ! -L "skills/$skill_name" ]]; then
+              errors+=("Skill '$skill_name' ($rel) is not symlinked in skills/ and not listed in .skillsrc")
+            else
+              # Verify the symlink target resolves correctly
+              if [[ ! -d "skills/$skill_name" ]]; then
+                errors+=("Symlink skills/$skill_name is broken (target does not exist)")
+              fi
+            fi
+          done < <(find plugins -name SKILL.md -type f | sort)
+
+          # Check for symlinks pointing to non-existent skills
+          if [[ -d skills ]]; then
+            for link in skills/*; do
+              [[ -L "$link" ]] || continue
+              if [[ ! -d "$link" ]]; then
+                errors+=("Symlink $link is broken")
+              fi
+            done
+          fi
+
+          if [[ ${#errors[@]} -gt 0 ]]; then
+            echo "::error::Skills directory check failed:"
+            for err in "${errors[@]}"; do
+              echo "  - $err"
+            done
+            echo ""
+            echo "To fix: add a symlink in skills/ or add the skill to .skillsrc"
+            exit 1
+          fi
+
+          echo "All skills are accounted for."
