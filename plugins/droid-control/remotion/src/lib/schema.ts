@@ -73,3 +73,32 @@ export const effectSchema = z.discriminatedUnion('fx', [
   }),
 ]);
 export type Effect = z.infer<typeof effectSchema>;
+
+export const codeRangeSchema = z.object({
+  start: z.number().int().positive(),
+  end: z.number().int().positive(),
+});
+export type CodeRange = z.infer<typeof codeRangeSchema>;
+
+export const codeAnnotationSchema = z.object({
+  t: z.number(),
+  dur: z.number(),
+  code: z.string(),
+  language: z.string().default('tsx'),
+  title: z.string().optional(),
+  highlight: z.array(codeRangeSchema).default([]),
+  focus: z.array(codeRangeSchema).default([]),
+  position: z
+    .enum(['center', 'top-right', 'bottom-left'])
+    .default('top-right'),
+});
+export type CodeAnnotation = z.infer<typeof codeAnnotationSchema>;
+
+export const transitionStyleSchema = z.enum([
+  'motion-blur',
+  'flash',
+  'whip-pan',
+  'light-leak',
+  'glitch-lite',
+]);
+export type TransitionStyle = z.infer<typeof transitionStyleSchema>;

@@ -71,6 +71,21 @@ Command (intent + commitments)
 
 Commands declare **what** to produce. Atoms own **how**.
 
+### Layout default
+
+**Default: `single`.** One clip showing the target/final state. Pick this unless the deliverable is fundamentally a comparison.
+
+| Case | Layout |
+|---|---|
+| Brand-new feature (no meaningful prior state) | `single` |
+| Bug fix, single-clip proof of the working path | `single` |
+| Walkthrough / tutorial / readme hero | `single` |
+| Regression proof (broken vs fixed) | `side-by-side` |
+| Behavior-preserving refactor (visual parity is the point) | `side-by-side` |
+| User explicitly asks for a comparison | `side-by-side` |
+
+Do not synthesize a "before" state to justify `side-by-side`. If there is no real baseline, use `single`.
+
 ## Delegation
 
 The parent agent plans and orchestrates. Mechanical work runs in **worker subagents** via the Task tool. This keeps the parent's context clean and enables parallelism.
@@ -79,8 +94,8 @@ The parent agent plans and orchestrates. Mechanical work runs in **worker subage
 
 | Task | Delegate? | Why |
 |---|---|---|
-| **Capture before branch** | YES — `run_in_background=true` | Independent from after branch; run both in parallel |
-| **Capture after branch** | YES — `run_in_background=true` | Independent from before branch |
+| **Capture clip** (single layout) | YES | Worker runs the interaction script end-to-end and returns the `.cast` path |
+| **Capture both clips** (comparison layout) | YES — `run_in_background=true` for each | Branches are independent; run in parallel |
 | **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, fidelity profiles, duration detection, cleanup) |
 | Planning, interaction scripting | NO — parent | Requires PR context and editorial judgment |
 | Layout and prop construction | NO — parent | Requires editorial decisions about effects, timing, labels |
@@ -125,7 +140,9 @@ Task prompt for a Remotion render worker:
      /tmp/droid-run-1712345678-42-xxxx/before.cast /tmp/droid-run-1712345678-42-xxxx/after.cast"
 ```
 
-### Parallel capture pattern
+### Parallel capture pattern (comparison flows only)
+
+Only applicable when the Layout default table above selects `side-by-side`. For a `single` layout, launch one capture worker and skip this section.
 
 For before/after comparison demos, launch both capture workers simultaneously:
 

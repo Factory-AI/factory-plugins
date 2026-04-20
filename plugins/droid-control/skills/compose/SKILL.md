@@ -55,7 +55,7 @@ Both use the same Remotion pipeline but target different visual registers.
 
 | | Showcase | Demo |
 |---|---|---|
-| **Goal** | Cinematic, high-polish marketing material | Clear, utilitarian before/after comparison |
+| **Goal** | Cinematic, high-polish marketing material | Clear, utilitarian demonstration — single or comparison, whichever the story calls for |
 | **Preset** | `factory`, `factory-hero`, or `hero` | `macos`, `minimal`, or `presentation` |
 | **Effects tier** | **Full** -- spotlight, zoom, callout, keystroke overlay. Go all out. | **Utilitarian** -- zoom for readability, keystroke overlay for user actions |
 | **Audience** | External — landing pages, social, marketing | Internal — PR reviews, docs, QA |
@@ -146,6 +146,12 @@ This checkpoint is not optional. A video that lands outside the target range fai
 
 ## Step 2: Build props
 
+### Choose layout
+
+**Default: `single`.** One clip of the target/final state. New features, bug-fix proofs, walkthroughs, and README heroes all belong here.
+
+Use `side-by-side` only when the story is fundamentally a comparison: regression (broken vs fixed), behavior-preserving refactor, or an explicit user request. Never fabricate a "before" clip to justify the side-by-side shape.
+
 Save the `showcaseSchema` JSON to a temp file:
 
 ```bash
@@ -154,10 +160,10 @@ PROPS="${DEMO_TMP}/showcase-props.json"
 
 cat > "$PROPS" << 'EOF'
 {
-  "clips": ["before.cast", "after.cast"],
-  "layout": "side-by-side",
+  "clips": ["demo.cast"],
+  "layout": "single",
   "fidelity": "auto",
-  "labels": ["BEFORE (dev)", "AFTER (PR #11621)"],
+  "labels": [],
   "speed": 3,
   "title": "PR #11621 — Prevent session freezes",
   "subtitle": "Bash Mode blocks interactive commands and supports ESC cancellation",
@@ -167,16 +173,15 @@ cat > "$PROPS" << 'EOF'
     {"t": 5.5, "label": "sleep 100"},
     {"t": 8.0, "label": "Esc"}
   ],
-  "sections": [
-    {"t": 2.0, "title": "Testing basic echo"},
-    {"t": 10.0, "title": "Testing long loop"}
-  ],
+  "sections": [],
   "effects": [],
   "speedNote": "3x speed",
   "windowTitle": "droid demo"
 }
 EOF
 ```
+
+For a comparison flow, swap `"clips"` to two paths, `"layout"` to `"side-by-side"`, and populate `"labels"` (e.g., `["BEFORE (main)", "AFTER (PR #11621)"]`).
 
 Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-props.json` across rerenders or concurrent demos.
 
@@ -203,6 +208,8 @@ Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-
 | `width` | `number` | no | Output width (default: 2560 for inspect, else 1920) |
 | `height` | `number` | no | Output height (default: 1440 for inspect, else 1080) |
 | `objectFit` | `"contain" \| "cover" \| "fill"` | no | How each clip fits its panel. Default `"contain"` (letterbox to preserve aspect). Use `"cover"` when clip aspect doesn't match panel aspect and you'd rather crop than see black bars. See "Clip aspect ratio" below. |
+| `codeAnnotations` | `CodeAnnotation[]` | no | Timed syntax-highlighted code overlays shown during the main content sequence. See "Code annotations" below. |
+| `transitionStyle` | `"motion-blur" \| "flash" \| "whip-pan" \| "light-leak" \| "glitch-lite"` | no | Presentation used for title→content and content→outro transitions. Default `"motion-blur"` preserves existing aesthetic. See "Transition styles" below. |
 
 ### Preset quick reference
 
@@ -256,6 +263,35 @@ Regions use percentage strings (e.g., `"25%"`) relative to the video dimensions.
 | Keystroke overlay | Showing user actions (typing, key presses) | No user interaction in the clip |
 
 **Less is more.** One well-timed spotlight has more impact than five overlapping effects.
+
+### Code annotations
+
+Timed syntax-highlighted code card laid over the captured video. Use for PR demos where the decisive source change needs to sit next to the runtime proof.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `t` | `number` | yes | Start time in seconds, relative to clip start. Adjust for `speed` factor (same rule as `keys[].t`). |
+| `dur` | `number` | yes | How long the card stays visible, in seconds. |
+| `code` | `string` | yes | Source text; `\n` for multiline; no trailing newline. |
+| `language` | `string` | no | Prism language id (`tsx`, `ts`, `py`, `rust`, `bash`, ...). Default `tsx`. |
+| `title` | `string` | no | Small caption above the code (usually a file path). |
+| `highlight` | `[{start,end}]` | no | 1-based inclusive line ranges with accent background + left border. |
+| `focus` | `[{start,end}]` | no | 1-based inclusive line ranges kept at full opacity; others are dimmed/blurred. |
+| `position` | `"top-right" \| "center" \| "bottom-left"` | no | Default `"top-right"`. Move to `"bottom-left"` if the captured top-right is load-bearing. |
+
+Keep it short — aim for ≤ 15 lines per card, hold for 3–6 seconds.
+
+### Transition styles
+
+`transitionStyle` selects the title→content and content→outro crossfade presentation. Both transitions in one render share the same style. `flash` and `light-leak` derive their tint from the preset palette. Default `motion-blur` is always safe; preset-tier guidance lives in `showcase/SKILL.md`.
+
+| Style | Feel | Use when… |
+|---|---|---|
+| `motion-blur` | Subtle dolly, blur + opacity crossfade | Default for PR demos, Factory content, most showcase work |
+| `flash` | Quick palette-tinted flash at midpoint | Bug-fix proofs where the "after" state should feel sudden |
+| `whip-pan` | Horizontal pan + motion blur | Energetic showcase / marketing when pacing is fast |
+| `light-leak` | Warm gradient sweep | Factory-branded landing/social clips |
+| `glitch-lite` | RGB channel offset + horizontal band | Security/vulnerability proof, terminal aesthetic; never default, never twice |
 
 ## Step 3: Render
 

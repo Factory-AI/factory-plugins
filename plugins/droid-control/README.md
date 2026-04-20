@@ -76,7 +76,7 @@ For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTUR
 
 ## Video rendering
 
-The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, motion-blur transitions, zooms, spotlights, keystroke overlays, and section headers.
+The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, configurable transitions (`motion-blur`, `flash`, `whip-pan`, `light-leak`, `glitch-lite`), zooms, spotlights, keystroke overlays, section headers, and syntax-highlighted code annotations.
 
 The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, clip staging, duration detection, Remotion rendering, and cleanup.
 

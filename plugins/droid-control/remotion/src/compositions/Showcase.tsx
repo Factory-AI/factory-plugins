@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { AbsoluteFill, staticFile, useVideoConfig } from 'remotion';
 import { Video } from '@remotion/media';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
-import { motionBlurTransition } from '../components/MotionBlurTransition';
+import { getTransitionPresentation } from '../components/ShowcaseTransition';
 import {
   fidelitySchema,
   presetSchema,
@@ -11,6 +11,8 @@ import {
   keystrokeSchema,
   effectSchema,
   sectionSchema,
+  codeAnnotationSchema,
+  transitionStyleSchema,
 } from '../lib/schema';
 import { getPalette } from '../lib/palettes';
 import { getPresetConfig } from '../lib/presets';
@@ -28,6 +30,7 @@ import { Watermark } from '../components/Watermark';
 import { ZoomEffect } from '../components/ZoomEffect';
 import { SectionTransitionOverlay } from '../components/SectionTransition';
 import { FanningRotorOutro } from '../components/FanningRotorOutro';
+import { CodeAnnotationOverlay } from '../components/CodeAnnotationOverlay';
 
 export const showcaseSchema = z.object({
   clips: z.array(z.string()),
@@ -53,11 +56,17 @@ export const showcaseSchema = z.object({
   //   and you'd rather crop edges than see giant black bars.
   // - "fill": stretch to fill the panel (distorts aspect). Rarely what you want.
   objectFit: z.enum(['contain', 'cover', 'fill']).optional(),
+  // Timed syntax-highlighted code overlays rendered during the main content
+  // sequence (above content, below noise/color grade). Timings are relative
+  // to the start of the main content clip.
+  codeAnnotations: z.array(codeAnnotationSchema).optional(),
+  // Presentation used for title->content and content->outro transitions.
+  // Defaults to 'motion-blur', which preserves existing aesthetic.
+  transitionStyle: transitionStyleSchema.optional(),
 });
 
 const TITLE_DURATION_S = 4;
 const TRANSITION_FRAMES = 15;
-const MOTION_BLUR = motionBlurTransition();
 
 const resolveFidelity = (
   props: z.infer<typeof showcaseSchema>
@@ -177,6 +186,14 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
   const titleFrames = TITLE_DURATION_S * fps;
   const clipFrames = Math.ceil((props.clipDuration ?? 60) * fps);
   const objectFit = props.objectFit ?? 'contain';
+  const transition = useMemo(
+    () =>
+      getTransitionPresentation(
+        props.transitionStyle ?? 'motion-blur',
+        palette
+      ),
+    [props.transitionStyle, palette]
+  );
 
   const spotlights = useMemo(
     () =>
@@ -212,7 +229,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
 
         {/* Crossfade from title to content */}
         <TransitionSeries.Transition
-          presentation={MOTION_BLUR}
+          presentation={transition}
           timing={linearTiming({ durationInFrames: TRANSITION_FRAMES })}
         />
 
@@ -294,12 +311,21 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
                 config={config}
               />
             )}
+
+            {/* Code annotations: timed syntax-highlighted overlays */}
+            {props.codeAnnotations && props.codeAnnotations.length > 0 && (
+              <CodeAnnotationOverlay
+                annotations={props.codeAnnotations}
+                palette={palette}
+                config={config}
+              />
+            )}
           </AbsoluteFill>
         </TransitionSeries.Sequence>
 
         {/* Crossfade to outro */}
         <TransitionSeries.Transition
-          presentation={MOTION_BLUR}
+          presentation={transition}
           timing={linearTiming({ durationInFrames: TRANSITION_FRAMES })}
         />
 
