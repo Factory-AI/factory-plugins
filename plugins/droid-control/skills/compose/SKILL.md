@@ -55,7 +55,7 @@ Both use the same Remotion pipeline but target different visual registers.
 
 | | Showcase | Demo |
 |---|---|---|
-| **Goal** | Cinematic, high-polish marketing material | Clear, utilitarian before/after comparison |
+| **Goal** | Cinematic, high-polish marketing material | Clear, utilitarian demonstration — single or comparison, whichever the story calls for |
 | **Preset** | `factory`, `factory-hero`, or `hero` | `macos`, `minimal`, or `presentation` |
 | **Effects tier** | **Full** -- spotlight, zoom, callout, keystroke overlay. Go all out. | **Utilitarian** -- zoom for readability, keystroke overlay for user actions |
 | **Audience** | External — landing pages, social, marketing | Internal — PR reviews, docs, QA |
@@ -146,6 +146,12 @@ This checkpoint is not optional. A video that lands outside the target range fai
 
 ## Step 2: Build props
 
+### Choose layout
+
+**Default: `single`.** One clip of the target/final state. New features, bug-fix proofs, walkthroughs, and README heroes all belong here.
+
+Use `side-by-side` only when the story is fundamentally a comparison: regression (broken vs fixed), behavior-preserving refactor, or an explicit user request. Never fabricate a "before" clip to justify the side-by-side shape.
+
 Save the `showcaseSchema` JSON to a temp file:
 
 ```bash
@@ -154,10 +160,10 @@ PROPS="${DEMO_TMP}/showcase-props.json"
 
 cat > "$PROPS" << 'EOF'
 {
-  "clips": ["before.cast", "after.cast"],
-  "layout": "side-by-side",
+  "clips": ["demo.cast"],
+  "layout": "single",
   "fidelity": "auto",
-  "labels": ["BEFORE (dev)", "AFTER (PR #11621)"],
+  "labels": [],
   "speed": 3,
   "title": "PR #11621 — Prevent session freezes",
   "subtitle": "Bash Mode blocks interactive commands and supports ESC cancellation",
@@ -167,16 +173,15 @@ cat > "$PROPS" << 'EOF'
     {"t": 5.5, "label": "sleep 100"},
     {"t": 8.0, "label": "Esc"}
   ],
-  "sections": [
-    {"t": 2.0, "title": "Testing basic echo"},
-    {"t": 10.0, "title": "Testing long loop"}
-  ],
+  "sections": [],
   "effects": [],
   "speedNote": "3x speed",
   "windowTitle": "droid demo"
 }
 EOF
 ```
+
+For a comparison flow, swap `"clips"` to two paths, `"layout"` to `"side-by-side"`, and populate `"labels"` (e.g., `["BEFORE (main)", "AFTER (PR #11621)"]`).
 
 Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-props.json` across rerenders or concurrent demos.
 
