@@ -141,7 +141,7 @@ The `Showcase` composition in `remotion/src/compositions/Showcase.tsx` is the on
 | Layer | Purpose | Controlled by |
 |---|---|---|
 | Background + FloatingParticles | Preset-driven warmth or coolness | `preset` |
-| TitleCard / FanningRotorOutro | Opening and closing cards | `title`, `subtitle`, `speedNote` |
+| TitleCard / DroidOutro | Opening and closing cards (outro plays fanning rotor → crossfade → DROID wordmark) | `title`, `subtitle`, `speedNote` |
 | Window chrome + layouts | `SingleLayout` or `SideBySideLayout` | `layout`, `labels`, `objectFit` |
 | ZoomEffect / SpotlightOverlay / KeystrokeOverlay / SectionHeader | Timed in-scene overlays | `effects`, `keys`, `sections` |
 | CodeAnnotationOverlay | Timed syntax-highlighted code cards | `codeAnnotations` |
