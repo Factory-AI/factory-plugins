@@ -1,3 +1,9 @@
+// Transition style names (`whip-pan`, `light-leak`, `flash`, `glitch-lite`) and
+// the "selectable enum of named transitions" API shape are inspired by
+// @hyperframes/shader-transitions (Apache-2.0). Implementations below are
+// original Remotion-native CSS/SVG overlays — no GLSL/WebGL involved.
+// https://github.com/heygen-com/hyperframes/tree/main/packages/shader-transitions
+
 import React from 'react';
 import { AbsoluteFill, interpolate, Easing, random } from 'remotion';
 import type {
