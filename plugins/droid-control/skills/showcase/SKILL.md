@@ -39,7 +39,7 @@ Each preset configures window chrome, spacing, background style, and palette sel
 - Subtle cool color grade overlay
 - Floating particles in accent blue
 
-**All presets** include: floating particles, noise texture overlay, color grade, motion blur title→content transition, animated window entrance, staggered panel entrance (side-by-side).
+**All presets** include: floating particles, noise texture overlay, color grade, motion blur title→content transition (configurable via `transitionStyle`), animated window entrance, staggered panel entrance (side-by-side), and optional `codeAnnotations` syntax-highlighted overlays during the main content sequence.
 
 ## Visual palettes
 
@@ -64,6 +64,18 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 | accent | `#89b4fa` | Blue accent |
 | text | `#cdd6f4` | Cool white |
 | muted | `#6c7086` | De-emphasized text |
+
+## Transition styles
+
+`transitionStyle` selects the crossfade presentation. Schema lives in `compose/SKILL.md`; preset-tier matching:
+
+| Preset | Recommended (default first) | Avoid |
+|---|---|---|
+| `factory`, `factory-hero` | `motion-blur`, `light-leak`, `whip-pan`, `flash` | `glitch-lite` (clashes with warm tone) |
+| `hero`, `presentation` | `motion-blur`, `whip-pan`, `flash` | `light-leak` (warm sweep clashes with cool palette) |
+| `macos`, `minimal` | `motion-blur` | `glitch-lite`, `light-leak` (too much personality for utilitarian frames) |
+
+`codeAnnotations` is preset-agnostic — palette and font stack are auto-derived. See `compose/SKILL.md` for schema and authoring rules.
 
 ## Operational notes
 

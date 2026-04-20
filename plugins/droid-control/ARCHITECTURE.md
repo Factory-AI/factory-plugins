@@ -134,6 +134,22 @@ The compose stage uses the Remotion project in `remotion/` as a single video eng
 
 This keeps droids out of the common failure modes: stale files in `public/`, mismatched `clipDuration`, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
 
+### Composition surface
+
+The `Showcase` composition in `remotion/src/compositions/Showcase.tsx` is the only video entry point. Everything else lives in `remotion/src/components/` and is composed by props:
+
+| Layer | Purpose | Controlled by |
+|---|---|---|
+| Background + FloatingParticles | Preset-driven warmth or coolness | `preset` |
+| TitleCard / FanningRotorOutro | Opening and closing cards | `title`, `subtitle`, `speedNote` |
+| Window chrome + layouts | `SingleLayout` or `SideBySideLayout` | `layout`, `labels`, `objectFit` |
+| ZoomEffect / SpotlightOverlay / KeystrokeOverlay / SectionHeader | Timed in-scene overlays | `effects`, `keys`, `sections` |
+| CodeAnnotationOverlay | Timed syntax-highlighted code cards | `codeAnnotations` |
+| Transition presentation | Title→content and content→outro crossfade | `transitionStyle` (default `motion-blur`) |
+| NoiseOverlay + ColorGradeOverlay + Watermark | Topmost polish pass | `fidelity`, `preset` |
+
+The key property is that the main composition is data-driven: the droid never writes Remotion JSX. Adding a new overlay or transition style is a new component plus a schema field, not a new composition.
+
 ## Platform isolation
 
 Platform-specific mechanics live below the atom that needs them:

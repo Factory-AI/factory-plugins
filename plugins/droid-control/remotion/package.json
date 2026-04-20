@@ -14,6 +14,7 @@
     "@remotion/media": "4.0.445",
     "@remotion/tailwind": "4.0.445",
     "@remotion/transitions": "4.0.445",
+    "prism-react-renderer": "^2.4.1",
     "react": "^19",
     "react-dom": "^19",
     "remotion": "4.0.445",
