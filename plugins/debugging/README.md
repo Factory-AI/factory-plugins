@@ -6,7 +6,7 @@ Tools for inspecting what code actually does at runtime: HTTP traffic, wire-leve
 
 ### `http-toolkit-intercept`
 
-Intercept and debug HTTP traffic from a Bun- or Node-based CLI using HTTP Toolkit. Pairs the outbound proxy log with a machine-readable CLI session log so you can verify LLM API calls, backend requests, auth flows, and wire-level behavior.
+Intercept and debug HTTP traffic from any CLI, service, or script using HTTP Toolkit. Works with any runtime (Node.js, Bun, Deno, Python, Go, Ruby, Java, .NET, Rust, shell, etc.) that respects a proxy. Pairs the outbound proxy log with a machine-readable session log so you can verify LLM API calls, backend requests, auth flows, and wire-level behavior.
 
 ## Install
 

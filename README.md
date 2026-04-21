@@ -70,7 +70,7 @@ Inspect runtime behavior: HTTP interception, traffic capture, and wire-level deb
 
 **Skills:**
 
-- `http-toolkit-intercept` - Intercept and debug HTTP traffic from a Bun/Node CLI via HTTP Toolkit
+- `http-toolkit-intercept` - Intercept and debug HTTP traffic from any CLI, service, or script via HTTP Toolkit (language/runtime agnostic)
 
 ### code-review
 

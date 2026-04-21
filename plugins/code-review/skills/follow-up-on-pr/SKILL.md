@@ -5,7 +5,7 @@ description: Follow up on an existing PR by rebasing on the base branch, address
 
 # Follow Up on PR
 
-Take over an existing PR, bring it up to date, address all feedback, and push it to a merge-ready state.
+Take over an existing PR, bring it up to date, address all feedback, and push it to a merge-ready state. This skill is language- and framework-agnostic — substitute your project's actual build, lint, test, and format commands where examples are shown.
 
 ## Inputs
 
@@ -61,21 +61,23 @@ Review comments were already fetched in step 1. For each unresolved comment:
 
 ### 5. Run Local CI Checks
 
-Run checks targeted to the affected packages. Use your package-manager's filter flag for speed (e.g. turbo `--filter`, nx `--projects`, pnpm `--filter`).
+Run the project's lint, format, typecheck/compile, and test commands for the affected areas. Discover them by reading the repo root (e.g. `Makefile`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `build.gradle`, `mix.exs`, `Gemfile`, `composer.json`, `justfile`, `Taskfile.yml`, `README.md`, or the CI workflow config).
 
-```bash
-# Example with npm + turbo
-npm run fix -- --filter=<workspace1> --filter=<workspace2>
-npm run typecheck -- --filter=<workspace1> --filter=<workspace2>
-npm run test -- --filter=<workspace1> --filter=<workspace2>
-```
+Prefer filter / target flags to scope runs to the affected areas — it is faster than running the whole repo. Common patterns:
 
-See the `create-pr` skill's "CI Checks Reference" section for a template of local commands matching common CI checks.
+- JS/TS monorepos: `npm run test -- --filter=<workspace>`, `pnpm -r --filter <pkg> test`, `nx test <project>`
+- Python: `pytest <path>`, `tox -e <env>`
+- Rust: `cargo test -p <crate>`, `cargo clippy -p <crate>`
+- Go: `go test ./<pkg>/...`, `golangci-lint run ./<pkg>/...`
+- Java/Kotlin: `./gradlew :<module>:test`, `./mvnw -pl <module> test`
+- Bazel: `bazel test //path/...`
+
+See the `create-pr` skill's "CI Checks Reference" section for a broader template of local commands matching common CI checks.
 
 **Distinguishing pre-existing failures from PR issues:**
-Some CI failures exist on the base branch and are unrelated to the PR. If a failure occurs in a file not touched by the PR, verify it exists on the base branch too before spending time fixing it. Common pre-existing issues include module resolution errors for recently-added dependencies.
+Some CI failures exist on the base branch and are unrelated to the PR. If a failure occurs in a file not touched by the PR, verify it exists on the base branch too before spending time fixing it. Common pre-existing issues include module / package resolution errors for recently-added dependencies.
 
-**E2E tests:** If the PR changes user-facing behavior (UI flow, defaults, keyboard handling), E2E tests may break even if the code is correct. Read the failing test to understand what it expects, then update it to match the new behavior. Don't assume E2E failures are flaky — read them first.
+**E2E tests:** If the PR changes user-facing behavior (UI flow, defaults, keyboard handling, CLI output), E2E tests may break even if the code is correct. Read the failing test to understand what it expects, then update it to match the new behavior. Don't assume E2E failures are flaky — read them first.
 
 ### 6. Commit and Push
 
@@ -136,7 +138,7 @@ Use your org's PR template format. Update the testing section to reflect the add
 Before considering the task complete, confirm:
 - [ ] Branch is rebased on the latest base branch
 - [ ] All reviewer comments are addressed with code changes
-- [ ] Local lint, typecheck, and tests pass for affected packages
+- [ ] Local lint, typecheck/compile, and tests pass for affected packages
 - [ ] Changes are pushed to remote
 - [ ] All reviewer comments have replies explaining what was done
 - [ ] PR description is up to date

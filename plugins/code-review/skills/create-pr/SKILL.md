@@ -5,7 +5,7 @@ description: Create a pull request with Conventional Commits formatting, a templ
 
 # Create Pull Request
 
-Create a PR with proper conventions: local verification, Conventional Commits title, a templated body, and an optional linked ticket.
+Create a PR with proper conventions: local verification, Conventional Commits title, a templated body, and an optional linked ticket. This skill is language- and framework-agnostic — substitute your project's actual build, lint, test, and format commands where examples are shown.
 
 ## Prerequisites
 
@@ -25,51 +25,57 @@ git diff origin/<base-branch>..HEAD --stat
 ```
 
 Determine:
-- **What changed**: Which apps/packages were modified
+- **What changed**: Which modules, packages, services, or directories were modified
 - **Change type**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
-- **Scope**: Primary workspace affected (use directory name or `monorepo` for cross-cutting changes)
-- **Is this a code change?**: If the PR modifies code (not only docs, markdown, or config-only changes), run the local verification checklist in step 2 before creating the PR.
+- **Scope**: Primary module/package/service affected (use directory name or `monorepo` / `repo` for cross-cutting changes)
+- **Is this a code change?**: If the PR modifies source code (not only docs, markdown, or config-only changes), run the local verification checklist in step 2 before creating the PR.
 
 ### 2. Local Verification (for code changes)
 
-**Skip this step** if the PR only touches documentation, markdown files, or other non-code files. For any change that touches `.ts`, `.tsx`, `.js`, `.jsx`, `.css`, or similar source files, run these checks locally before creating the PR.
+**Skip this step** if the PR only touches documentation, markdown files, or other non-code files. For any change that touches source files, run your project's verification commands locally before creating the PR.
 
-Use a filter flag (turbo `--filter`, nx `--projects`, pnpm `--filter`) to target only the affected workspaces when possible — it is faster than running the whole repo.
+Discover the commands by reading the repo root (e.g. `Makefile`, `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `build.gradle`, `mix.exs`, `Gemfile`, `composer.json`, `justfile`, `Taskfile.yml`, `README.md`, or the CI workflow config). Use filter/target flags where available (e.g. `turbo --filter`, `nx --projects`, `pnpm --filter`, `bazel //path/...`, `cargo -p <crate>`, `pytest <path>`, `go test ./<pkg>/...`) to run only the affected portions — it is faster than running the whole repo.
 
-#### Typecheck
-```bash
-# Repo-wide
-npm run typecheck
-# Filtered to affected workspaces (preferred — faster)
-npm run typecheck -- --filter=<workspace1> --filter=<workspace2>
-```
+Common verification categories to run when applicable:
 
-#### Lint
-```bash
-# Autofix (preferred — fixes formatting + lint in one pass)
-npm run fix
-# Or filtered
-npm run fix -- --filter=<workspace>
-# Lint-only (no autofix)
-npm run lint
-```
+#### Typecheck / Compile
+Run the project's static type check or compile step if it has one.
+
+Examples across ecosystems (use whatever the repo defines):
+- TypeScript: `npm run typecheck`, `pnpm -r typecheck`, `tsc --noEmit`
+- Python (typed): `mypy .`, `pyright`, `ty check`
+- Rust: `cargo check`
+- Go: `go build ./...`, `go vet ./...`
+- Java/Kotlin: `./gradlew compileJava`, `./mvnw compile`
+
+#### Lint / Format
+Run the project's linter and formatter. Prefer an autofix target if one exists.
+
+Examples:
+- JS/TS: `npm run fix`, `npm run lint`, `eslint .`, `prettier --check .`
+- Python: `ruff check --fix .`, `ruff format .`, `black .`, `flake8`
+- Rust: `cargo clippy --all-targets`, `cargo fmt --check`
+- Go: `golangci-lint run`, `gofmt -l .`
+- Shell: `shellcheck`, `shfmt -d .`
 
 #### Tests
-```bash
-# Repo-wide (slow — runs all workspaces)
-npm run test
-# Filtered to affected workspaces (preferred)
-npm run test -- --filter=<workspace>
-```
+Run the unit/integration tests for affected packages.
+
+Examples:
+- JS/TS: `npm run test -- --filter=<workspace>`, `pnpm -r test`, `vitest run <path>`, `jest <path>`
+- Python: `pytest <path>`, `tox -e <env>`, `python -m unittest`
+- Rust: `cargo test -p <crate>`
+- Go: `go test ./<pkg>/...`
+- Java/Kotlin: `./gradlew test`, `./mvnw test`
+- Ruby: `bundle exec rspec <path>`, `rake test`
 
 #### Additional checks (run when relevant)
-- **Knip** (unused exports): `npm run knip` — always run if you added/removed exports.
-- **Depcheck**: `npm run depcheck` — run if you changed dependencies.
-- **Lockfile**: If you modified any `package.json`, run `npm install` at repo root and commit any `package-lock.json` changes. CI fails if the lockfile is out of date.
-- **OpenAPI / codegen**: If your backend has an OpenAPI spec or generated client, regenerate and commit any changes.
-- **Stylelint**: `npm run stylelint` — run if you changed CSS/style files.
-
-Substitute your package manager and check names if you do not use npm / turbo.
+- **Unused exports / dead code**: Run your project's dead-code check if it has one (e.g. `knip`, `ts-prune`, `vulture` for Python, `deadcode` / `unused` for Go, `cargo udeps` for Rust).
+- **Dependency hygiene**: Run your project's dependency check if it has one (e.g. `depcheck`, `pip check`, `cargo audit`, `bundle audit`).
+- **Lockfile in sync**: If you modified any dependency manifest (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Gemfile`, etc.), run the install command (`npm install`, `pnpm install`, `uv sync`, `poetry lock --no-update`, `cargo update -w`, `go mod tidy`, `bundle install`) and commit any lockfile changes. CI commonly fails if the lockfile is out of date.
+- **Generated code / codegen**: If the repo has an OpenAPI spec, protobuf, GraphQL schema, SQL migrations, or any other generated artifacts, regenerate and commit any changes.
+- **Style / asset linters**: Run stylesheet linters (`stylelint`, etc.) or asset linters if you changed those files.
+- **Security scans**: Run any security/secret scanners configured in the repo (`trivy`, `semgrep`, `gitleaks`, etc.).
 
 ### 3. Link to a Ticket (optional)
 
@@ -85,11 +91,12 @@ Most CI systems can be configured to require the ticket identifier in the PR bod
 Follow Conventional Commits: `type(scope): description`
 
 - `type`: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
-- `scope`: Workspace name from your `apps/*` or `packages/*` directories, or `monorepo` / `repo` for cross-cutting changes. Multiple scopes can be comma-separated: `fix(a, b, c): ...`
+- `scope`: Name of the affected module/package/service/directory, or `monorepo` / `repo` for cross-cutting changes. Multiple scopes can be comma-separated: `fix(a, b, c): ...`
 
 Examples:
 - `feat(web): add dark mode toggle`
 - `fix(cli, daemon): load shell env at entrypoint`
+- `fix(api): handle nil response from upstream`
 - `chore(repo): bump dependencies`
 
 ### 5. Generate PR Body
@@ -137,25 +144,24 @@ Return the PR URL to the user.
 
 ## CI Checks Reference (template)
 
-These are typical checks that run on every PR. Map them to your repo's actual commands when adapting this skill.
+These are typical check categories that run on every PR. Map them to your repo's actual commands when adapting this skill.
 
 ### Always-run checks
-| Check | What it does | Local equivalent |
+| Category | What it does | How to find the local command |
 |---|---|---|
-| **Typecheck** | `npm run typecheck` | `npm run typecheck` (or `--filter=<workspace>`) |
-| **ESLint** | `npm run lint` | `npm run lint` or `npm run fix` |
-| **Prettier** | `npm exec prettier -- --check .` | `npm run format` (to fix) |
-| **Stylelint** | `npm run stylelint` | `npm run stylelint` |
-| **Depcheck** | `npm run depcheck` | `npm run depcheck` |
-| **Tests** | `turbo run test` (or equivalent) | `npm run test -- --filter=<workspace>` |
-| **Knip** | `npm run knip` | `npm run knip` |
-| **Lockfile** | Fails if `npm install` would modify `package-lock.json` | Run `npm install` and commit lockfile |
+| **Typecheck / compile** | Verifies the project compiles or passes static types | Check `package.json`, `Makefile`, `pyproject.toml`, `Cargo.toml`, `go.mod`, CI config |
+| **Lint** | Enforces code style / correctness rules | Check for `lint`, `check`, or equivalent scripts in the repo root |
+| **Format** | Enforces consistent formatting | Check for `format`, `fmt`, `prettier`, `black`, `gofmt`, `rustfmt`, etc. |
+| **Tests** | Runs unit and integration tests | Check for `test` script / target |
+| **Dead code / unused exports** | Flags unused code | Check for `knip`, `ts-prune`, `vulture`, `cargo udeps`, etc. |
+| **Dependency check** | Flags unused / vulnerable dependencies | Check for `depcheck`, `audit`, `cargo audit`, etc. |
+| **Lockfile in sync** | Fails if lockfile is stale relative to the manifest | Run your package manager's install command and commit the lockfile |
 | **PR Conventions** | Validates branch name, semantic title, ticket presence | Follow the formatting rules above |
 
 ### Conditional checks (run only when affected files change)
-- **OpenAPI validation**: Triggered by backend API/spec changes. Regenerate locally.
-- **Desktop/mobile build**: Triggered when those apps are affected.
-- **E2E tests**: Triggered when the consumer app is affected.
+- **API / schema validation**: Triggered by API or schema changes. Regenerate locally.
+- **Platform-specific builds**: Triggered when desktop/mobile/embedded targets are affected.
+- **E2E tests**: Triggered when the consumer app or top-level binary is affected.
 
 ### Typical PR conventions CI enforces
 - **Branch name**: Max length, allowed characters (e.g. `[A-Za-z0-9/-]`).
@@ -164,10 +170,10 @@ These are typical checks that run on every PR. Map them to your repo's actual co
 
 ## Common Mistakes to Avoid
 
-- **Wrong base branch**: Use the branch your org takes PRs into (e.g. `dev`, `main`, `develop`).
+- **Wrong base branch**: Use the branch your org takes PRs into (e.g. `dev`, `main`, `develop`, `trunk`).
 - **Missing scope**: PR title CI check often requires a valid scope.
 - **Missing ticket reference**: Description must reference your ticket ID for CI to pass (except `chore:`/`revert:`).
 - **Forgetting to push**: Branch must be on remote before `gh pr create`.
-- **Lockfile drift**: Always run `npm install` and commit `package-lock.json` after dependency changes.
-- **Skipping local checks on code PRs**: Typecheck, lint, and tests should be run locally before sending out code changes to catch issues early and avoid CI round-trips.
-- **Uncommitted OpenAPI spec / generated client**: After backend API changes, regenerate and commit.
+- **Lockfile drift**: Always run the install command and commit lockfile changes after dependency changes.
+- **Skipping local checks on code PRs**: Typecheck/compile, lint, and tests should be run locally before sending out code changes to catch issues early and avoid CI round-trips.
+- **Uncommitted generated artifacts**: After API/schema changes, regenerate and commit.
