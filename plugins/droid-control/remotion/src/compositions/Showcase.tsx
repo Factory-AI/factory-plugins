@@ -29,7 +29,7 @@ import { ColorGradeOverlay } from '../components/ColorGradeOverlay';
 import { Watermark } from '../components/Watermark';
 import { ZoomEffect } from '../components/ZoomEffect';
 import { SectionTransitionOverlay } from '../components/SectionTransition';
-import { FanningRotorOutro } from '../components/FanningRotorOutro';
+import { DroidOutro } from '../components/DroidOutro';
 import { CodeAnnotationOverlay } from '../components/CodeAnnotationOverlay';
 
 export const showcaseSchema = z.object({
@@ -331,7 +331,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
 
         {/* Outro card */}
         <TransitionSeries.Sequence durationInFrames={3.5 * fps}>
-          <FanningRotorOutro
+          <DroidOutro
             palette={palette}
           />
         </TransitionSeries.Sequence>

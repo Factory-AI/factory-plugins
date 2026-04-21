@@ -2,12 +2,18 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, Easing } from 'remotion';
 import type { Palette } from '../lib/palettes';
 import { RotorMark } from './RotorMark';
+import { DroidWordmark } from './DroidWordmark';
 
-export const FanningRotorOutro: React.FC<{
+export const DroidOutro: React.FC<{
   palette: Palette;
 }> = ({ palette }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const rotorCenterX = 303.105;
+  const rotorCenterY = 319.528;
+  const rotorCenterXPercent = (rotorCenterX / 613) * 100;
+  const rotorCenterYPercent = (rotorCenterY / 650) * 100;
+  const topRightSliceYPercent = ((rotorCenterY - (613 - rotorCenterX)) / 650) * 100;
 
   // Phase 1: Fan out the 8 triangles (0s to 1.5s)
   const fanDuration = 1.5 * fps;
@@ -47,17 +53,13 @@ export const FanningRotorOutro: React.FC<{
           left: '50%',
           width: '613px',
           height: '650px',
-          marginLeft: '-306.5px',
-          marginTop: '-325px',
-          transformOrigin: '50% 50%',
+          marginLeft: `${-rotorCenterX}px`,
+          marginTop: `${-rotorCenterY}px`,
+          transformOrigin: `${rotorCenterX}px ${rotorCenterY}px`,
           transform: `scale(${scaleProgress}) rotate(${rotationProgress}deg)`,
           opacity,
           mixBlendMode: 'screen',
-          // A 45-degree pie slice capturing exactly one blade (top-right)
-          // 50% 50% = center
-          // 100% 50% = straight right
-          // 100% 2.85% = exactly 45 degrees up (y = 18.5px out of 650px)
-          clipPath: 'polygon(50% 50%, 100% 50%, 100% 2.85%)',
+          clipPath: `polygon(${rotorCenterXPercent}% ${rotorCenterYPercent}%, 100% ${rotorCenterYPercent}%, 100% ${topRightSliceYPercent}%)`,
         }}
       >
         <RotorMark width={613} height={650} color="white" />
@@ -76,16 +78,6 @@ export const FanningRotorOutro: React.FC<{
     extrapolateRight: 'clamp',
   });
 
-  const asciiLogo = `
-  █████████    █████████     ████████    ███   █████████
-  ███    ███   ███    ███   ███    ███   ███   ███    ███
-  ███    ███   ███    ███   ███    ███   ███   ███    ███
-  ███    ███   █████████    ███    ███   ███   ███    ███
-  ███    ███   ███    ███   ███    ███   ███   ███    ███
-  ███    ███   ███    ███   ███    ███   ███   ███    ███
-  █████████    ███    ███    ████████    ███   █████████
-  `.trim();
-
   return (
     <AbsoluteFill
       style={{
@@ -101,43 +93,17 @@ export const FanningRotorOutro: React.FC<{
         {wedges}
       </div>
 
-      {/* The ASCII Droid layer */}
+      {/* The ASCII Droid wordmark layer */}
       <div
         style={{
           position: 'absolute',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           opacity: asciiOpacity,
         }}
       >
-        <div
-          style={{
-            color: 'white', // ASCII DROID in white
-            fontFamily: "'Geist Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace",
-            fontSize: 24,
-            lineHeight: 1.2,
-            whiteSpace: 'pre',
-            textAlign: 'left',
-            textShadow: '0 0 20px rgba(255,255,255,0.4)',
-          }}
-        >
-          {asciiLogo}
-        </div>
-        <div
-          style={{
-            marginTop: 40,
-            color: palette.accent, // AUTONOMOUS ENGINEERING in orange
-            fontSize: 32,
-            fontWeight: 300,
-            fontFamily: "'Geist', system-ui, sans-serif",
-            letterSpacing: '0.2em',
-            textShadow: `0 0 15px ${palette.accent}66`,
-          }}
-        >
-          AUTONOMOUS ENGINEERING
-        </div>
+        <DroidWordmark palette={palette} />
       </div>
     </AbsoluteFill>
   );
