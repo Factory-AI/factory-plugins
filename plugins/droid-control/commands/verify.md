@@ -1,6 +1,6 @@
 ---
 description: Test a claim about behavior and report whether the evidence supports or refutes it
-argument-hint: "<claim to test>" or "<PR-number> -- <specific claim>"
+argument-hint: '"<claim to test>" or "<PR-number> -- <specific claim>"'
 ---
 
 Load skills: **droid-control**.
