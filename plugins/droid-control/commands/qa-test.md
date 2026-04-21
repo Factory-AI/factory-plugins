@@ -1,6 +1,6 @@
 ---
 description: Run an automated QA test flow against a terminal CLI or web/Electron app
-argument-hint: "<URL>" or "<app-name>" or "<PR-number> [-- focus area]" or "<description>"
+argument-hint: '"<URL>" or "<app-name>" or "<PR-number> [-- focus area]" or "<description>"'
 ---
 
 Load skills: **droid-control**.

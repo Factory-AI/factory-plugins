@@ -1,6 +1,6 @@
 ---
 description: Plan and record a demo video of a feature or PR
-argument-hint: "<PR-number> [-- notes]" or "<description of what to demo>"
+argument-hint: '"<PR-number> [-- notes]" or "<description of what to demo>"'
 ---
 
 Load skills: **droid-control**.
