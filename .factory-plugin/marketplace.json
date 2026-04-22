@@ -35,6 +35,24 @@
       "description": "Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.",
       "source": "./plugins/autoresearch",
       "category": "research"
+    },
+    {
+      "name": "typescript",
+      "description": "Opinionated TypeScript and React patterns: ban `as` assertions, replace useEffect with derived state, and fix knip unused exports",
+      "source": "./plugins/typescript",
+      "category": "quality"
+    },
+    {
+      "name": "debugging",
+      "description": "Inspect runtime behavior: HTTP interception, traffic capture, and wire-level debugging for CLIs and services",
+      "source": "./plugins/debugging",
+      "category": "productivity"
+    },
+    {
+      "name": "code-review",
+      "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
+      "source": "./plugins/code-review",
+      "category": "productivity"
     }
   ]
 }

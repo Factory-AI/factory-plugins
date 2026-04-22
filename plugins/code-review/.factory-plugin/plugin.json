@@ -1,0 +1,8 @@
+{
+  "name": "code-review",
+  "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  }
+}

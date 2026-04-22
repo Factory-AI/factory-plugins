@@ -1,0 +1,8 @@
+{
+  "name": "debugging",
+  "description": "Inspect runtime behavior: HTTP interception, traffic capture, and wire-level debugging for CLIs and services",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  }
+}

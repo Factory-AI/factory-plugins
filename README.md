@@ -31,6 +31,7 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 **Skills:**
 
 - `review` - Review code changes and identify high-confidence, actionable bugs. Includes systematic analysis patterns for null safety, async/await, security, concurrency, API contracts, and more. Used by both the CLI `/review` command and the CI action.
+- `simplify` - Parallel code review across reuse, quality, and efficiency axes
 
 ### droid-control
 
@@ -44,7 +45,7 @@ See [plugins/droid-control/README.md](plugins/droid-control/README.md) for detai
 
 ### security-engineer
 
-Security review, threat modeling, and vulnerability validation skills.
+Security review, threat modeling, vulnerability validation, and patch generation skills.
 
 **Skills:**
 
@@ -52,6 +53,33 @@ Security review, threat modeling, and vulnerability validation skills.
 - `threat-model-generation` - Generate threat models for repositories
 - `commit-security-scan` - Scan commits/PRs for security vulnerabilities
 - `vulnerability-validation` - Validate and confirm security findings
+
+### typescript
+
+Opinionated TypeScript and React patterns for safer, cleaner code.
+
+**Skills:**
+
+- `ban-type-assertions` - Ban `as` casts and replace them with compiler-verified alternatives (zod, control-flow narrowing)
+- `no-use-effect` - Five replacement patterns for `useEffect` (derived state, query libraries, event handlers, `useMountEffect`, `key`)
+- `fix-knip-unused-exports` - Fix every category of knip "Unused exports" violation
+
+### debugging
+
+Inspect runtime behavior: HTTP interception, traffic capture, and wire-level debugging for CLIs and services.
+
+**Skills:**
+
+- `http-toolkit-intercept` - Intercept and debug HTTP traffic from any CLI, service, or script via HTTP Toolkit (language/runtime agnostic)
+
+### code-review
+
+Pull request lifecycle skills: open, triage, and follow up on PRs with consistent conventions.
+
+**Skills:**
+
+- `create-pr` - Open a PR with Conventional Commits title, templated body, and local verification gates
+- `follow-up-on-pr` - Rebase, address reviewer comments, fix CI, and push an existing PR to merge-ready state
 
 ### droid-evolved
 
