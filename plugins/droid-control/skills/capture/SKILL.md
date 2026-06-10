@@ -8,7 +8,7 @@ user-invocable: false
 
 The orchestrator routed you here. This atom owns the full recording lifecycle: launch a target, execute an interaction script, collect raw outputs.
 
-You should already have a **driver atom** loaded (tuistory, true-input, or agent-browser) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
+You should already have a **driver atom** loaded (tuistory, true-input, agent-browser, or desktop-control) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
 
 ## Inputs
 
@@ -28,7 +28,7 @@ Before recording anything:
 - Terminal size is consistent across all sessions (`--cols 120 --rows 36`)
 - **Browser viewport size matches the composition layout** (see "Browser viewport sizing" below) — mismatched aspects letterbox in the final video
 - Branch/worktree paths and env vars are correct
-- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser
+- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser, window PNGs / `recording.mp4` for desktop-control
 - If comparing branches, both sessions use identical terminal / viewport dimensions and launch parameters
 - For `droid-dev` captures, `--repo-root` is **mandatory** — `tctl` will refuse to launch without it
 - **Color env vars are set** (see below)
@@ -137,6 +137,7 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o /tmp/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
 | Web/Electron | Screenshots: `agent-browser screenshot --annotate /tmp/proof-N.png` |
+| Native desktop GUI | Window screenshots + AX trees: `cua-driver get_window_state '{...}' --screenshot-out-file ${RUN_DIR}/proof-N.png`; video via `cua-driver recording start/stop` |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
 ## Outputs
@@ -148,7 +149,7 @@ Hand these to the **compose** stage:
 - clips: [/tmp/before.cast, /tmp/after.cast]
 - screenshots: [/tmp/proof-1.png, /tmp/proof-2.png]
 - keys: /tmp/keys.tsv (if keystroke logging was requested)
-- driver: tuistory | true-input | agent-browser
+- driver: tuistory | true-input | agent-browser | desktop-control
 - terminal_size: 120x36          # for tuistory / true-input
 - viewport: 960x1000             # for agent-browser; report so compose knows the clip aspect
 ```

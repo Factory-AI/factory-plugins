@@ -89,6 +89,7 @@ The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SSH |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH |
 | agent-browser | All | `agent-browser` |
+| desktop-control | All | `cua-driver` |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` |
 | showcase | All | Node.js (>= 18), Chrome/Chromium |
 
@@ -98,7 +99,8 @@ pip install asciinema                                 # terminal recording
 cargo install --git https://github.com/asciinema/agg  # .cast -> .gif converter
 sudo apt-get install -y ffmpeg                        # video processing
 agent-browser install                                 # browser automation (downloads Chromium)
+curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash  # native desktop GUI automation
 cd plugins/droid-control/remotion && npm install      # Remotion video rendering
 ```
 
-Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser.
+Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser. Native desktop GUI automation just needs cua-driver.

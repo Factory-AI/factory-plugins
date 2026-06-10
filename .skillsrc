@@ -4,6 +4,7 @@
 droid-control/skills/agent-browser
 droid-control/skills/capture
 droid-control/skills/compose
+droid-control/skills/desktop-control
 droid-control/skills/droid-cli
 droid-control/skills/droid-control
 droid-control/skills/pty-capture
