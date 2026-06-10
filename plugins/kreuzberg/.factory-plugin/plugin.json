@@ -1,0 +1,24 @@
+{
+  "name": "kreuzberg",
+  "version": "0.1.0",
+  "description": "Local document extraction: text, tables, metadata, images from 91+ formats with optional OCR.",
+  "author": {
+    "name": "Kreuzberg, Inc.",
+    "email": "support@kreuzberg.dev",
+    "url": "https://kreuzberg.dev"
+  },
+  "homepage": "https://kreuzberg.dev",
+  "repository": "https://github.com/kreuzberg-dev/plugins",
+  "license": "MIT",
+  "category": "document-intelligence",
+  "keywords": [
+    "document-intelligence",
+    "extraction",
+    "ocr",
+    "pdf",
+    "tables"
+  ],
+  "brandColor": "#1F6FEB",
+  "icon": "./assets/icon.svg",
+  "logo": "./assets/logo.png"
+}

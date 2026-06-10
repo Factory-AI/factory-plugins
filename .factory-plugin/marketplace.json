@@ -53,6 +53,24 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "kreuzberg",
+      "description": "Local document extraction: text, tables, metadata, images from 91+ formats with optional OCR.",
+      "source": "./plugins/kreuzberg",
+      "category": "document-intelligence"
+    },
+    {
+      "name": "kreuzcrawl",
+      "description": "Web crawling and scraping with HTML→Markdown and headless-Chrome fallback.",
+      "source": "./plugins/kreuzcrawl",
+      "category": "web-scraping"
+    },
+    {
+      "name": "kreuzberg-cloud",
+      "description": "Managed extraction via api.kreuzberg.dev with webhooks, uploads, and usage tracking.",
+      "source": "./plugins/kreuzberg-cloud",
+      "category": "document-intelligence"
     }
   ]
 }

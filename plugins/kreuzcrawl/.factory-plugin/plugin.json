@@ -1,0 +1,23 @@
+{
+  "name": "kreuzcrawl",
+  "version": "0.1.0",
+  "description": "Web crawling and scraping with HTML→Markdown and headless-Chrome fallback.",
+  "author": {
+    "name": "Kreuzberg, Inc.",
+    "email": "support@kreuzberg.dev",
+    "url": "https://kreuzberg.dev"
+  },
+  "homepage": "https://kreuzberg.dev",
+  "repository": "https://github.com/kreuzberg-dev/plugins",
+  "license": "MIT",
+  "category": "web-scraping",
+  "keywords": [
+    "web-scraping",
+    "crawling",
+    "html-to-markdown",
+    "headless-chrome"
+  ],
+  "brandColor": "#7C3AED",
+  "icon": "./assets/icon.svg",
+  "logo": "./assets/logo.png"
+}
