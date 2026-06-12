@@ -35,9 +35,10 @@ Three independent lookups. Do all three, then load the union of skills they prod
 | Other terminal TUI | tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
 | Other terminal TUI (real terminal proof) | **true-input** |
 | Web page or Electron app | **agent-browser** |
+| Native desktop GUI app | **desktop-control** |
 | Raw terminal byte sequences | **true-input** + **pty-capture** |
 
-**tuistory** is the default for terminal work. Use **true-input** only when you need real terminal rendering evidence.
+**tuistory** is the default for terminal work. Use **true-input** only when you need real terminal rendering evidence. On Linux, desktop-control rides upstream's pre-release tier -- its platform file documents the Wayland/AT-SPI/input caveats and when to fall back to **agent-browser** or **true-input**.
 
 ### 2. Stage route — what does the workflow need?
 
@@ -157,7 +158,7 @@ For before/after comparison demos, launch both capture workers simultaneously:
 
 ## Shared tooling
 
-Terminal drivers use the unified `tctl` wrapper. agent-browser has its own CLI and does not use `tctl`.
+Terminal drivers use the unified `tctl` wrapper. agent-browser and desktop-control have their own CLIs (`agent-browser`, `cua-driver`) and do not use `tctl`.
 
 Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-browser` for a web UI it interacts with.
 
@@ -170,6 +171,7 @@ Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-br
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SPICE + SSH, `DROID_VM_*` env vars | `virt-manager` |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH, `DROID_MAC_*` env vars | — |
 | agent-browser | All | `agent-browser` (+ `agent-browser install`) | — |
+| desktop-control | All | `cua-driver` (+ daemon via `cua-driver serve`; macOS also `cua-driver permissions grant`) | upstream skill pack (`cua-driver skills install`) |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` | — |
 | showcase | All | Node.js (>= 18), Chrome/Chromium | — |
 
@@ -187,6 +189,10 @@ sudo apt-get install -y grim wf-recorder             # optional: screenshots + v
 
 # agent-browser driver
 agent-browser install                                # one-time: downloads bundled Chromium
+
+# desktop-control driver (Windows hosts: irm .../scripts/install.ps1 | iex)
+curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash
+cua-driver skills install                            # upstream skill pack (deep tool reference)
 
 # compose + showcase (video rendering)
 sudo apt-get install -y ffmpeg                       # video processing (includes ffprobe)

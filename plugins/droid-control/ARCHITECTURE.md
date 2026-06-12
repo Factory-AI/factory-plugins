@@ -36,7 +36,7 @@ This is the first guardrail against agent drift. The droid does not start with "
 
 | Route | Question | Examples |
 |---|---|---|
-| **Target** | What are we driving? | Droid CLI, other terminal TUI, web/Electron app, raw PTY bytes |
+| **Target** | What are we driving? | Droid CLI, other terminal TUI, web/Electron app, native desktop app, raw PTY bytes |
 | **Stage** | What does the workflow need? | capture, compose, verify |
 | **Artifact** | Does compose need polish tools? | showcase presets, effects, keystroke overlays |
 
@@ -48,7 +48,7 @@ Each atom skill is a self-contained surface the droid reads at a specific point 
 
 | Atom type | Skills | Responsibility |
 |---|---|---|
-| Driver atoms | `tuistory`, `true-input`, `agent-browser` | How to drive a class of environment. |
+| Driver atoms | `tuistory`, `true-input`, `agent-browser`, `desktop-control` | How to drive a class of environment. |
 | Target atoms | `droid-cli`, `pty-capture` | Target-specific shortcuts, launch rules, and byte-capture patterns. |
 | Stage atoms | `capture`, `compose`, `verify` | Lifecycle phases with explicit inputs and outputs. |
 | Polish atom | `showcase` | Visual presets and cinematic layer guidance. |
@@ -119,7 +119,7 @@ Terminal workflows use `bin/tctl` as the only launch/control boundary. It hides 
 
 `tctl` also enforces Droid CLI launch invariants. `droid-dev` sessions must provide `--repo-root`, which lets `tctl` set `DROID_DEV_REPO_ROOT` and record provenance for the captured branch and commit.
 
-Browser and Electron workflows intentionally do **not** go through `tctl`; they use `agent-browser`, whose persistent Playwright-backed daemon is the right control boundary for DOM snapshots, screenshots, and CDP-connected apps.
+Browser/Electron and native-desktop workflows intentionally do **not** go through `tctl`. They have their own control boundaries: `agent-browser`'s persistent Playwright daemon for DOM snapshots, screenshots, and CDP-connected apps; `cua-driver`'s daemon for accessibility trees and per-`(pid, window_id)` element caches on desktop GUIs.
 
 ## Video composition
 
@@ -161,6 +161,9 @@ skills/true-input/platforms/macos.md
 skills/pty-capture/platforms/linux.md
 skills/pty-capture/platforms/windows.md
 skills/pty-capture/platforms/macos.md
+skills/desktop-control/platforms/linux.md
+skills/desktop-control/platforms/windows.md
+skills/desktop-control/platforms/macos.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
