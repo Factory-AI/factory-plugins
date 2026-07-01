@@ -84,6 +84,115 @@ wait_for_wayland_socket() {
   return 1
 }
 
+collect_tree_pids() {
+  local root="$1"
+  local pid ppid
+  local -A children=()
+  while read -r pid ppid; do
+    children["$ppid"]+=" $pid"
+  done < <(ps -eo pid=,ppid= 2>/dev/null || true)
+
+  local -a result=("$root") queue=("$root")
+  local current
+  while (( ${#queue[@]} )); do
+    current="${queue[0]}"
+    queue=("${queue[@]:1}")
+    for pid in ${children[$current]:-}; do
+      result+=("$pid")
+      queue+=("$pid")
+    done
+  done
+  printf '%s\n' "${result[@]}"
+}
+
+# Tear down a true-input compositor and everything under it. Descendant
+# enumeration alone misses processes that script(1) moved to a new session;
+# a process-group kill alone misses those same processes AND anything
+# reparented to init after the leader died. Do both, then escalate.
+terminate_true_input_stack() {
+  local root="$1"
+  local grace_ms="${2:-2000}"
+  [[ -n "$root" ]] || return 0
+
+  local -a targets=()
+  mapfile -t targets < <(collect_tree_pids "$root")
+
+  local pid
+  kill -TERM -- "-$root" >/dev/null 2>&1 || true
+  for pid in "${targets[@]}"; do
+    kill -TERM "$pid" >/dev/null 2>&1 || true
+  done
+
+  local deadline=$(( $(date +%s%3N) + grace_ms ))
+  local alive=1
+  while (( $(date +%s%3N) <= deadline )); do
+    alive=0
+    kill -0 -- "-$root" >/dev/null 2>&1 && alive=1
+    if (( ! alive )); then
+      for pid in "${targets[@]}"; do
+        if kill -0 "$pid" >/dev/null 2>&1; then
+          alive=1
+          break
+        fi
+      done
+    fi
+    (( alive )) || break
+    sleep 0.05
+  done
+
+  if (( alive )); then
+    kill -KILL -- "-$root" >/dev/null 2>&1 || true
+    for pid in "${targets[@]}"; do
+      kill -KILL "$pid" >/dev/null 2>&1 || true
+    done
+  fi
+}
+
+# SIGINT first so wf-recorder finalizes the container; escalate if it hangs.
+terminate_recorder_pid() {
+  local pid="$1"
+  local grace_ms="${2:-3000}"
+  [[ -n "$pid" ]] || return 0
+  kill -INT "$pid" >/dev/null 2>&1 || true
+  local deadline=$(( $(date +%s%3N) + grace_ms ))
+  while kill -0 "$pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+    sleep 0.05
+  done
+  if kill -0 "$pid" >/dev/null 2>&1; then
+    kill -KILL "$pid" >/dev/null 2>&1 || true
+  fi
+}
+
+pid_is_self_or_ancestor() {
+  local candidate="$1"
+  local cur=$$ ppid
+  while [[ -n "$cur" && "$cur" != "0" && "$cur" != "1" ]]; do
+    [[ "$cur" == "$candidate" ]] && return 0
+    ppid="$(ps -o ppid= -p "$cur" 2>/dev/null | tr -d '[:space:]')" || return 1
+    [[ "$ppid" != "$cur" ]] || return 1
+    cur="$ppid"
+  done
+  return 1
+}
+
+# Belt-and-suspenders for sessions whose meta lost the compositor PID (a
+# pre-fix launch bug left CAGE_PID empty for every recorded session). Match
+# only the session's runner scripts ($dir/run-*.sh) -- matching the bare dir
+# path would also hit unrelated processes that merely mention it in argv
+# (an inspecting shell, an editor) -- and never kill ourselves or a caller.
+terminate_session_strays() {
+  local session="$1"
+  local dir
+  dir="$(session_dir "$session")"
+  [[ -n "$dir" ]] || return 0
+  local stray
+  while read -r stray; do
+    [[ -n "$stray" ]] || continue
+    pid_is_self_or_ancestor "$stray" && continue
+    terminate_true_input_stack "$stray" 1000
+  done < <(pgrep -f -- "$dir/run-" 2>/dev/null || true)
+}
+
 quote_sh() {
   printf '%q' "$1"
 }
@@ -481,7 +590,11 @@ launch_true_input() {
   require_cmd cage
   require_cmd wtype
   require_cmd script
+  require_cmd setsid
   require_cmd "$TERMINAL"
+  # Fail before the compositor starts, not after: a die inside the
+  # recording path would strand a live cage.
+  [[ -z "$record_path" ]] || require_cmd wf-recorder
 
   local dir log_file terminal_cmd runtime_dir socket_path
   dir="$(session_dir "$session")"
@@ -519,18 +632,23 @@ launch_true_input() {
   WARMED_UP="0"
   save_session_state "$session"
 
+  # setsid: cage leads its own process group, so teardown can group-kill
+  # the whole stack even after members reparent to init.
   XDG_RUNTIME_DIR="$runtime_dir" \
   WLR_BACKENDS="${WLR_BACKENDS:-headless}" \
   WLR_LIBINPUT_NO_DEVICES="${WLR_LIBINPUT_NO_DEVICES:-1}" \
-  cage -- "${terminal_cmd[@]}" >/dev/null 2>&1 &
+  setsid cage -- "${terminal_cmd[@]}" >/dev/null 2>&1 &
   CAGE_PID="$!"
-  wait_for_wayland_socket "$CAGE_PID" "$socket_path" 5000 \
-    || die "true-input compositor did not create $socket_path"
+  if ! wait_for_wayland_socket "$CAGE_PID" "$socket_path" 5000; then
+    terminate_true_input_stack "$CAGE_PID" 1000
+    die "true-input compositor did not create $socket_path"
+  fi
+  # Persist CAGE_PID before anything below calls load_meta: the recording
+  # path reloads the meta file and would clobber it back to empty.
+  save_session_state "$session"
 
   if [[ -n "$record_path" ]]; then
     start_true_input_recording "$session" "$record_path"
-  else
-    save_session_state "$session"
   fi
 }
 
@@ -741,8 +859,7 @@ stop_true_input_recording() {
   load_meta "$session"
   [[ "$BACKEND" == "true-input" ]] || die "tuistory recordings stop when the session exits; use close to finalize the cast"
   [[ -n "$RECORDER_PID" ]] || die "no active recorder for session: $session"
-  kill -INT "$RECORDER_PID" >/dev/null 2>&1 || true
-  wait "$RECORDER_PID" 2>/dev/null || true
+  terminate_recorder_pid "$RECORDER_PID"
   RECORDER_PID=""
   save_session_state "$session"
 }
@@ -1049,14 +1166,9 @@ cmd_close() {
     fi
     (( close_status == 0 )) || die "failed to close tuistory session: $session"
   else
-    if [[ -n "$RECORDER_PID" ]]; then
-      kill -INT "$RECORDER_PID" >/dev/null 2>&1 || true
-      wait "$RECORDER_PID" 2>/dev/null || true
-    fi
-    if [[ -n "$CAGE_PID" ]]; then
-      kill "$CAGE_PID" >/dev/null 2>&1 || true
-      wait "$CAGE_PID" 2>/dev/null || true
-    fi
+    terminate_recorder_pid "$RECORDER_PID"
+    terminate_true_input_stack "$CAGE_PID"
+    terminate_session_strays "$session"
     if [[ -n "$RUNTIME_DIR" ]]; then
       rm -rf "$RUNTIME_DIR"
     fi
