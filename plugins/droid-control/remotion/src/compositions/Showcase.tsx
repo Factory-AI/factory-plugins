@@ -31,6 +31,7 @@ import { ZoomEffect } from '../components/ZoomEffect';
 import { SectionTransitionOverlay } from '../components/SectionTransition';
 import { DroidOutro } from '../components/DroidOutro';
 import { CodeAnnotationOverlay } from '../components/CodeAnnotationOverlay';
+import { CalloutOverlay } from '../components/CalloutOverlay';
 
 export const showcaseSchema = z.object({
   clips: z.array(z.string()),
@@ -67,6 +68,23 @@ export const showcaseSchema = z.object({
 
 const TITLE_DURATION_S = 4;
 const TRANSITION_FRAMES = 15;
+
+// Effect types this composition actually renders. Anything schema-valid but
+// absent from this set is a silent no-op — warn instead of dropping quietly.
+const RENDERED_FX = new Set(['zoom', 'spotlight', 'callout']);
+const warnedUnrenderedFx = new Set<string>();
+
+const warnUnrenderedEffects = (effects: z.infer<typeof effectSchema>[]) => {
+  for (const effect of effects) {
+    if (RENDERED_FX.has(effect.fx) || warnedUnrenderedFx.has(effect.fx)) {
+      continue;
+    }
+    warnedUnrenderedFx.add(effect.fx);
+    console.warn(
+      `Showcase: effect fx='${effect.fx}' is schema-valid but not rendered by this composition`
+    );
+  }
+};
 
 const resolveFidelity = (
   props: z.infer<typeof showcaseSchema>
@@ -211,6 +229,16 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
     [props.effects]
   );
 
+  const callouts = useMemo(
+    () =>
+      props.effects.filter(
+        (e): e is Extract<typeof e, { fx: 'callout' }> => e.fx === 'callout'
+      ),
+    [props.effects]
+  );
+
+  warnUnrenderedEffects(props.effects);
+
   return (
     <AbsoluteFill>
       <Background palette={palette} config={config} />
@@ -288,6 +316,11 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
                 dim={spot.dim}
               />
             ))}
+
+            {/* Callout annotations: timed text pills at percent positions */}
+            {callouts.length > 0 && (
+              <CalloutOverlay callouts={callouts} palette={palette} />
+            )}
 
             {/* Frosted sweep at section boundaries */}
             {props.sections && props.sections.length > 1 && (
