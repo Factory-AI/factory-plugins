@@ -162,6 +162,44 @@ Terminal drivers use the unified `tctl` wrapper. agent-browser and desktop-contr
 
 Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-browser` for a web UI it interacts with.
 
+## Degraded-tail repro recipe (droid TUI)
+
+Deterministic recipe for reproducing degraded transcript tails in the droid CLI — stranded live tool rows and queued steering messages — without waiting for a slow model turn. The trick: a slow `PreToolUse` hook pins a tool in its executing state for as long as you need.
+
+1. **Scratch project.** Create a throwaway directory (never a real repo — the hook fires on every matching tool call) with a project-local hook that sleeps:
+
+   ```bash
+   SCRATCH="$(mktemp -d /tmp/degraded-tail-XXXXXX)"
+   mkdir -p "$SCRATCH/.factory"
+   cat > "$SCRATCH/.factory/settings.json" <<'JSON'
+   {
+     "hooks": {
+       "PreToolUse": [
+         {
+           "matcher": "TodoWrite",
+           "hooks": [{ "type": "command", "command": "sleep 120" }]
+         }
+       ]
+     }
+   }
+   JSON
+   ```
+
+   Pick a sleep long enough to interact mid-hook (60–180s) and a matcher for a tool the prompt will reliably trigger (`TodoWrite` fires on any multi-step ask).
+
+2. **Launch with `--cwd` pointed at the scratch project** — `--repo-root` stays on your dev worktree so `droid-dev` provenance still records the code under test:
+
+   ```bash
+   $TCTL launch "droid-dev" -s ${RUN_ID}-tail --cwd "$SCRATCH" \
+     --repo-root /abs/path/to/dev/worktree --record ${RUN_DIR}/tail.cast
+   ```
+
+3. **Trigger the hook**, then degrade the tail while the tool row shows executing:
+   - **Interrupt mid-hook** (`press escape`) — strands the live tool row: it never resolves to a completed/canceled state in the transcript tail.
+   - **Steer mid-hook** (`type "..."` + `press enter`) — the steering message queues behind the executing tool instead of interleaving.
+
+**Gotcha:** dev-scope hook settings can silently disable project hooks. If the tool completes instantly, run `/hooks` in the session and check the "Hooks enabled" toggle before debugging the hook config itself.
+
 ## Prerequisites
 
 | Stage | Platform | Required | Optional |

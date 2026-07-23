@@ -117,7 +117,7 @@ Terminal workflows use `bin/tctl` as the only launch/control boundary. It hides 
 | `tuistory` | Virtual PTY sessions, deterministic waits/snapshots, asciinema recording at launch. | Fast TUI automation and most demo captures. |
 | `true-input` | Headless Wayland compositor, real terminal emulator, native key injection, PTY log/screenshot/video capture. | Real terminal rendering or keyboard-encoding proof. |
 
-`tctl` also enforces Droid CLI launch invariants. `droid-dev` sessions must provide `--repo-root`, which lets `tctl` set `DROID_DEV_REPO_ROOT` and record provenance for the captured branch and commit.
+`tctl` also enforces Droid CLI launch invariants. `droid-dev` sessions must provide `--repo-root`, which lets `tctl` set `DROID_DEV_REPO_ROOT` and record provenance for the captured branch and commit. `--cwd` is independent: it sets the child's working directory (recorded in provenance) and defaults to `--repo-root` when unset, so a session can run one worktree's code from a different project directory.
 
 Browser/Electron and native-desktop workflows intentionally do **not** go through `tctl`. They have their own control boundaries: `agent-browser`'s persistent Playwright daemon for DOM snapshots, screenshots, and CDP-connected apps; `cua-driver`'s daemon for accessibility trees and per-`(pid, window_id)` element caches on desktop GUIs.
 

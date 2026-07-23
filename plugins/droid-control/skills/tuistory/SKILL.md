@@ -59,7 +59,7 @@ $TCTL -s demo close
 | `snapshot [--trim]` | Print cleaned text (`--trim` strips trailing blanks) |
 | `close` | Tear down session |
 
-Launch options: `--cols <n>`, `--rows <n>`, `--cwd <path>`, `--env KEY=VALUE`, `--record <path>`.
+Launch options: `--cols <n>`, `--rows <n>`, `--cwd <path>` (child working directory; defaults to `--repo-root` when set), `--env KEY=VALUE`, `--record <path>`.
 
 ## Recording
 
