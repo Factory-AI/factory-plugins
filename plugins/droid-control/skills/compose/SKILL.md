@@ -245,8 +245,8 @@ Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-
 
 | Effect | Props | Description |
 |---|---|---|
-| `fade-in` | `t`, `dur` | Fade from black |
-| `fade-out` | `t`, `dur` | Fade to black |
+| `fade-in` | `t`, `dur` | Fade from black (schema-valid but not yet rendered by Showcase — emits a render-time warning) |
+| `fade-out` | `t`, `dur` | Fade to black (schema-valid but not yet rendered by Showcase — emits a render-time warning) |
 | `zoom` | `t`, `dur`, `to: {x,y,w,h}` | Directed zoom to a target region (30% in, 40% hold, 30% out) |
 | `spotlight` | `t`, `dur`, `on: {x,y,w,h}`, `dim?` | Dim everything except a region (`dim`: 0–1, default 0.6) |
 | `callout` | `t`, `dur`, `text`, `at: {x,y}` | Text overlay anchored to a point |

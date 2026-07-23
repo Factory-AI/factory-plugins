@@ -31,7 +31,8 @@ Launch options:
   --terminal <name>          Override terminal for true-input
   --cols <n>                 Columns (default: 120)
   --rows <n>                 Rows (default: 36)
-  --cwd <path>               Working directory (tuistory)
+  --cwd <path>               Working directory for the child, both backends
+                             (default: --repo-root when set)
   --repo-root <path>         Git worktree root for provenance + droid-dev launches
   --env <KEY=VALUE>          Environment variable (repeatable)
   --tmux                     Wrap the command in tmux with RGB-safe tuistory defaults
@@ -319,21 +320,25 @@ require_git_worktree_root() {
 write_provenance() {
   local session="$1"
   local repo_root="$2"
+  local cwd="$3"
   local file branch commit
   file="$(provenance_file "$session")"
 
-  if [[ -z "$repo_root" ]]; then
+  if [[ -z "$repo_root" && -z "$cwd" ]]; then
     rm -f "$file"
     return 0
   fi
 
-  branch="$(git -C "$repo_root" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
-  commit="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf 'unknown')"
-  cat > "$file" <<PROVENANCE
-repo_root=$repo_root
-branch=$branch
-commit=$commit
-PROVENANCE
+  {
+    if [[ -n "$repo_root" ]]; then
+      branch="$(git -C "$repo_root" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
+      commit="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+      printf 'repo_root=%s\nbranch=%s\ncommit=%s\n' "$repo_root" "$branch" "$commit"
+    fi
+    if [[ -n "$cwd" ]]; then
+      printf 'cwd=%s\n' "$cwd"
+    fi
+  } > "$file"
 }
 
 resolve_backend() {
@@ -937,9 +942,12 @@ cmd_launch() {
 
   if [[ -n "$repo_root" ]]; then
     require_git_worktree_root "$repo_root"
-    if [[ -n "$cwd" && "$cwd" != "$repo_root" ]]; then
-      die "--cwd must match --repo-root when --repo-root is set"
-    fi
+  fi
+
+  if [[ -n "$cwd" ]]; then
+    [[ "$cwd" = /* ]] || die "--cwd must be an absolute path: $cwd"
+    [[ -d "$cwd" ]] || die "--cwd does not exist: $cwd"
+  elif [[ -n "$repo_root" ]]; then
     cwd="$repo_root"
   fi
 
@@ -977,7 +985,7 @@ cmd_launch() {
   WARMED_UP="0"
   REPO_ROOT="$repo_root"
   save_session_state "$session"
-  write_provenance "$session" "$repo_root"
+  write_provenance "$session" "$repo_root" "$cwd"
 
   if [[ "$BACKEND" == "tuistory" ]]; then
     launch_tuistory "$session" "$cols" "$rows" "$record_path"

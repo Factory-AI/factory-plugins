@@ -72,6 +72,7 @@ $TCTL -s demo press tab
 - **No per-branch builds.** One `npm run setup` (in any checkout) installs the shim. Switching branches is instant via `--repo-root`.
 - **Prerequisite:** The target worktree must have `node_modules` installed (`npm install` at the repo root). If missing, the bun launch fails.
 - **`tctl --repo-root`** sets `DROID_DEV_REPO_ROOT` automatically and pins the session to that worktree.
+- **`tctl --cwd`** is independent of `--repo-root`: run droid against one worktree's code while sitting in a different project directory (e.g., a scratch project with its own `.factory/settings.json` hooks). Defaults to `--repo-root` when unset.
 
 ### `droid-dev`
 
