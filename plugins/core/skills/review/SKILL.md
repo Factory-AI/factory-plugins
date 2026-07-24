@@ -248,4 +248,6 @@ Before approving a candidate:
 
 When invoked locally (TUI/CLI), analyze the changes and provide a structured summary of findings. List each finding with its priority, file, line, and description.
 
+If the review produces **no findings**, respond with a short **LGTM** message (e.g., "LGTM — no issues found."). Do not pad it with caveats or disclaimers.
+
 Do **not** post inline comments to the PR or submit a GitHub review unless the user explicitly asks for it.
