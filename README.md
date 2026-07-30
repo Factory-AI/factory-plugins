@@ -32,6 +32,7 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 
 - `review` - Review code changes and identify high-confidence, actionable bugs. Includes systematic analysis patterns for null safety, async/await, security, concurrency, API contracts, and more. Used by both the CLI `/review` command and the CI action.
 - `simplify` - Parallel code review across reuse, quality, and efficiency axes
+- `macos-notifications` - Diagnose and fix macOS desktop notifications for the CLI, including tmux and iTerm2 setups. Covers the silent `terminal-notifier` failure on modern macOS, `hooks.json` vs `settings.json` precedence, and a known-good `osascript` hook script.
 
 ### droid-control
 
