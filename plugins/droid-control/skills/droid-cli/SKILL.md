@@ -37,7 +37,6 @@ When a dialog shows `Use up/down to navigate...`: `up`/`down` moves the highligh
 | `/model` | Open model selector |
 | `/clear` or `/new` | Start a new session |
 | `/sessions` | Browse previous sessions |
-| `/review` | Start AI code review |
 | `/status` | Show current config |
 | `/cost` | Show usage / cost |
 | `/compress [prompt]` | Summarize and move to fresh session |
