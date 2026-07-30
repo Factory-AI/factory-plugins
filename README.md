@@ -30,7 +30,6 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 
 **Skills:**
 
-- `review` - Review code changes and identify high-confidence, actionable bugs. Includes systematic analysis patterns for null safety, async/await, security, concurrency, API contracts, and more. Used by both the CLI `/review` command and the CI action.
 - `simplify` - Parallel code review across reuse, quality, and efficiency axes
 
 ### droid-control
