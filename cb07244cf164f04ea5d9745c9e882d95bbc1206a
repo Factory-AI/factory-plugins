@@ -1,0 +1,25 @@
+plugins/core/skills/macos-notifications/SKILL.md
+  293940abeb806deb 1-270
+README.md
+  293940abeb806deb 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "cb07244cf164f04ea5d9745c9e882d95bbc1206a",
+  "prompts": {
+    "293940abeb806deb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3ebcdd18-051a-43eb-92f6-a8e189f40721",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Jawad Mamun",
+      "messages": [],
+      "total_additions": 271,
+      "total_deletions": 0,
+      "accepted_lines": 271,
+      "overriden_lines": 0
+    }
+  }
+}
