@@ -1,0 +1,8 @@
+{
+  "name": "conjure",
+  "description": "Deploy and manage static sites on conjure, and use the site-scoped platform APIs (db, files, identity, ws, ai, warehouse)",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  }
+}

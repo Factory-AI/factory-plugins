@@ -97,6 +97,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### conjure
+
+Deploy a folder of static files to conjure and get a live site with platform APIs attached. Requires the `conjure` CLI.
+
+**Skills:**
+
+- `conjure` - Deploy loop (`deploy`, `versions`, `rollback`, `logs`), API tokens, and the site-scoped `/_conjure/` APIs: db, files, identity, ws, ai, warehouse
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
