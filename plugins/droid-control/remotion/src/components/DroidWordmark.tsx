@@ -9,7 +9,7 @@ const DROID_ASCII = `
   ███    ███    ███ ███       ███    ███    ███    ███    ███
   ███    ███    ███  ███      ███    ███    ███    ███    ███
   ██████████    ███   ███     ██████████    ███    ██████████
-`.trim();
+`.replace(/^\n/, '').trimEnd();
 
 export const DroidWordmark: React.FC<{
   palette: Palette;
