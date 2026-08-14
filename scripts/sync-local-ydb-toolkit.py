@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import re
 import shutil
 import stat
@@ -190,6 +191,24 @@ def remove_managed_target(target: PurePosixPath) -> None:
         shutil.rmtree(destination)
 
 
+def write_generated_file(destination: Path, source_file: SourceFile) -> None:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    mode = 0o755 if source_file.executable else 0o644
+
+    try:
+        descriptor = os.open(destination, flags, mode)
+    except FileExistsError as error:
+        target = destination.relative_to(PLUGIN_ROOT)
+        raise SyncError(f"Destination appeared during synchronization: {target}") from error
+
+    with os.fdopen(descriptor, "wb") as output:
+        output.write(source_file.content)
+        if hasattr(os, "fchmod"):
+            os.fchmod(output.fileno(), mode)
+
+
 def synchronize(generated: dict[PurePosixPath, SourceFile]) -> None:
     for _, target in SOURCE_MAPPINGS:
         remove_managed_target(target)
@@ -197,8 +216,7 @@ def synchronize(generated: dict[PurePosixPath, SourceFile]) -> None:
     for target, source_file in sorted(generated.items(), key=lambda item: item[0].as_posix()):
         destination = destination_for(target)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(source_file.content)
-        destination.chmod(0o755 if source_file.executable else 0o644)
+        write_generated_file(destination, source_file)
 
 
 def parse_arguments() -> argparse.Namespace:

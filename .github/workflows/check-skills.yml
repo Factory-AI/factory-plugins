@@ -90,6 +90,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          python3 scripts/test_sync_local_ydb_toolkit.py
+
           source_commit="$(python3 -c 'import json; print(json.load(open("plugins/local-ydb-toolkit/SOURCE.json"))["commit"])')"
           if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error::Invalid Local YDB Toolkit source commit"
