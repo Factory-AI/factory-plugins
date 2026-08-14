@@ -57,11 +57,7 @@
     {
       "name": "local-ydb-toolkit",
       "description": "Operate Docker-based local YDB deployments with safety guidance and a local stdio MCP server",
-      "source": {
-        "source": "github",
-        "repo": "astandrik/local-ydb-toolkit",
-        "ref": "main"
-      },
+      "source": "./plugins/local-ydb-toolkit",
       "category": "database"
     }
   ]

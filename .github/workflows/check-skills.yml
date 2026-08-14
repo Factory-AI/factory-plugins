@@ -83,3 +83,25 @@ jobs:
           fi
 
           echo "All skills are accounted for."
+
+      - name: Verify vendored Local YDB Toolkit source
+        env:
+          SOURCE_REPOSITORY: https://github.com/astandrik/local-ydb-toolkit.git
+        run: |
+          set -euo pipefail
+
+          source_commit="$(python3 -c 'import json; print(json.load(open("plugins/local-ydb-toolkit/SOURCE.json"))["commit"])')"
+          if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Invalid Local YDB Toolkit source commit"
+            exit 1
+          fi
+
+          source_dir="$(mktemp -d)"
+          trap 'rm -rf "$source_dir"' EXIT
+
+          git init -q "$source_dir"
+          git -C "$source_dir" remote add origin "$SOURCE_REPOSITORY"
+          git -C "$source_dir" fetch --quiet --depth=1 origin "$source_commit"
+          git -C "$source_dir" checkout --quiet --detach FETCH_HEAD
+
+          python3 scripts/sync-local-ydb-toolkit.py --source "$source_dir" --check
