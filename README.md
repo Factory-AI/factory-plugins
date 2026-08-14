@@ -80,6 +80,18 @@ Pull request lifecycle skills: open, triage, and follow up on PRs with consisten
 - `create-pr` - Open a PR with Conventional Commits title, templated body, and local verification gates
 - `follow-up-on-pr` - Rebase, address reviewer comments, fix CI, and push an existing PR to merge-ready state
 
+### local-ydb-toolkit
+
+Operate Docker-based local YDB deployments with reusable safety guidance and a pinned local stdio MCP server.
+
+**Skill:** `local-ydb`
+
+**MCP server:** `local-ydb` via `npx --yes @astandrik/local-ydb-mcp@0.15.4`
+
+Requires Node.js 20.19 or newer and npm. Because the MCP server starts from the plugin root, pass an absolute `configPath` or set `LOCAL_YDB_TOOLKIT_CONFIG` when using a toolkit config file.
+
+Source: [astandrik/local-ydb-toolkit](https://github.com/astandrik/local-ydb-toolkit)
+
 ### droid-evolved
 
 Skills for continuous learning and improvement.
