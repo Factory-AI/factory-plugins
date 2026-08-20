@@ -1,0 +1,23 @@
+plugins/conjure/README.md
+  2dd6032c558e1d4d 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "d5fad218a95c231eb4c042a4940bf6c7fe578950",
+  "prompts": {
+    "2dd6032c558e1d4d": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "74ff5f5b-ae95-4a89-af4b-6867d7c053da",
+        "model": "claude-opus-5-fast"
+      },
+      "human_author": "Eric Fan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 0,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
