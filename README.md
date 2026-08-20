@@ -80,6 +80,14 @@ Pull request lifecycle skills: open, triage, and follow up on PRs with consisten
 - `create-pr` - Open a PR with Conventional Commits title, templated body, and local verification gates
 - `follow-up-on-pr` - Rebase, address reviewer comments, fix CI, and push an existing PR to merge-ready state
 
+### conjure
+
+Build, deploy and manage sites and dashboards on Conjure, Factory's internal static-site platform.
+
+**Skills:**
+
+- `conjure` - Install and authenticate the conjure CLI, then build, deploy, roll back and inspect sites, including their per-site db, files, identity, ws, ai and warehouse APIs
+
 ### droid-evolved
 
 Skills for continuous learning and improvement.

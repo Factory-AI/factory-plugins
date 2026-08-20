@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "conjure",
+      "description": "Build, deploy and manage sites and dashboards on Conjure, Factory's internal static-site platform",
+      "source": "./plugins/conjure",
+      "category": "productivity"
     }
   ]
 }
