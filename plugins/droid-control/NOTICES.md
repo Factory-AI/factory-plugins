@@ -17,7 +17,7 @@ This plugin depends on several third-party tools and libraries. They are not bun
 
 ## Browser automation
 
-- **[agent-browser](https://docs.factory.ai/)** -- Playwright-backed browser automation CLI
+- **[agent-browser](https://docs.factory.ai/)** -- CDP browser automation CLI
 
 ## System tools
 
