@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "aeon",
+      "description": "Operator console for an Aeon agent instance: enable/schedule/edit skills, wire secrets and channels, debug runs, and mine past coding-agent chats into scheduled skills",
+      "source": "./plugins/aeon",
+      "category": "productivity"
     }
   ]
 }
