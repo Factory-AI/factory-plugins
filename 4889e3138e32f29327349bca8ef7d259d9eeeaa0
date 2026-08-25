@@ -1,0 +1,25 @@
+plugins/droid-control/skills/agent-browser/SKILL.md
+  275d8f0d3ff2ec63 9-11,13,15,17-18,21,24-25,27,30-31,34-36,38,40,43-47,50-51,53,55,58-63,66,69,72,76,80,82,85-89,92,94,96,100-103,107-108,110,112,115,118,120,122,125-128,131-133,135,137,140-143,145-149,152-154,156,158,161-162,165,167,169-172,174-176,178,180-188,190,192,195,197-201,204-205
+plugins/droid-control/ARCHITECTURE.md
+  275d8f0d3ff2ec63 122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "4889e3138e32f29327349bca8ef7d259d9eeeaa0",
+  "prompts": {
+    "275d8f0d3ff2ec63": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e6c374cf-cb9b-4473-ba37-208c11a0be5a",
+        "model": "gpt-5.6-sol-fast"
+      },
+      "human_author": "factory-daniel",
+      "messages": [],
+      "total_additions": 114,
+      "total_deletions": 438,
+      "accepted_lines": 114,
+      "overriden_lines": 0
+    }
+  }
+}
