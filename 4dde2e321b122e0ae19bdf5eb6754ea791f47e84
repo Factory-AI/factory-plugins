@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "4dde2e321b122e0ae19bdf5eb6754ea791f47e84",
+  "prompts": {
+    "d6f18d7700de3b4e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7ffa5762-066a-47d5-9724-cb26f2c00774",
+        "model": "auto"
+      },
+      "human_author": "Nizar Alrifai",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 2,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,31 @@
+plugins/droid-control/bin/tctl
+  16a316e4cddd377e 323,327,332-341,945-950,988
+plugins/droid-control/skills/droid-control/SKILL.md
+  16a316e4cddd377e 165-202
+plugins/droid-control/ARCHITECTURE.md
+  16a316e4cddd377e 120
+plugins/droid-control/skills/droid-cli/SKILL.md
+  16a316e4cddd377e 75
+plugins/droid-control/skills/tuistory/SKILL.md
+  16a316e4cddd377e 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "5654245788a8193a18eb2fb89c5044475233e747",
+  "prompts": {
+    "16a316e4cddd377e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ed8c08a0-cc96-494e-be7e-04dd7749925d",
+        "model": "custom:anthropic://fable-5"
+      },
+      "human_author": "factory-ain3sh",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 67,
+      "overriden_lines": 0
+    }
+  }
+}

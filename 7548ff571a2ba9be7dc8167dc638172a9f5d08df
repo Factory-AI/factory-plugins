@@ -1,0 +1,29 @@
+plugins/conjure/.factory-plugin/plugin.json
+  8a0dcb27809c1c65 1-8
+.factory-plugin/marketplace.json
+  8a0dcb27809c1c65 56-61
+plugins/conjure/README.md
+  8a0dcb27809c1c65 1-31
+README.md
+  8a0dcb27809c1c65 100-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "7548ff571a2ba9be7dc8167dc638172a9f5d08df",
+  "prompts": {
+    "8a0dcb27809c1c65": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "fdecc92c-0586-481b-afe9-237833baee11",
+        "model": "claude-opus-5-fast"
+      },
+      "human_author": "Luke Alvoeiro",
+      "messages": [],
+      "total_additions": 53,
+      "total_deletions": 0,
+      "accepted_lines": 53,
+      "overriden_lines": 0
+    }
+  }
+}

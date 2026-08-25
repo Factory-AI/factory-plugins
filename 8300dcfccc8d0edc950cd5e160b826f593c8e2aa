@@ -1,0 +1,23 @@
+plugins/droid-control/skills/droid-cli/SKILL.md
+  d6f18d7700de3b4e 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "8300dcfccc8d0edc950cd5e160b826f593c8e2aa",
+  "prompts": {
+    "d6f18d7700de3b4e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7ffa5762-066a-47d5-9724-cb26f2c00774",
+        "model": "auto"
+      },
+      "human_author": "Nizar Alrifai",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

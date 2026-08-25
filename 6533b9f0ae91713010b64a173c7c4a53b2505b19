@@ -1,0 +1,29 @@
+plugins/droid-control/skills/compose/SKILL.md
+  16a316e4cddd377e 248-249
+plugins/droid-control/remotion/src/compositions/Showcase.tsx
+  16a316e4cddd377e 72-88,320-324
+plugins/droid-control/README.md
+  16a316e4cddd377e 79
+plugins/droid-control/remotion/src/components/CalloutOverlay.tsx
+  16a316e4cddd377e 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "6533b9f0ae91713010b64a173c7c4a53b2505b19",
+  "prompts": {
+    "16a316e4cddd377e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "ed8c08a0-cc96-494e-be7e-04dd7749925d",
+        "model": "custom:anthropic://fable-5"
+      },
+      "human_author": "factory-ain3sh",
+      "messages": [],
+      "total_additions": 186,
+      "total_deletions": 18,
+      "accepted_lines": 185,
+      "overriden_lines": 0
+    }
+  }
+}
