@@ -22,12 +22,14 @@ HOL Guard is an external runtime. This Factory plugin does not claim that Droid 
 
 ## Install
 
-Check the runtime and scanner separately:
+Check the runtime and scanner separately with commands that work across supported shells:
 
 ```bash
-command -v hol-guard || true
-command -v plugin-scanner || true
+hol-guard --version
+plugin-scanner --version
 ```
+
+If either command is unavailable, install only the CLI needed for the requested workflow.
 
 For runtime protection:
 
@@ -49,11 +51,12 @@ Do not assume the `hol-guard` package also provides the `plugin-scanner` command
 
 ## Protect A Supported Harness
 
-HOL Guard currently supports these harness targets: `codex`, `claude-code`, `copilot`, `cursor`, `gemini`, `hermes`, `openclaw`, `opencode`, and `antigravity`.
+Treat `hol-guard detect --json` as the source of truth for the harnesses supported by the installed HOL Guard version. Do not maintain or infer a static harness list in this skill.
 
 Use Guard-owned setup and verify before normal work:
 
 ```bash
+hol-guard detect --json
 hol-guard bootstrap
 hol-guard install <harness>
 hol-guard run <harness> --dry-run
@@ -68,7 +71,7 @@ For Hermes, prefer its dedicated bootstrap path when applicable:
 hol-guard hermes bootstrap
 ```
 
-If the current environment is Factory/Droid without one of the supported harnesses above, do not invent a `droid` target. Use HOL Guard for package scanning, evidence review, or for a separately installed supported harness.
+If the current Factory/Droid environment is not reported as a supported harness by `hol-guard detect --json`, do not invent a `droid` target. Use HOL Guard for package scanning, evidence review, or for a separately installed harness that Guard reports as supported.
 
 ## Review Approvals And Evidence
 
