@@ -584,6 +584,20 @@ launch_tuistory() {
     cleanup_tuistory_asciinema "$session" "$record_path"
     launch_cmd="$(write_tuistory_recording_runner "$session" "$record_path")"
   fi
+  # On Windows, passing a .sh file directly makes CreateProcess follow the
+  # file association and open Git Bash/Mintty outside Tuistory's PTY. Launch
+  # the runner through bash.exe instead. Tuistory's Windows command parser
+  # does not preserve quoted executable paths, so use DOS short paths to keep
+  # both argv entries whitespace-free.
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      require_cmd cygpath
+      local bash_win runner_win
+      bash_win="$(cygpath -w -s "$(command -v bash)")"
+      runner_win="$(cygpath -w -s "$launch_cmd")"
+      launch_cmd="$bash_win $runner_win"
+      ;;
+  esac
   local args=(launch "$launch_cmd" -s "$session" --cols "$cols" --rows "$rows")
   tuistory "${args[@]}"
 }
