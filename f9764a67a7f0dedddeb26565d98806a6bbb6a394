@@ -1,0 +1,25 @@
+README.md
+  3466adcbf5c709ce 115-116
+plugins/core/output-styles/explanatory.md
+  3466adcbf5c709ce 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "f9764a67a7f0dedddeb26565d98806a6bbb6a394",
+  "prompts": {
+    "3466adcbf5c709ce": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "029ad89a-c73a-4669-97ad-33ea93c32b50",
+        "model": "claude-fable-5.1"
+      },
+      "human_author": "Arman Bolat",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
