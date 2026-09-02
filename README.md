@@ -32,6 +32,10 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 
 - `simplify` - Parallel code review across reuse, quality, and efficiency axes
 
+**Output styles:**
+
+- `Explanatory` - Explains implementation choices and codebase patterns while completing the task
+
 ### droid-control
 
 Terminal, browser, and computer automation for Droids. Record demos, verify behavior claims, and run QA flows.
@@ -108,6 +112,8 @@ plugin-name/
 ├── skills/               # Skill definitions
 │   └── skill-name/
 │       └── SKILL.md
+├── output-styles/        # Output style definitions (optional)
+│   └── style-name.md
 ├── droids/               # Droid definitions (optional)
 ├── commands/             # Custom commands (optional)
 ├── mcp.json              # MCP server config (optional)
