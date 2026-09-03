@@ -1,0 +1,8 @@
+{
+  "name": "addi-decisioning",
+  "description": "Addi-specific skills for the Decisioning platform: validate E2E test scenarios documented in Notion against the staging legacy_loan_application JSONB rows.",
+  "author": {
+    "name": "Addi Platform",
+    "email": "platform@addi.com"
+  }
+}

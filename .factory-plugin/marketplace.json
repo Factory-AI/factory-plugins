@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "addi-decisioning",
+      "description": "Addi-specific skills for the Decisioning platform: validate E2E test scenarios from Notion against the staging legacy_loan_application JSONB rows",
+      "source": "./plugins/addi-decisioning",
+      "category": "qa"
     }
   ]
 }

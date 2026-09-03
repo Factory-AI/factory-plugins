@@ -101,6 +101,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### addi-decisioning
+
+Addi-specific skills for validating the Decisioning platform.
+
+**Skills:**
+
+- `validating-decisioning-e2e-tests` - Validate Decisioning E2E test scenarios documented in Notion against the staging `legacy_loan_application` JSONB rows
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

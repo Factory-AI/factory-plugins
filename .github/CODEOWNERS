@@ -1,0 +1,9 @@
+# CODEOWNERS for Factory-AI/factory-plugins
+#
+# One entry per plugin. Owners are auto-requested for review on any PR that
+# touches their plugin's directory or the top-level skill symlink that points
+# into it.
+
+# addi-decisioning — owned by the Addi Decisioning team
+/plugins/addi-decisioning/                @AdelanteFinancialHoldings/decisioning-approvers
+/skills/validating-decisioning-e2e-tests  @AdelanteFinancialHoldings/decisioning-approvers
