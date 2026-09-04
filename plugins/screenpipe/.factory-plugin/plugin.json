@@ -1,0 +1,10 @@
+{
+  "name": "screenpipe",
+  "description": "Local-first workflow memory for reconstructing real work, drafting cited SOPs, and finding automation candidates",
+  "version": "1.0.0",
+  "author": {
+    "name": "screenpipe",
+    "url": "https://screenpi.pe"
+  },
+  "license": "MIT"
+}
