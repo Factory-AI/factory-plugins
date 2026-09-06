@@ -101,6 +101,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### aeon
+
+Operator console for [Aeon](https://github.com/aeonfun/aeon), an autonomous agent framework that runs your own skills on a schedule in GitHub Actions.
+
+**Skills:**
+
+- `aeon` - Set up and run an Aeon instance: enable or schedule skills, wire secrets and channels, debug runs, set the strategy and voice, and mine past coding-agent chats into scheduled skills
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
