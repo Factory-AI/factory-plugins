@@ -31,6 +31,7 @@ Core skills for essential functionalities and integrations. Pre-installed by the
 **Skills:**
 
 - `simplify` - Parallel code review across reuse, quality, and efficiency axes
+- `macos-notifications` - Diagnose and fix macOS desktop notifications for the CLI, including tmux and iTerm2 setups. Covers the silent `terminal-notifier` failure on modern macOS, `hooks.json` vs `settings.json` precedence, and a known-good `osascript` hook script.
 
 **Output styles:**
 
