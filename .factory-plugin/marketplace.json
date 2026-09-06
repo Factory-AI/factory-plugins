@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "atomic-chat",
+      "description": "Connect Atomic Chat local LLMs to Factory via OpenAI-compatible API and setup skills",
+      "source": "./plugins/atomic-chat",
+      "category": "integrations"
     }
   ]
 }
