@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "local-ydb-toolkit",
+      "description": "Operate Docker-based local YDB deployments with safety guidance and a local stdio MCP server",
+      "source": "./plugins/local-ydb-toolkit",
+      "category": "database"
     }
   ]
 }
