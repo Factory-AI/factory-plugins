@@ -101,6 +101,16 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### humanizer-ru
+
+Remove AI-generation markers from Russian text and make it read like a human wrote it. Russian-language counterpart to `human-writing`.
+
+**Skills:**
+
+- `humanizer-ru` - 64 AI-text patterns across 14 categories, 21 hard bans, rewrite / audit / targeted-fix modes, optional deterministic 0-100 scanner (`scripts/scan.py`)
+
+See [plugins/humanizer-ru/README.md](plugins/humanizer-ru/README.md) for details.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

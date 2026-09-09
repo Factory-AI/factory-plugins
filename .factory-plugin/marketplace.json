@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "humanizer-ru",
+      "description": "Remove AI-generation markers from Russian text: 64 patterns, 21 hard bans, rewrite / audit / targeted-fix modes, and a deterministic scanner",
+      "source": "./plugins/humanizer-ru",
+      "category": "writing"
     }
   ]
 }
