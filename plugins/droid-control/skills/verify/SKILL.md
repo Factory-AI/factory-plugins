@@ -15,6 +15,8 @@ You receive:
 1. **Commitments** from the command's parse step -- the promises made about what the deliverable would contain
 2. **Compose outputs** -- the finished artifact(s) and their metadata
 
+Composition is optional: raw desktop screenshots/state and the driver's evidence handoff can be the deliverable. Verify the task's postcondition, not merely the action's exit status or `effect` field. An unavailable capture or permission wait is a blocker, not proof of failure or success.
+
 ## Video deliverables
 
 ### Technical checks

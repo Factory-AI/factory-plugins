@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/trycua/cua",
+  "revision": "69b23e1a6c8fc76687d38aee8aa869b5359ff4a5",
+  "source_path": "libs/cua-driver/rust/Skills/cua-driver",
+  "files": {
+    "BROWSER.md": "865da3b26f49f9a4dcdcdcfd245783e604ba81563b19e566579a17a1b46c3ba7",
+    "EMBEDDING.md": "206e2c5ad3b5be5d7d5a0214975df9fa9e59026e72165c97eed4b59669db9715",
+    "LICENSE.md": "c0779290c1d4783169aa3dbfb55feb505e563ef8a004bbf55298ceffcfbda8d9",
+    "LINUX.md": "a711eb73acc0588bcfcea9bc3599f53c124953b7b9a0b06ebfcf562c11f1f03e",
+    "MACOS.md": "c3fe476a0321fef996e82cbe0ab06d75a44cf1298daaec24ed681efb9a3b2cc5",
+    "README.md": "67ebc80cb1f86dcd123d07ca8fd060f38925903892c3127c500d955252b53f92",
+    "RECORDING.md": "cadd67ac75b83d3d3851bd92c0aab18509bea0be0158912071b68efc64930c9b",
+    "RUNTIME.md": "ad032aecfbee63812a2fda201aeb3c8b0ebc56dc8418690c71d2fc2c7850fe20",
+    "SKILL.md": "a5ad24c76f864adeadf725b5260ab29b9cb72c07076c484f6db67952ed05bfb5",
+    "WINDOWS.md": "8827fb3de9019176a3e9632f9bc66b0c06413324cff2fde8c5c07f4159790d68",
+    "WORKFLOW.md": "f00eeb9b8228e3186f1bb0644290a660d6875db4618fe1c0784f903f2e8cab5d"
+  }
+}

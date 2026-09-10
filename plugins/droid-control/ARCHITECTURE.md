@@ -12,7 +12,7 @@ The plugin is designed to keep a droid focused while it operates real software:
 
 - **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and Remotion internals.
 - **Evidence-first workflows:** every command starts by making commitments, then ends by verifying the artifact against those commitments.
-- **Parallel execution:** before/after captures and render jobs can run in worker droids without sharing session names or output paths.
+- **Parallel execution:** independent capture environments and render jobs can run in workers. Shared desktop input stays serialized; session names do not isolate focus.
 - **Clear ownership:** commands decide *what* must be produced; atom skills decide *how* to execute their slice.
 - **Platform specificity:** OS-specific mechanics live in platform subdocuments, not in global instructions.
 
@@ -85,9 +85,10 @@ The parent droid keeps judgment. Workers get exact commands.
 
 | Work | Owner | Reason |
 |---|---|---|
+| Short interactive desktop task | Parent | One controller owns observation, input, permission waits, and cleanup. |
 | Interpret PR / claim / QA goal | Parent | Requires context and judgment. |
 | Write the interaction script | Parent | Defines the proof story. |
-| Capture baseline and candidate branches | Worker droids | Independent, mechanical, parallelizable. |
+| Capture baseline and candidate branches | Workers only for independent environments | A shared desktop must be captured serially. |
 | Render Remotion video | Worker droid | Mechanical once props and clips are fixed. |
 | Verify commitments | Parent | Requires the original contract and evidence judgment. |
 
@@ -161,12 +162,16 @@ skills/true-input/platforms/macos.md
 skills/pty-capture/platforms/linux.md
 skills/pty-capture/platforms/windows.md
 skills/pty-capture/platforms/macos.md
-skills/desktop-control/platforms/linux.md
-skills/desktop-control/platforms/windows.md
-skills/desktop-control/platforms/macos.md
+references/cua-driver/LINUX.md
+references/cua-driver/WINDOWS.md
+references/cua-driver/MACOS.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
+
+Desktop-control bundles exact upstream documentation with a source commit, hashes, and license. Its entrypoint owns plugin setup and evidence handoff; the bundled reference owns driver mechanics. `scripts/cua-reference.py` imports reviewed Git blobs and checks the bundle offline. No user-home skill dependency or runtime documentation download is required.
+
+For ordinary desktop tasks, the driver verifies each action and reports directly. Capture/verify stages are loaded for formal evidence deliverables, and compose only when a produced artifact was requested. Explicit GUI-only or cua-only constraints take precedence over Electron's default browser route.
 
 ## Extending the plugin
 

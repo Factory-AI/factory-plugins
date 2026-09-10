@@ -1,5 +1,5 @@
 ---
-description: Run an automated QA test flow against a terminal CLI or web/Electron app
+description: Run an automated QA test flow against a terminal, browser, or native desktop app
 argument-hint: '"<URL>" or "<app-name>" or "<PR-number> [-- focus area]" or "<description>"'
 ---
 
@@ -9,7 +9,7 @@ Load skills: **droid-control**.
 
 `$ARGUMENTS` can be:
 - **URL** (`https://app.factory.ai`, `localhost:3000`) → web app
-- **Electron app name** (`Slack`, `VS Code`, `Figma`) → Electron app via CDP
+- **Desktop app name** (`Slack`, `VS Code`, `Calculator`) → use the orchestrator's target route; explicit cua/native-input requirements override Electron's CDP default
 - **CLI command** (`droid-dev`, `htop`, `my-cli --flag`) → terminal TUI
 - **PR reference** (`11386`) with optional `-- focus area` → infer target from the diff
 - **Free-text description** ("test the login flow on staging") → infer target and flow
@@ -47,6 +47,8 @@ If the user provides specific steps, use them. Otherwise, design a reasonable fl
 **Web/Electron**: open page → wait for load → screenshot → interact with primary UI → verify state changes → screenshot → close.
 
 **Terminal**: launch app → wait for ready → snapshot → exercise primary features → verify output → snapshot → close.
+
+**Native desktop / cua-only**: discover or launch the requested app → select an exact target → observe → act → verify each postcondition. Broaden to visible desktop capture/input only with authorization. Leave personal applications open unless closure is requested; end only the automation run.
 
 If the flow is ambiguous or success criteria are unclear, ask the user.
 

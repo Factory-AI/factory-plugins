@@ -2,7 +2,7 @@
 
 Terminal, browser, and computer automation plugin for Droids.
 
-Droids can read and write code. This plugin lets them *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished evidence. No human hands required.
+Droids can read and write code. This plugin lets them *operate* it: launch apps, type commands, click buttons, record what happens, and produce evidence. OS permission grants and consequential actions still require the appropriate user or host authorization.
 
 ## What you get
 
@@ -48,6 +48,10 @@ Or use the `/plugins` UI: Browse tab, select droid-control, install.
 
 Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
+For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-control runs the observe/act/verify loop without loading video-production stages.
+
+The plugin bundles Cua driver documentation and setup guidance. Install the `cua-driver` executable if missing; no separate cua skill installation is needed. The pinned reference is [documented here](references/README.md). It does not claim that all installed driver versions or Wayland compositors support the same capabilities.
+
 ## Commands
 
 ### `/demo`
@@ -69,7 +73,7 @@ Runs automated QA against terminal CLIs, web apps, or Electron apps. Accepts a U
 1. **Commands** parse user intent into commitments.
 2. **The orchestrator** routes by target, stage, and artifact needs.
 3. **Atom skills** provide only the mechanics needed right now: drivers, target patterns, capture, compose, verify, and showcase polish.
-4. **Workers** handle mechanical capture/render jobs while the parent droid keeps planning and verification context.
+4. **Workers** handle independent capture/render jobs. The parent keeps short interactive desktop tasks, including observations, input, permission waits, and cleanup.
 5. **Verify** checks the final evidence against the original commitments.
 
 For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -103,4 +107,4 @@ curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scr
 cd plugins/droid-control/remotion && npm install      # Remotion video rendering
 ```
 
-Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser. Native desktop GUI automation just needs cua-driver.
+Only install what you need, with approval. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation defaults to agent-browser; an explicit cua-only/native-input request uses desktop-control instead. Native desktop automation needs cua-driver plus the graphical session and OS permissions reported by its preflight. Recording and rendering have additional dependencies; they are not required for ordinary desktop tasks.

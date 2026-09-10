@@ -21,6 +21,8 @@ The command that invoked you should have provided:
 
 ## Recording lifecycle
 
+For desktop-control, load the [bundled recording guide](../../references/cua-driver/RECORDING.md) before recording. It owns Cua transport and recorder semantics; do not translate the terminal commands below into desktop commands. Recording is requested work, not a side effect of loading this skill. Routine desktop snapshots stay in the driver's observe/act/verify loop.
+
 ### 1. Pre-flight
 
 Before recording anything:
@@ -98,7 +100,7 @@ Film for a viewer with no context. You are a director, not an operator.
 - **Record before setup** -- the baseline state is act 1.
 - **Hold after state changes** -- 2-3 seconds so text is readable. Use `snapshot --trim` as natural verification beats.
 - **Verify between steps** -- `wait` or `snapshot` to confirm state before proceeding. Don't blindly fire the next key.
-- **Verification IS evidence.** A snapshot that shows nothing changed after pressing ESC proves the session is frozen. A snapshot that shows an error message proves the command was blocked. Always snapshot after actions where the *absence* of a response is the point -- the viewer needs to see it too.
+- **Verification IS evidence.** Capture the actual state after actions, including when no change is visible. One unchanged frame alone does not prove a frozen session or a dropped key; check the task's postcondition and timing.
 
 For comparison recordings, both branches run **identical interactions** -- only the behavior differs.
 
@@ -120,7 +122,7 @@ Use readable key names (`Ctrl+C`, not `\x03`). Save alongside the recording (e.g
 ### 5. Close and verify raw outputs
 
 ```bash
-$TCTL -s demo close    # finalizes the .cast / stops recording
+$TCTL -s "${RUN_ID}-demo" close    # terminal session owned by this run
 ```
 
 Before handing off, confirm every expected output file exists and is non-empty:
@@ -137,7 +139,7 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o /tmp/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
 | Web/Electron | Screenshots: `agent-browser screenshot --annotate /tmp/proof-N.png` |
-| Native desktop GUI | Window screenshots + AX trees: `cua-driver get_window_state '{...}' --screenshot-out-file ${RUN_DIR}/proof-N.png`; video via `cua-driver recording start/stop` |
+| Native desktop GUI | Follow **desktop-control**: exact-window state or explicitly authorized desktop state; video lifecycle comes from the bundled recording guide |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
 ## Outputs
@@ -164,6 +166,6 @@ $TCTL -s <name> snapshot --trim   # check visible state
 $TCTL -s <name> close             # hard reset
 ```
 
-For browser: `agent-browser close`.
+For an isolated browser owned by this run: `agent-browser close`.
 
-Then re-launch and re-record. Partial recordings are not usable.
+For desktop-control, reacquire state after interruption and coordinate with the recorder owner. Do not stop a shared daemon, close a personal app, or replay an uncertain input to recover a recording. Preserve partial artifacts as diagnostic evidence; label them incomplete rather than claiming they satisfy the deliverable.
