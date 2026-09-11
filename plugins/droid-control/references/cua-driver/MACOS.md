@@ -1,10 +1,8 @@
 # cua-driver — macOS specifics
 
-This file is the macOS-specific extension to `SKILL.md`.
-The cross-platform core (snapshot invariant, CLI/MCP defaults,
-behavior matrix, canonical loop, pixel-click contract, common error
-patterns) is in `SKILL.md`. Read this in addition to `SKILL.md` when
-you're driving an app on macOS.
+Use this guide for macOS-specific launch, permissions, and input behavior.
+[WORKFLOW.md](WORKFLOW.md) owns the shared observe/act/verify loop;
+[RUNTIME.md](RUNTIME.md) owns transport, lifecycle, and authorization.
 
 ## The no-foreground contract
 
@@ -120,76 +118,22 @@ For authorized foreground input, use the Cua action's
 `delivery_mode:"foreground"`. For requested persistent foreground state, use
 `bring_to_front`. Neither requires a shell activation workaround.
 
-When a cua-driver call surprises you, diagnose cua-driver first:
+### Capture and verification on macOS
 
-- **Empty `tree_markdown`?** `get_window_state` returns **both** the
-  AX tree and a screenshot by default — there's nothing to configure and
-  no capture mode to pick. An empty tree means the surface isn't AX (a
-  non-AX surface: Electron/Chromium/canvas), and the response carries
-  `degraded: true` — so act by **`px`** off the screenshot that's
-  already in the same response. `capture_mode` is **deprecated and
-  ignored** (still accepted so old callers don't error, but it has no
-  effect — tree + screenshot come back regardless); don't reach for
-  `get_config` to "switch modes," there is no mode to switch.
-- **`has_screenshot: false`?** The window capture failed (transient
-  race against a close, or the window has no backing store yet).
-  Re-snapshot; if persistent, pick a different `window_id` via
-  `list_windows`.
-- **`snapshot_id_required` / `stale_element_token` / no cached AX state?**
-  Re-snapshot the exact window and use the new `element_token`, or pair its
-  `snapshot_id` with the matching `element_index`. A new snapshot of that
-  window invalidates older targets immediately.
-- **Sparse Chromium AX tree?** Retry `get_window_state` once — the
-  tree populates on second call.
+Follow [observation](WORKFLOW.md#observe) and
+[postcondition verification](WORKFLOW.md#verify-and-stop) for missing images,
+sparse trees, and stale handles. A capture failure does not justify switching
+to an unrelated window or broader input scope.
 
-Only after those are ruled out, and only if the user's action
-genuinely needs frontmost state, fall through to the activate
-fallback. Always name the focus steal in your response ("I'll
-briefly bring Chrome to the front because …").
+macOS surfaces worth cross-checking against a fresh, valid image:
 
-### Verifying actions: cross-check the tree against the pixels you already have
-
-There is no `ax`/`vision` capture toggle. **Every `get_window_state`
-returns both the AX tree and a screenshot** (default), so verifying that
-an action **landed** never means "go grab a screenshot" — it means
-cross-check the tree diff against the pixels you already have in the same
-response, and only switch _dispatch rung_ on a real signal:
-
-1. **Re-snapshot and read the tree diff** — a changed `AXValue`, a new
-   element, a collapsed menu, a disabled button. If the tree shows the
-   change, you're done. When you only need the tree diff and don't need
-   fresh pixels, pass `include_screenshot:false` to skip the grab — a
-   **perf** knob, not a mode flip.
-2. **Trust the screenshot and do an element px action** when the tree
-   **lies** — the action response carried `effect:"suspected_noop"`, the
-   re-snapshot came back `degraded` (empty tree), or the tree looks
-   unchanged/unreadable / disagrees with the pixels on a surface where
-   it's known to lie:
-   - **Canvas-backed editors** — Monaco (VSCode, Cursor), xterm, Figma,
-     WebGL. The AX tree shows the chrome but nothing for the canvas
-     content; a snapshot's tree can look unchanged after a successful
-     edit while the pixels show it landed.
-   - **Catalyst / iOS-on-Mac text views** — see "Known text-input
-     limits" above. `AXValue` can lag the rendered pixels or report the
-     placeholder while the field is actually populated.
-
-On these surfaces you read the result off the screenshot already in the
-response, then address the target by `x,y` — an **element px action**.
-`px` is your **conscious switch to the pixel addressing path**, not a
-different capture: the screenshot was always there, you just change _how
-you address_ the target. The point is to catch the "type → AX-check
-succeeds → believe the lie → find out three calls later" trap on exactly
-the surfaces that warrant it.
-
-Rule of thumb:
-
-- **element ax action** (default) — the element lookup before a click
-  AND the first verify after it; you address by `[N]` `element_index`
-  and read the tree diff.
-- **element px action** — when the tree is unreadable / `suspected_noop`
-  / `degraded` / disagrees with the pixels, or for pure visual
-  inspection (reading a chart). You address by `x,y` off the screenshot
-  that's already in the snapshot response.
+- **Canvas-backed editors** such as Monaco, xterm, Figma, and WebGL may expose
+  only their chrome through AX, not the edited content.
+- **Catalyst / iOS-on-Mac text views** may expose delayed values or placeholders.
+  See [text-input limits](#known-text-input-limits-catalyst--electron).
+- **Electron text shims** may echo an AX write that the renderer never observed.
+  If the requested outcome needs rendered evidence and capture is unavailable,
+  report that blocker rather than treating the echo as success.
 
 ### Self-check pattern
 
@@ -214,8 +158,8 @@ editor state.
 
 ## Prerequisites — macOS
 
-1. `cua-driver` is on `$PATH` (`which cua-driver`). If not, point the
-   user at `scripts/install-local.sh` and stop.
+1. `cua-driver` is on `$PATH` (`which cua-driver`). If missing, follow the
+   [approved executable installation](README.md#install-cua-driver).
 2. Start the daemon with `open -n -g -a CuaDriver --args serve` (the
    recommended form — goes through LaunchServices so TCC attributes
    the process to CuaDriver.app). `cua-driver serve &` also works;
@@ -308,9 +252,8 @@ rung holds physical HID modifier keys around the click, restores the hardware
 cursor and prior foreground app, and confirms list-like selection changes with
 a stable AX readback.
 
-macOS-specific residuals worth knowing (the rest of the capture/dispatch/
-addressing params are a shared cross-platform contract — see `SKILL.md` →
-_Cross-platform parameter contract_):
+macOS-specific residuals worth knowing; shared addressing rules are in
+[WORKFLOW.md](WORKFLOW.md#select-the-target):
 
 - **`check_permissions.prompt` is macOS-only and public calls are
   status-only.** Omitted `prompt` defaults to `false`; explicit `true` is
@@ -499,6 +442,7 @@ starting point for new browser workflows.
    populated AX subtree (sidebar, list view, files).
 3. Done.
 
-If the user instead asks to navigate _within_ an already-open Finder
-window, use the menu-bar flow from "Navigating native menu bars"
-above (click Go → pick a menu item → re-snapshot → click it).
+For navigation within an already-open Finder window, use `invoke_menu` with
+the observed path, such as `["Go","Downloads"]`, and that exact window.
+Apply the [foreground authorization boundary](RUNTIME.md#foreground-boundary)
+and verify the destination from fresh state afterward.

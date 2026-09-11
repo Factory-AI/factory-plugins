@@ -12,5 +12,3 @@ droid-control/skills/showcase
 droid-control/skills/true-input
 droid-control/skills/tuistory
 droid-control/skills/verify
-# Vendored documentation, not a separately exposed plugin skill.
-droid-control/references/cua-driver

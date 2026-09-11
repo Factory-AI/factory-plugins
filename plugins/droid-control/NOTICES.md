@@ -4,7 +4,7 @@ This plugin depends on several third-party tools and libraries. Executables are 
 
 ## Desktop automation documentation
 
-- **[Cua Driver](https://github.com/trycua/cua)** — documentation under `references/cua-driver/`, distributed under the [included MIT license](references/cua-driver/LICENSE.md). Exact source revision and file hashes: [source.json](references/cua-driver/source.json). Driver code and binaries are not bundled. See [reference maintenance](references/README.md).
+- **[Cua Driver](https://github.com/trycua/cua)** — documentation under `references/cua-driver/` is adapted from Cua and maintained with this plugin under the [included MIT license](references/cua-driver/LICENSE.md). Driver code and binaries are not bundled. See [reference maintenance](references/README.md).
 
 ## Video rendering
 

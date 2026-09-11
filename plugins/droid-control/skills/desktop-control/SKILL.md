@@ -26,7 +26,7 @@ The plugin includes its reference material under `references/cua-driver/`. **No 
 
 The executable is a separate dependency. Preserve existing wrappers, service ownership, and permission settings. Missing software or access is a setup blocker, not permission to silently install, upgrade, restart a shared service, or approve an OS dialog.
 
-The bundled source revision is recorded in [source.json](../../references/cua-driver/source.json). It describes the reference, not the installed daemon. Inspect live schemas for version-dependent parameters; do not infer capability from a platform name.
+The references are maintained with this plugin; they do not identify the installed daemon. Inspect live schemas for version-dependent parameters and verify behavior; do not infer capability from a platform name.
 
 Read the current host's guide only when its setup or behavior matters:
 [macOS](../../references/cua-driver/MACOS.md),
@@ -68,4 +68,4 @@ Load on demand; do not reabsorb these into this file:
 - [Runtime](../../references/cua-driver/RUNTIME.md): transport, sessions, permissions, and cleanup.
 - [Browser](../../references/cua-driver/BROWSER.md): optional typed page automation only when the user's method permits it.
 - [Recording](../../references/cua-driver/RECORDING.md): ownership, opt-in video, artifacts, and replay limits.
-- [Reference maintenance](../../references/README.md): pinned source, license, and offline validation.
+- [Reference maintenance](../../references/README.md): documentation ownership, license, and link checks.

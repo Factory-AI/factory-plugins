@@ -5,11 +5,9 @@ asks to drive a native Windows app, follow the loop in this doc
 rather than calling tools ad-hoc — the snapshot-before-action
 invariant is not optional and silently breaks if you skip it.
 
-`SKILL.md` in this directory describes the cross-platform core;
-this file is the Windows-specific extension. Read both:
-the snapshot invariant, MCP-vs-CLI choice, agent cursor overlay, and
-recording flow are identical. The launch, click, and accessibility-
-tree mechanics in this file replace the macOS ones.
+[WORKFLOW.md](WORKFLOW.md) owns the shared observe/act/verify loop;
+[RUNTIME.md](RUNTIME.md) owns transport, lifecycle, and authorization.
+This guide covers Windows-specific launch, input, and accessibility behavior.
 
 ## Background window delivery
 
@@ -93,7 +91,7 @@ costlier path; only use it for surfaces with no UIA peer.
 
 Errors retain their diagnostic `escalation.recommended` hint. Successful
 action results use the narrower `escalation.target` contract instead (see
-`SKILL.md` → behavior matrix). On Windows this error recommendation is
+[action facts](WORKFLOW.md#verify-and-stop)). On Windows this error recommendation is
 `"foreground"` because the dropped event needs the fronting rung. (Contrast
 macOS / X11, where a background pixel click can still land in the background.)
 
@@ -289,7 +287,7 @@ described above.
 ### Cross-platform schema residuals (Windows)
 
 The capture/dispatch/addressing params are a shared cross-platform
-contract (see `SKILL.md` → _Cross-platform parameter contract_). Three
+contract (see [target addressing](WORKFLOW.md#select-the-target)). Three
 Windows-relevant notes:
 
 - **`session` is now accepted on every action/cursor tool.** Earlier
@@ -353,11 +351,10 @@ gone wrong — re-read "The no-foreground contract" above.
 
 ### The narrow carve-out
 
-The **only** legitimate use of `SetForegroundWindow` or
-`Start-Process` with a foreground app is when the user **explicitly**
-asked for frontmost state ("bring Edge to the front", "make
-Calculator visible", "I want to see it"). Reaching for it because a
-tool call returned something confusing is wrong — diagnose first.
+For authorized foreground input, use the Cua action's
+`delivery_mode:"foreground"`. Use `bring_to_front` for requested persistent
+foreground state. Neither requires a shell activation workaround; follow the
+[foreground boundary](RUNTIME.md#foreground-boundary).
 
 When a cua-driver surprises you, diagnose cua-driver first:
 
@@ -377,19 +374,10 @@ When a cua-driver surprises you, diagnose cua-driver first:
   click in.
 - **`Invalid window handle (0x80070578)`?** The HWND you passed is
   stale (window closed, recreated). Re-resolve via `list_windows`.
-- **Empty `tree_markdown` / sparse UIA tree?** Some apps populate
-  their UIA tree lazily on first call; retry `get_window_state`
-  once. If still empty, the app has no UIA provider — fall back to an
-  element px action (x,y clicks off the screenshot) on visible content
-  (acceptable for exploration; pair with screenshots).
-- **Empty tree, or a snapshot with no image?** `get_window_state`
-  returns **both** the UIA tree and a screenshot by default — there is no
-  capture mode to pick. If the tree came back empty, the response is
-  `degraded` (no UIA provider — retry once for lazy trees, see the note
-  above); act by **px** off the screenshot in the same response. The
-  `capture_mode` param is **deprecated and ignored** — it's still accepted
-  so old callers don't error, but both the tree and the image come back
-  regardless of what you pass.
+- **Sparse UIA tree or unavailable image?** Follow
+  [observation recovery](WORKFLOW.md#observe); these are different failures.
+  Check the interactive-session and UIA-provider diagnostics below. A missing
+  or invalid image cannot ground pixel input.
 - **`list_windows` returns Win32 windows but misses UWP / WebView2
   windows?** UIA desktop enumeration may be degraded because a provider
   is unresponsive. `list_windows` falls back to Win32-only output instead
@@ -408,9 +396,9 @@ When a cua-driver surprises you, diagnose cua-driver first:
   queues — PostMessage(WM_LBUTTONDOWN) gets ignored. Use
   `element_index` instead of (x,y) for UWP targets.
 
-Only after those are ruled out should you fall through to the
-activate fallback. Always name the focus steal in your response
-("I'll briefly bring Edge to the front because …").
+If background input remains unavailable, obtain authorization before retrying
+that action with foreground delivery. A diagnostic recommendation grants no
+permission to activate the app.
 
 ### Self-check pattern
 
@@ -473,9 +461,8 @@ your prior tool calls earned.
    - UAC elevation **only** for `autostart` registration if a
      system-wide scheduled task is requested (per-user task is
      non-elevated and the default).
-   - SmartScreen: on a fresh install, Windows Defender SmartScreen
-     may flag the unsigned binary on first run. Click "More info →
-     Run anyway" once.
+   - SmartScreen may block a fresh installation. Stop and let the user or
+     trusted host decide whether to approve it; do not automate the approval.
 
 ## Using cua-driver from the shell
 

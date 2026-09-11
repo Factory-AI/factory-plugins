@@ -27,8 +27,6 @@ Bare MCP owns a runtime on Windows/Linux and uses the signed service identity on
 
 For missing software, use the installation instructions in [README.md](README.md) with user approval. `check-update` is read-only; `update --apply` installs software. After an approved update, check both the executable and daemon. Do not interpret a nonzero updater exit as proof that nothing changed.
 
-`skills update` replaces the installed pack. Back up personal edits before refreshing. `skills install --from main` is for source validation, not proof of compatibility with a release binary. Other platform guides are installed only with `--all-platforms`.
-
 The old computer-use compatibility flag does not add a screenshot tool. Use `get_window_state` or explicitly authorized `get_desktop_state`.
 
 ## Session lifecycle
@@ -46,6 +44,19 @@ cua-driver end_session '{"session":"run-1"}'
 Explicit targets own observation/input modality, not session configuration. There is no `deescalate_session`. Do not use retired `capture_scope` settings or legacy escalation-session tools in new workflows. Reserved fields such as `_session_id` belong to the transport, never to an agent.
 
 Keep one controller per shared desktop. Separate sessions/cursors do not isolate global keyboard focus, physical input, a single-instance application, or another observer's snapshot cache. `creates_new_application_instance:true` requests a separate instance where supported; verify distinct processes/windows before concurrent work. For independent MCP work, use independent connections as well.
+
+## Continue an existing task
+
+For a request to resume or recall prior Cua work, use `history_status` first
+when both it and `history_query` are advertised and access is permitted. If
+history is healthy, make one bounded initial query. Treat returned metadata as
+a lead and verify current application state; omitted content and intent remain
+unknown.
+
+Query again only for a relevant session or sequence boundary exposed by that
+slice. Do not reconstruct excluded fields, query unrelated history, or change
+history settings. If history is absent, denied, empty, or unhealthy, continue
+with current-state discovery.
 
 ## Foreground boundary
 

@@ -169,7 +169,7 @@ references/cua-driver/MACOS.md
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
 
-Desktop-control bundles exact upstream documentation with a source commit, hashes, and license. Its entrypoint owns plugin setup and evidence handoff; the bundled reference owns driver mechanics. `scripts/cua-reference.py` imports reviewed Git blobs and checks the bundle offline. No user-home skill dependency or runtime documentation download is required.
+Desktop-control includes plugin-maintained guidance adapted from Cua, with its license and attribution. Its entrypoint owns plugin setup and evidence handoff; the local references own driver mechanics. Maintain them with the plugin and check their links offline. No user-home skill dependency or runtime documentation download is required.
 
 For ordinary desktop tasks, the driver verifies each action and reports directly. Capture/verify stages are loaded for formal evidence deliverables, and compose only when a produced artifact was requested. Explicit GUI-only or cua-only constraints take precedence over Electron's default browser route.
 

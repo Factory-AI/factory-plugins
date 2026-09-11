@@ -84,5 +84,5 @@ jobs:
 
           echo "All skills are accounted for."
 
-      - name: Verify bundled desktop-control references offline
+      - name: Verify desktop-control documentation links
         run: python3 -m unittest discover -s plugins/droid-control/tests -p 'test_desktop_control.py' -v

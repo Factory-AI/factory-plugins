@@ -457,14 +457,9 @@ activation script as a browser API. Those paths can visibly disrupt the
 user's browser. Use `browser_navigate` for an exactly bound page or the native
 AX/PX ladder for browser chrome.
 
-The legacy `page` tool remains a compatibility surface for older clients. Do
-not start new browser workflows with it: its backend and trust semantics are
-less precise than the typed browser tools, and it does not replace exact
-window binding. Its mutations are disabled by default. Only a trusted daemon
-operator can enable the temporary compatibility path with
-`CUA_DRIVER_ENABLE_LEGACY_PAGE_MUTATIONS=1` before daemon startup. Restart Cua
-Driver after changing the flag. It does not add typed endpoint ownership,
-capabilities, or existing-profile consent.
+Do not start workflows with the legacy `page` tool or enable its mutation
+compatibility path. It does not replace exact window binding or existing-profile
+consent. Use the typed tools or the permitted native route.
 
 ## Support boundaries
 
