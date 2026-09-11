@@ -6,66 +6,72 @@ user-invocable: false
 
 # Desktop Control
 
-Operate the requested GUI through Cua, with one controller owning discovery, observation, input, verification, and cleanup.
+One controller operates an exact GUI target, observes each effect, and stops when the user's postcondition is proved.
 
 ## Act
 
-| Goal | Action | Bundled reference |
-|---|---|---|
-| Check readiness | Resolve `cua-driver`; inspect `--version`, `status`, `doctor`, and unfamiliar tool schemas | [Runtime](../../references/cua-driver/RUNTIME.md) |
-| Install missing software | Explain the dependency and obtain approval; use the official installer | [Installation](../../references/cua-driver/README.md#install-cua-driver) |
-| Discover and operate a window | `list_apps` / `launch_app` → select `window_id` → `get_window_state` → action → fresh proof | [Workflow](../../references/cua-driver/WORKFLOW.md) |
-| Recover unavailable window capture | Inspect the structured error; broaden to desktop only when authorized | [Linux capture recovery](../../references/cua-driver/LINUX.md#capture-recovery) |
-| Use the visible desktop | `get_desktop_state` → action with `target:{kind:"desktop",display_id:"primary"}` → `get_desktop_state` | [Desktop loop](../../references/cua-driver/WORKFLOW.md#desktop-loop) |
-| Record when requested | Use one persistent connection; verify recorder ownership, video status, and final artifacts | [Recording](../../references/cua-driver/RECORDING.md) |
-| Finish | Stop after the postcondition is proved; end this run, not the shared daemon | [Cleanup](../../references/cua-driver/RUNTIME.md#cleanup-and-evidence) |
+| Goal | Command / tool |
+|---|---|
+| Discover | `cua-driver list_apps`; use `launch_app` when launch is requested, then select the intended window from its response or `list_windows` |
+| Observe | `get_window_state` with observed `pid`, `window_id`, and the run's `session`; use `query`, `max_elements`, or `max_depth` to bound large trees |
+| Act | `click` / `type_text` with an exact `target` and fresh `element_token`; use `x,y` only from a valid target screenshot |
+| Menu / geometry | Prefer `invoke_menu` with an observed menu path, or `set_window_frame`; verify the resulting window state |
+| Verify | Fresh `get_window_state` / `get_desktop_state`, or `verify_state` for an expressible exact-window postcondition |
+| Finish | Finalize any owned recording, then `end_session`; leave personal apps and shared services running unless closure was requested |
 
-## Setup contract
+Use the CLI by default or an existing MCP connection. Replace example IDs, tokens, coordinates, and `RUN_ID` with current observations and a unique run label:
 
-The plugin includes its reference material under `references/cua-driver/`. **No separately installed cua skill is required.** Do not run `cua-driver skills install` or load documentation from a user's home directory as a prerequisite.
+```bash
+cua-driver get_window_state '{"pid":844,"window_id":10725,"session":"RUN_ID"}'
+cua-driver click '{"target":{"kind":"window","pid":844,"window_id":10725},"element_token":"s0000002a:14","session":"RUN_ID"}'
+# Observe again and verify the requested effect before another action.
+```
 
-The executable is a separate dependency. Preserve existing wrappers, service ownership, and permission settings. Missing software or access is a setup blocker, not permission to silently install, upgrade, restart a shared service, or approve an OS dialog.
+## Detect and setup
 
-The references are maintained with this plugin; they do not identify the installed daemon. Inspect live schemas for version-dependent parameters and verify behavior; do not infer capability from a platform name.
+```bash
+command -v cua-driver
+cua-driver --version
+cua-driver status
+cua-driver doctor
+cua-driver describe click
+```
 
-Read the current host's guide only when its setup or behavior matters:
-[macOS](../../references/cua-driver/MACOS.md),
-[Windows](../../references/cua-driver/WINDOWS.md),
-[Linux](../../references/cua-driver/LINUX.md).
+No separate Cua skill installation is required. Preserve existing executable wrappers and service ownership. If the binary is missing, obtain approval before using the official [macOS/Linux installer](https://cua.ai/driver/install.sh) or [Windows installer](https://cua.ai/driver/install.ps1). Inspect unfamiliar live schemas; a client version does not identify an already-running daemon.
 
-## Run ownership
+| Host | Required setup |
+|---|---|
+| macOS | The responsible app/host needs Accessibility and Screen Recording grants; let the user run `cua-driver permissions grant` and approve prompts |
+| Windows | The runtime must run in the interactive desktop session, not Session 0; user/host handles installation and security prompts |
+| Linux | Run as the graphical user on its display/session bus; native Wayland may require `CUA_DRIVER_RS_ENABLE_WAYLAND=1` in the service environment. Compositor capture/input/video support varies |
 
-Use a unique run label and artifact directory. Reuse the orchestrator's `RUN_ID` / `RUN_DIR` when supplied; otherwise create them once. Named CLI calls must repeat the same session label on every tool that accepts it. Tools without a public session parameter need a persistent connection when lifecycle continuity matters.
+## Rules
 
-Keep short interactive tasks in the parent agent. A screenshot worker adds a competing observer and makes permission waits harder to handle. Separate sessions/cursors do not isolate shared desktop focus, keyboard input, application state, or snapshot caches. Delegate independent rendering or analysis, not simultaneous input to one desktop.
+1. **Never substitute methods.** Cua-only/native-input excludes CDP, DOM, application APIs, and shell/media shortcuts, including for Electron.
+2. **Never share desktop control.** Keep interactive observation, input, permission waits, and cleanup in the parent. Reuse one run label and artifact directory; repeat `session` on each supported CLI call. Labels do not isolate focus, app state, or snapshot caches.
+3. **Never reuse stale or ambiguous targets.** A new snapshot invalidates old handles. Do not combine `target` with flat targeting fields; observation and semantic-only tools keep their own schemas. Re-resolve cold launches or vanished windows with bounded discovery, not repeated launches.
+4. **Never infer pixels from absent evidence.** Read the actual image and its dimensions; account for resized previews/crops. Tree-only capture cannot ground pixel input. `capture_mode` does not repair capture failures.
+5. **Never escalate implicitly.** Window background input is the default. Foreground delivery, temporary menu activation, desktop capture/input, service changes, and OS approvals require the appropriate user/host authorization.
+6. **Never equate delivery with completion.** Reobserve after uncertain, partial, or interrupted input before retrying. Check the task's postcondition: selection is not playback; an unchanged frame is not proof of a freeze; a closed window is not proof of process exit.
 
-## Method and permission boundaries
+## Failure map
 
-1. A user-requested cua-only or GUI-only method overrides the default Electron/browser route. Use native Cua input and observation; do not substitute CDP, DOM, app APIs, or shell/media shortcuts.
-2. Prefer fresh semantic handles where usable. Missing semantics can justify screenshot-grounded pixels; a missing screenshot cannot. Use the returned coordinate frame, not an unaccounted-for downsampled preview.
-3. Background window input and visible desktop control have different effects. Foreground escalation and desktop capture/input require the appropriate authorization; a failed narrow route grants none.
-4. Let the user or trusted host handle OS/security approval. After approval or interruption, reacquire current state rather than replaying an uncertain action.
-5. The action result reports delivery, not task completion. Confirm the requested postcondition and stop; an unchanged tree, selected track, or written file path alone is not sufficient proof.
+| Symptom | Next action |
+|---|---|
+| Missing binary, permission, or capability | Stop that route; resolve setup with the user rather than silently installing, restarting, or changing security settings |
+| Sparse tree | Inspect `degraded_reason`; retry once for lazy initialization. Use pixels only if a valid image exists |
+| Missing image / `surface_identity_unproven` | Use returned semantics if sufficient; otherwise request desktop scope or report the blocker. Do not relabel a crop as verified window capture |
+| Permission wait | Let the user approve or deny; after approval reacquire state instead of replaying the timed-out action |
+| `background_unavailable` | Reobserve; retry only the necessary action with `delivery_mode:"foreground"` if visible control is authorized |
+
+For an authorized desktop loop, use `get_desktop_state` → input with `target:{"kind":"desktop","display_id":"primary"}` → fresh desktop state. Keyboard input follows visible focus: stop if the user or another controller changes it.
+
+## Recording
+
+Only when requested, use one persistent MCP connection: `get_recording_state({})` → `start_recording({"output_dir":"/absolute/unused/run-dir","record_video":true})` → authorized actions → `stop_recording({})`.
+
+These recording tools have no public `session` parameter. Video is off by default; check `video_active` and `last_error`. The recorder is shared within its runtime, and manual stop is unconditional: coordinate with an existing owner rather than taking over. Finalize before disconnecting; inspect `last_video_path`, decode the video, and check its scope/dimensions/duration. A working PNG does not prove Wayland video support.
 
 ## Evidence handoff
 
-For an ordinary task, report the observed result and relevant limitations directly. Load **capture** for a recording or multi-step evidence deliverable, **verify** for a formal proof/QA report, and **compose** only for a produced artifact. Never record video merely because this skill was loaded.
-
-When handing evidence onward, include:
-
-- driver version, OS/compositor, target window or display, and input route;
-- raw screenshot/state/action-result paths in the run directory;
-- requested postcondition, observed outcome, and any pending permission or capability blocker;
-- for video, the finalized path and actual dimensions/duration, plus any capture failure.
-
-Keep raw evidence unmodified. Review captures for private content before sharing them. Closing a window does not prove the process exited; end the app only when requested and preserve unsaved work.
-
-## References
-
-Load on demand; do not reabsorb these into this file:
-
-- [Workflow](../../references/cua-driver/WORKFLOW.md): exact targets, bounded observation, coordinates, action semantics, and proof.
-- [Runtime](../../references/cua-driver/RUNTIME.md): transport, sessions, permissions, and cleanup.
-- [Browser](../../references/cua-driver/BROWSER.md): optional typed page automation only when the user's method permits it.
-- [Recording](../../references/cua-driver/RECORDING.md): ownership, opt-in video, artifacts, and replay limits.
-- [Reference maintenance](../../references/README.md): documentation ownership, license, and link checks.
+Report ordinary task results directly. Load **capture** for recorded or multi-step evidence, **verify** for formal proof/QA, and **compose** only for a produced artifact. Include driver/host, exact target/input route, observed postcondition, raw evidence paths, and any limitation. Preserve partial recordings as incomplete evidence; review private content before sharing.

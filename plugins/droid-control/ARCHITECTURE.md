@@ -162,14 +162,12 @@ skills/true-input/platforms/macos.md
 skills/pty-capture/platforms/linux.md
 skills/pty-capture/platforms/windows.md
 skills/pty-capture/platforms/macos.md
-references/cua-driver/LINUX.md
-references/cua-driver/WINDOWS.md
-references/cua-driver/MACOS.md
+skills/desktop-control/SKILL.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
 
-Desktop-control includes plugin-maintained guidance adapted from Cua, with its license and attribution. Its entrypoint owns plugin setup and evidence handoff; the local references own driver mechanics. Maintain them with the plugin and check their links offline. No user-home skill dependency or runtime documentation download is required.
+Desktop-control keeps routine setup, target selection, recovery, and recording rules in one compact entrypoint. It includes a host setup table rather than copied platform manuals. No user-home skill dependency or runtime documentation download is required.
 
 For ordinary desktop tasks, the driver verifies each action and reports directly. Capture/verify stages are loaded for formal evidence deliverables, and compose only when a produced artifact was requested. Explicit GUI-only or cua-only constraints take precedence over Electron's default browser route.
 

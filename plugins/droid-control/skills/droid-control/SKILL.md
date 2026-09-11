@@ -231,7 +231,7 @@ sudo apt-get install -y grim wf-recorder             # optional: screenshots + v
 # agent-browser driver
 agent-browser install                                # one-time: downloads bundled Chromium
 
-# desktop-control: follow its bundled installation guide only if the binary
+# desktop-control: follow its setup instructions only if the binary
 # is missing and installation is approved. No separate skill install.
 
 # compose + showcase (video rendering)

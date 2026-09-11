@@ -21,7 +21,7 @@ The command that invoked you should have provided:
 
 ## Recording lifecycle
 
-For desktop-control, load the [bundled recording guide](../../references/cua-driver/RECORDING.md) before recording. It owns Cua transport and recorder semantics; do not translate the terminal commands below into desktop commands. Recording is requested work, not a side effect of loading this skill. Routine desktop snapshots stay in the driver's observe/act/verify loop.
+For desktop-control, follow its [recording contract](../desktop-control/SKILL.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
 
 ### 1. Pre-flight
 
@@ -139,7 +139,7 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o /tmp/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
 | Web/Electron | Screenshots: `agent-browser screenshot --annotate /tmp/proof-N.png` |
-| Native desktop GUI | Follow **desktop-control**: exact-window state or explicitly authorized desktop state; video lifecycle comes from the bundled recording guide |
+| Native desktop GUI | Follow **desktop-control** for exact-window or authorized desktop state and recorder ownership |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
 ## Outputs

@@ -50,7 +50,7 @@ Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
 For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-control runs the observe/act/verify loop without loading video-production stages.
 
-The plugin includes Cua driver documentation and setup guidance. Install the `cua-driver` executable if missing; no separate cua skill installation is needed. The references are [maintained with this plugin](references/README.md). Installed driver versions and Wayland compositors may support different capabilities.
+The [desktop-control skill](skills/desktop-control/SKILL.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
 
 ## Commands
 

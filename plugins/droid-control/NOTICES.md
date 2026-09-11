@@ -1,10 +1,10 @@
 # Third-Party Notices
 
-This plugin depends on several third-party tools and libraries. Executables are installed separately by the user. The Cua documentation listed below is bundled; its license accompanies the copied files.
+This plugin depends on several third-party tools and libraries. Executables are installed separately by the user.
 
 ## Desktop automation documentation
 
-- **[Cua Driver](https://github.com/trycua/cua)** — documentation under `references/cua-driver/` is adapted from Cua and maintained with this plugin under the [included MIT license](references/cua-driver/LICENSE.md). Driver code and binaries are not bundled. See [reference maintenance](references/README.md).
+- **[Cua Driver](https://github.com/trycua/cua)** — desktop-control guidance is adapted from Cua under the [included MIT license](CUA-LICENSE.md). Driver code and binaries are not bundled.
 
 ## Video rendering
 
