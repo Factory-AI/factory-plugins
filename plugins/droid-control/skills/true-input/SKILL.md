@@ -16,7 +16,7 @@ Drive a real terminal emulator, injecting keystrokes through the platform's nati
 - Recording demos that reflect actual terminal rendering
 - Validating that Droid handles a keystroke correctly end-to-end in a specific terminal
 
-If you don't need real terminal proof, use **tuistory** -- it's faster and more deterministic.
+If you don't need real terminal proof, use the `tuistory` backend in **terminal-use** -- it's faster and more deterministic.
 
 ## Platform support
 

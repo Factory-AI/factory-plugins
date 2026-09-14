@@ -1,0 +1,73 @@
+name: droid-control tests
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/droid-control/scripts/render-showcase.sh'
+      - 'plugins/droid-control/tests/**'
+      - 'plugins/droid-control/remotion/**'
+      - '.github/workflows/droid-control-tests.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'plugins/droid-control/scripts/render-showcase.sh'
+      - 'plugins/droid-control/tests/**'
+      - 'plugins/droid-control/remotion/**'
+      - '.github/workflows/droid-control-tests.yml'
+
+env:
+  PYTHONDONTWRITEBYTECODE: 1
+
+jobs:
+  render-helper:
+    name: render-showcase.sh behavior
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ffmpeg and agg
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          curl -fsSL -o agg https://github.com/asciinema/agg/releases/download/v1.9.0/agg-x86_64-unknown-linux-gnu
+          echo "f111e315cd71056b116302342553dd765b7297579ed511f111d0cedb442aeda6  agg" | sha256sum -c -
+          sudo install -m 0755 agg /usr/local/bin/agg
+
+      - name: Run helper integration tests
+        run: python3 -m unittest discover -v -s plugins/droid-control/tests -p 'test_*.py'
+
+  remotion:
+    name: Remotion typecheck, duration tests, real render
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/droid-control/remotion
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # node --test with built-in type stripping (22.18+); Remotion runtime itself needs >= 18
+          node-version: 22
+          cache: npm
+          cache-dependency-path: plugins/droid-control/remotion/package-lock.json
+
+      - run: npm ci
+
+      - run: npx tsc --noEmit -p .
+
+      - run: npm test
+
+      - name: Install ffmpeg and the Remotion browser
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          npx remotion browser ensure
+
+      - name: Render a synthetic clip through render-showcase.sh and check the encoded file
+        working-directory: .
+        env:
+          RENDER_SHOWCASE_E2E: 1
+        run: python3 -m unittest discover -v -s plugins/droid-control/tests -p 'test_*.py' -k RealRender

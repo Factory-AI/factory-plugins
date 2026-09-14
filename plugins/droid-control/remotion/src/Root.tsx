@@ -25,6 +25,7 @@ export const RemotionRoot: React.FC = () => {
           title: 'Demo',
           subtitle: '',
           preset: 'factory' as const,
+          fidelity: 'standard' as const,
           keys: [],
           effects: [],
           width: 1920,

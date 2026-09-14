@@ -17,7 +17,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 1328261054,
-      "version": 1,
+      "version": 2,
       "versionNonce": 1901493144,
       "isDeleted": false,
       "boundElements": null,
@@ -29,7 +29,7 @@
       "textAlign": "left",
       "verticalAlign": "middle",
       "containerId": null,
-      "originalText": "Runtime pipeline: parent judgment, worker execution, verified artifacts",
+      "originalText": "Terminal comparison pipeline: parent judgment, isolated workers, proof",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "title_pipeline",
@@ -37,7 +37,7 @@
       "y": 30,
       "width": 980,
       "height": 37,
-      "text": "Runtime pipeline: parent judgment, worker execution, verified artifacts"
+      "text": "Terminal comparison pipeline: parent judgment, isolated workers, proof"
     },
     {
       "type": "text",
@@ -53,7 +53,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 1850501473,
-      "version": 1,
+      "version": 2,
       "versionNonce": 776605305,
       "isDeleted": false,
       "boundElements": null,
@@ -65,7 +65,7 @@
       "textAlign": "left",
       "verticalAlign": "middle",
       "containerId": null,
-      "originalText": "Run-scoped IDs isolate sessions and outputs so multiple droids can capture and render concurrently.",
+      "originalText": "Run IDs isolate outputs. Workers need isolated environments; a shared desktop stays with the parent.",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "subtitle_pipeline",
@@ -73,7 +73,7 @@
       "y": 78,
       "width": 980,
       "height": 24,
-      "text": "Run-scoped IDs isolate sessions and outputs so multiple droids can capture and render concurrently."
+      "text": "Run IDs isolate outputs. Workers need isolated environments; a shared desktop stays with the parent."
     },
     {
       "angle": 0,
@@ -928,7 +928,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 1987262418,
-      "version": 1,
+      "version": 2,
       "versionNonce": 1374389013,
       "isDeleted": false,
       "boundElements": null,
@@ -940,7 +940,7 @@
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "render",
-      "originalText": "Render worker\nrender-showcase.sh\n\n.cast -> agg -> mp4\nstage public clips\nauto-detect duration",
+      "originalText": "Render worker\nrender-showcase.sh\n\n.cast -> agg -> mp4\nstage per-render clips\nlongest-clip duration",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "t_render",
@@ -948,7 +948,7 @@
       "y": 383,
       "width": 284,
       "height": 159,
-      "text": "Render worker\nrender-showcase.sh\n\n.cast -> agg -> mp4\nstage public clips\nauto-detect duration"
+      "text": "Render worker\nrender-showcase.sh\n\n.cast -> agg -> mp4\nstage per-render clips\nlongest-clip duration"
     },
     {
       "angle": 0,
@@ -1217,7 +1217,7 @@
       "frameId": null,
       "roundness": null,
       "seed": 1728822696,
-      "version": 1,
+      "version": 2,
       "versionNonce": 677430271,
       "isDeleted": false,
       "boundElements": null,
@@ -1229,7 +1229,7 @@
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "verify_final",
-      "originalText": "Verify\n\nffprobe\nfile size / duration\ncommitment checklist",
+      "originalText": "Verify\n\nffprobe + decode\nproof frames\ncommitment checklist",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "t_verify_final",
@@ -1237,7 +1237,7 @@
       "y": 413,
       "width": 234,
       "height": 124,
-      "text": "Verify\n\nffprobe\nfile size / duration\ncommitment checklist"
+      "text": "Verify\n\nffprobe + decode\nproof frames\ncommitment checklist"
     },
     {
       "angle": 0,

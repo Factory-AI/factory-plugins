@@ -14,12 +14,12 @@ The command or capture stage should have provided a handoff with two sections:
 
 ### Mechanical (structured)
 
-- **clips**: paths to raw recordings (.cast, .mp4, .webm, .png)
-- **driver**: tuistory | true-input | agent-browser
+- **clips**: paths to raw recordings (`.cast`, `.mp4`, `.webm`); stills are not clips — see "Screenshot-only artifacts"
+- **driver**: tuistory | true-input | agent-browser | cua-driver
 - **layout**: `single` | `side-by-side`
 - **labels**: text for each clip (e.g., "BEFORE (dev)", "AFTER (PR)")
-- **speed**: multiplier (default 3x)
-- **fidelity**: `auto` | `compact` | `standard` | `inspect` (optional; auto => side-by-side=inspect, single=standard)
+- **speed**: playback multiplier applied once, by the composition, to every clip (default 1x)
+- **fidelity**: `compact` | `standard` | `inspect` (optional; omitted => side-by-side=inspect, single=standard)
 - **title**: text for the title card
 - **subtitle**: one-sentence summary
 - **sections**: text banners for chapters `[{t, title}]` (optional)
@@ -36,7 +36,7 @@ Free-text guidance on what to emphasize: which moments to hold, what the title c
 
 ```
 1. Build props   →  construct the Showcase JSON props
-2. Render        →  render-showcase.sh (converts .cast, stages clips, renders, cleans up)
+2. Render        →  render-showcase.sh (converts .cast, stages clips, probes duration, renders, cleans up)
 3. Finalize      →  verify and output
 ```
 
@@ -72,7 +72,7 @@ The command stage committed an **effects tier** (utilitarian, full, or none). No
 
 ## Step 1: Choose fidelity and pacing
 
-`render-showcase.sh` auto-selects `inspect` for side-by-side and `standard` for single-clip layouts when `fidelity` is omitted or set to `auto`.
+`render-showcase.sh` selects `inspect` for side-by-side and `standard` for single-clip layouts when `fidelity` is omitted; pass `compact`, `standard`, or `inspect` (in props or via `--fidelity`) to override. It is the only place fidelity is resolved.
 
 | Fidelity | Default output size | Remotion encode | Polish overlays | Best for |
 |---|---|---|---|---|
@@ -82,7 +82,7 @@ The command stage committed an **effects tier** (utilitarian, full, or none). No
 
 ### .cast conversion behavior
 
-`render-showcase.sh` converts `.cast` inputs through `agg -> gif -> ffmpeg -> mp4` before Remotion render, using the asciicast's own cols/rows and fixed font metrics so element positions remain stable across fidelity profiles.
+`render-showcase.sh` converts `.cast` inputs through `agg -> gif -> ffmpeg -> mp4` before Remotion render, using the asciicast's own cols/rows and fixed font metrics so element positions remain stable across fidelity profiles. Conversion runs at 1x with agg's idle-time compression disabled, so the mp4 keeps the recording's timeline (plus agg's 3s hold on the final frame); `speed` is applied later by the composition, exactly like `.mp4`/`.webm` clips.
 
 **CRITICAL: `agg` replaces ALL 16 ANSI colors with its theme palette.** The render script uses a custom Droid CLI theme. If you manually run `agg`, never omit `--theme` and never use built-in themes like `monokai` or `dracula`.
 
@@ -100,13 +100,13 @@ For other terminals that DO emit ANSI color codes, build the full theme string f
 | Before/after comparison, side-by-side | 45-75s | Each panel needs time to land; frozen-vs-active contrasts need a beat |
 | Multi-phase or complex flow | 60-120s | Phase cards give the viewer reset points; rushing defeats the purpose |
 
-Set the `speed` prop to hit the target: if the raw recording is 3 minutes and the target is 60s, use `"speed": 3`. If it's already 40s raw, use `"speed": 1` or trim dead time instead. **Trim first, speed second** -- cut LLM thinking pauses, build waits, and network delays from the `.cast` with `asciinema cut` or by splitting segments, then apply a gentle speed-up only if still over target.
+Targets are for the **final video**, which is the clips plus 7.5s of cards (4s title, 3.5s outro; see the duration checkpoint). Set the `speed` prop to hit the target: for a 60s target the clips get ~52s, so a 3-minute raw recording needs `"speed": 3.5`. If it's already 40s raw, use `"speed": 1` or trim dead time instead. **Trim first, speed second** -- cut LLM thinking pauses, build waits, and network delays from the `.cast` with `asciinema cut` or by splitting segments, then apply a gentle speed-up only if still over target.
 
-**Keystroke timing adjustment**: If a keystroke list was emitted during capture, its timestamps are in raw recording time. When you apply a speed multiplier, you **must** divide every timestamp by the speed factor before passing it to the Remotion props. A keystroke at raw `t=6.0s` in a 3x video should appear at `t=2.0s`.
+**Overlay timing boundary**: every overlay time in props (`keys[].t`, `sections[].t`, `effects[].t/dur`, `codeAnnotations[].t/dur`) is **output-timeline seconds** relative to content start. The composition applies `speed` to the clips only, never to overlay times. Capture logs raw recording seconds, so divide each timestamp by the speed factor (and subtract any trimmed lead) before writing props: a keystroke at raw `t=6.0s` in a 3x video is `t=2.0s`.
 
 ### Non-.cast clips
 
-`.mp4`, `.webm`, and `.png` clips are passed through to Remotion unchanged except for staging into `public/`. Re-encode non-`.cast` clips manually only if their pixel format or dimensions are invalid.
+`.mp4` and `.webm` clips are staged unchanged and play at `speed` like converted casts. Re-encode them manually only if their pixel format or dimensions are invalid. `.png` files are refused as clips; stills belong in "Screenshot-only artifacts" below.
 
 ### Clip aspect ratio (mandatory check for browser captures)
 
@@ -133,8 +133,12 @@ Two fixes, in priority order:
 Check whether the planned speed factor produces a final duration within the pacing table's target range:
 
 ```
-final_duration = clip_duration / speed_factor
+final_duration = 4s title + longest_clip_duration / speed_factor + 3.5s outro
 ```
+
+This is the exact length `remotion/src/lib/duration.ts` gives the composition (frames are rounded up to whole frames at 30fps). The content sequence has padding for both 0.5s crossfades: the title crossfade precedes playback; the outro crossfade begins after the frame-rounded playback interval and shows held frames. The window chrome's own 0.5s entrance animation overlaps the first half-second of playback, so open recordings on a settled baseline. Any positive finite `speed` is valid, including one that shrinks the clips below a crossfade length.
+
+The clips run for the longest clip; a shorter clip holds its final frame (it does not loop) until the sequence ends. For comparisons, record both clips to matched endings or the viewer sees one panel frozen while the other continues.
 
 | If final_duration is... | Action |
 |---|---|
@@ -162,7 +166,6 @@ cat > "$PROPS" << 'EOF'
 {
   "clips": ["demo.cast"],
   "layout": "single",
-  "fidelity": "auto",
   "labels": [],
   "speed": 3,
   "title": "PR #11621 — Prevent session freezes",
@@ -185,24 +188,24 @@ For a comparison flow, swap `"clips"` to two paths, `"layout"` to `"side-by-side
 
 Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-props.json` across rerenders or concurrent demos.
 
-**CRITICAL: `clipDuration` handling.** The render script auto-detects clip duration via ffprobe when `clipDuration` is omitted from the props. If you set it manually, it **must** match the actual clip duration or you get blank frames (too long) or truncation (too short). When in doubt, omit it and let the script auto-detect.
+**`clipDuration` is owned by the render script.** It probes every clip with ffprobe and writes the longest duration in source seconds; the composition divides by `speed`. Do not set it by hand — to shorten a video, trim the source clip.
 
 ### Props reference
 
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `clips` | `string[]` | yes | Filenames (basenames only — the render script handles staging) |
+| `clips` | `string[]` | yes | Overwritten by the render script with staged paths in command-line order; the positional clip arguments are the source of truth |
 | `layout` | `"single" \| "side-by-side"` | yes | Composition layout |
 | `labels` | `string[]` | yes | Labels for each clip (visible in side-by-side; pass `[]` for single) |
-| `fidelity` | `"compact" \| "standard" \| "inspect"` | no | Output quality/compression profile. Omit for auto-selection by layout. |
-| `speed` | `number` | no | Playback speed for `.cast -> agg` conversion. |
+| `fidelity` | `"compact" \| "standard" \| "inspect"` | no | Output quality/compression profile. Omit and the render script chooses by layout. |
+| `speed` | `number` | no | Playback multiplier applied once by the composition to every clip (default 1). Overlay times are not scaled. |
 | `title` | `string` | yes | Title card heading |
 | `subtitle` | `string` | yes | Title card subheading |
 | `preset` | preset name | yes | Visual preset — see table below |
 | `keys` | `Keystroke[]` | yes | Keystroke overlay events (pass `[]` for none) |
 | `sections` | `Section[]` | no | Section banners to mark chapters (pass `[]` for none) |
 | `effects` | `Effect[]` | yes | Effect timeline (pass `[]` for none) |
-| `clipDuration` | `number` | no | Clip duration in seconds. **Auto-detected by render script if omitted.** |
+| `clipDuration` | `number` | no | Longest clip in source seconds. **Set by the render script; do not write it by hand.** |
 | `speedNote` | `string` | no | Shown on title card (e.g., `"3x speed"`) |
 | `windowTitle` | `string` | no | Text in the window title bar |
 | `width` | `number` | no | Output width (default: 2560 for inspect, else 1920) |
@@ -295,32 +298,32 @@ Keep it short — aim for ≤ 15 lines per card, hold for 3–6 seconds.
 
 ## Step 3: Render
 
-Use the render script — it handles clip staging, duration detection, rendering, and cleanup:
+Use the render script — it is the only entry point to the composition (staging, normalization, duration, rendering, cleanup):
 
 ```bash
 RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh
 
 # Basic render
-$RENDER --props "$PROPS" --output /tmp/demo.mp4 \
-  /tmp/before.cast /tmp/after.cast
+$RENDER --props "$PROPS" --output "${RUN_DIR}/demo.mp4" \
+  "${RUN_DIR}/before.cast" "${RUN_DIR}/after.cast"
 
 # Or with inline props (useful for simple cases)
-$RENDER --props-inline '{"clips":["clip.mp4"],"layout":"single","labels":[],"title":"Demo","subtitle":"Test","preset":"macos","keys":[],"effects":[]}' \
-  --output /tmp/demo.mp4 /tmp/clip.mp4
+$RENDER --props-inline '{"clips":[],"layout":"single","labels":[],"title":"Demo","subtitle":"Test","preset":"macos","keys":[],"effects":[]}' \
+  --output "${RUN_DIR}/demo.mp4" "${RUN_DIR}/clip.mp4"
 ```
 
 The script:
-1. Converts `.cast` inputs to `.mp4` using the selected fidelity profile
-2. Copies clip files into `${REMOTION_DIR}/public/`
-3. Auto-detects `clipDuration` via ffprobe if missing from props
-4. Runs `npx remotion render Showcase` with profile-specific encode flags
-5. Cleans up staged and generated clips
+1. Accepts `.cast`, `.mp4`, `.webm` only; converts `.cast` to `.mp4` at 1x with the selected fidelity profile
+2. Stages clips as `clip-<index>` inside a directory it creates under `${REMOTION_DIR}/public/` for this render only
+3. Resolves `fidelity`, `width`/`height`, `speed`; sets `clipDuration` to the longest clip (ffprobe)
+4. Runs `npx remotion render Showcase` with profile-specific encode flags plus `--pixel-format=yuv420p --color-space=bt709` (the color space is what keeps the file at limited-range `yuv420p` instead of `yuvj420p`)
+5. Removes its own staged directory on exit and on failure. Cancel it with Ctrl-C or by signalling its process group; a signal sent to the script's PID alone takes effect only after the `npx remotion` child exits
 
-**Quick frame check** (sanity-check layout before full render):
+**Quick frame check** (sanity-check layout before full render; same normalization and staging as a render):
 
 ```bash
-cd ${REMOTION_DIR}
-npx remotion still Showcase --props="$(cat "$PROPS")" --frame=30 --scale=0.5 /tmp/check.png
+$RENDER --props "$PROPS" --still 150 --output "${RUN_DIR}/check.png" "${RUN_DIR}/before.cast" "${RUN_DIR}/after.cast"
+# frame 150 = 5.0s at 30fps; clips start at frame 120, after the title crossfade
 ```
 
 **Render time**: Expect ~1-3 minutes for a 30-60s video at 1920x1080. Set worker timeouts accordingly (5 minutes is safe).
@@ -330,14 +333,16 @@ npx remotion still Showcase --props="$(cat "$PROPS")" --frame=30 --scale=0.5 /tm
 Check the result:
 
 ```bash
-ffprobe -v quiet -print_format json -show_format -show_streams /tmp/demo.mp4
+ffprobe -v quiet -print_format json -show_format -show_streams "${RUN_DIR}/demo.mp4"
 ```
 
 Confirm:
-- Resolution is 1920x1080 (or matches the expected output)
-- Duration is reasonable (not 0s, not hours)
+- Resolution matches the resolved fidelity: 1920x1080 for `compact`/`standard`, 2560x1440 for `inspect` (the default for `side-by-side`), or the explicit `width`/`height` in props
+- Duration matches `4s title + longest_clip / speed + 3.5s outro` (the duration checkpoint formula)
 - File size is manageable (under 5 MB for GitHub embeds, 25 MB hard limit)
-- Pixel format is yuv420p (universal playback)
+- Pixel format is `yuv420p` with `color_space=bt709` (universal playback)
+
+The **verify** stage owns the decode and proof-frame checks; do not report the video as playable from metadata alone.
 
 ## Outputs
 
@@ -357,7 +362,7 @@ Hand to the **verify** stage:
 
 ## Screenshot-only artifacts (proofs, QA)
 
-Not every deliverable is a video. For proof and QA workflows, compose may just organize screenshots and snapshots:
+Not every deliverable is a video. For proof and QA workflows, compose may just organize screenshots and snapshots. This is also where `.png` stills go — they are never passed to the render script as clips:
 
 ### Annotated screenshot set
 

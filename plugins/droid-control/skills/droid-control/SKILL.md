@@ -1,18 +1,18 @@
 ---
 name: droid-control
-description: Control terminal TUIs and web/Electron apps for testing, demos, QA, and computer-use tasks. Use when you need to automate a CLI, drive a browser, record a demo, or capture proof artifacts.
+description: Control terminal TUIs, browsers, and native desktop apps for testing, demos, QA, and computer-use tasks. Use when you need to operate an app, automate a CLI, record a demo, or capture proof.
 ---
 
 # Droid Control
 
-Automate terminals and browsers. Three routing decisions, then atoms guide you the rest of the way.
+Automate terminals, browsers, and desktop apps. Route by the user's requested method first, then load only the mechanics and evidence stages needed.
 
 ## Ground rules
 
 1. **Real apps, real environments.** Non-deterministic behavior (LLM responses, network latency, variable output) is expected. Handle it with `wait` / `wait-idle`. Never substitute fixtures or mocked data.
-2. **Commit to execution.** Once you've chosen a driver, run the plan. If something fails mid-run, recover and retry -- don't re-evaluate the approach.
-3. **Atoms are self-contained.** Load one and follow its mechanics. No cross-referencing needed.
-4. **`tctl` is the ONLY way to launch recorded sessions.** `tctl` manages recording by wrapping `asciinema rec` around the PTY — raw `tuistory` has no recording capability and never will. Never call `tuistory launch` directly; unknown flags crash `tuistory-relay`. Always resolve `TCTL` to its absolute filesystem path before use, especially when delegating to workers (they don't inherit `${DROID_PLUGIN_ROOT}`).
+2. **Recover from evidence.** After a failed or uncertain action, observe current state before retrying. Honor method constraints and permission boundaries; a refusal does not authorize another driver or broader target.
+3. **Atoms include their references.** Load linked material on demand. Desktop-use does not require a separately installed cua skill.
+4. **`tctl` owns recorded terminal sessions.** It wraps `asciinema rec` around the PTY; browser and desktop drivers own their separate lifecycles. Never call `tuistory launch` directly. Resolve `TCTL` to an absolute path only for terminal workflows or worker handoffs.
 5. **Isolate every run.** Multiple droids may be filming simultaneously on the same machine. Session names and output paths share a global namespace (`/tmp/tctl-sessions/`). At the start of every workflow, generate a run ID (`RUN_ID=$(date +%s)-$$` or similar) and use it as a prefix for all session names and a scoped temp directory for all output files:
    ```bash
    RUN_ID="$(date +%s)-$$"
@@ -21,6 +21,7 @@ Automate terminals and browsers. Three routing decisions, then atoms guide you t
    # Output paths: ${RUN_DIR}/before.cast, ${RUN_DIR}/after.cast
    ```
    Never use bare session names like `-s demo`, `-s before`, `-s after` — they will collide with concurrent runs.
+   Separate names and paths do not isolate shared desktop focus or keyboard input. Keep one controller for a visible desktop.
 
 ## Routing
 
@@ -30,15 +31,14 @@ Three independent lookups. Do all three, then load the union of skills they prod
 
 | Target | Load these skills |
 |---|---|
-| Droid CLI (`droid-dev`, `droid exec`) | **droid-cli** + tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
-| Droid CLI (real terminal proof) | **true-input** + **droid-cli** |
-| Other terminal TUI | tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
-| Other terminal TUI (real terminal proof) | **true-input** |
-| Web page or Electron app | **agent-browser** |
-| Native desktop GUI app | **desktop-control** |
-| Raw terminal byte sequences | **true-input** + **pty-capture** |
+| User explicitly requests cua-only, native GUI input, or desktop control (including Electron) | **desktop-use**; method constraints override the defaults below |
+| Droid CLI (`droid-dev`, `droid exec`) | **terminal-use** + **droid-cli** |
+| Other terminal TUI | **terminal-use** |
+| Web page or Electron app | **browser-use** |
+| Native desktop GUI app | **desktop-use** |
+| Raw terminal byte sequences | **terminal-use** + **pty-capture** |
 
-**tuistory** is the default for terminal work. Use **true-input** only when you need real terminal rendering evidence. On Linux, desktop-control rides upstream's pre-release tier -- its platform file documents the Wayland/AT-SPI/input caveats and when to fall back to **agent-browser** or **true-input**.
+**terminal-use** selects the terminal backend behind `${DROID_PLUGIN_ROOT}/bin/tctl`: `tuistory` by default, and it loads **true-input** when real terminal rendering or keyboard-encoding evidence is needed. Desktop-use includes compositor-specific guidance; inspect live Cua capabilities rather than assuming all Linux targets are X11-only or abandoning the user's chosen method.
 
 ### 2. Stage route — what does the workflow need?
 
@@ -46,9 +46,9 @@ Every workflow passes through stages. Load the atoms for each stage you'll use.
 
 | Stage | Skill | When to load |
 |---|---|---|
-| Capture | **capture** | Always -- every workflow records or captures something |
+| Capture | **capture** | Recording, scripted multi-step evidence, or a demo/QA deliverable; ordinary desktop operation uses the driver's observe/verify loop |
 | Compose | **compose** | When the deliverable is a produced artifact (video, annotated screenshots, comparison image) |
-| Verify | **verify** | Always -- every deliverable gets checked against commitments |
+| Verify | **verify** | Formal proof, demo, or QA deliverable; every action still needs verification even without this stage |
 
 ### 3. Artifact route — does compose need polish tools?
 
@@ -89,15 +89,16 @@ Do not synthesize a "before" state to justify `side-by-side`. If there is no rea
 
 ## Delegation
 
-The parent agent plans and orchestrates. Mechanical work runs in **worker subagents** via the Task tool. This keeps the parent's context clean and enables parallelism.
+Keep short interactive desktop tasks in the parent: it owns observations, input, user permission waits, and cleanup. Delegate independent capture environments or rendering, not individual screenshots interleaved with another controller's input.
 
 ### What to delegate
 
 | Task | Delegate? | Why |
 |---|---|---|
-| **Capture clip** (single layout) | YES | Worker runs the interaction script end-to-end and returns the `.cast` path |
-| **Capture both clips** (comparison layout) | YES — `run_in_background=true` for each | Branches are independent; run in parallel |
-| **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, fidelity profiles, duration detection, cleanup) |
+| **Interactive shared desktop** | NO — parent | One controller owns focus, snapshots, input, permission waits, and cleanup |
+| **Capture clip in an isolated terminal/browser environment** | YES | Worker owns the complete interaction and recording lifecycle |
+| **Capture both clips** (comparison layout) | YES, only with independent environments | Worktrees and session labels alone do not isolate a desktop |
+| **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, per-render staging, fidelity profiles, longest-clip duration, cleanup) |
 | Planning, interaction scripting | NO — parent | Requires PR context and editorial judgment |
 | Layout and prop construction | NO — parent | Requires editorial decisions about effects, timing, labels |
 | Verification | NO — parent | Requires commitment context |
@@ -143,7 +144,7 @@ Task prompt for a Remotion render worker:
 
 ### Parallel capture pattern (comparison flows only)
 
-Only applicable when the Layout default table above selects `side-by-side`. For a `single` layout, launch one capture worker and skip this section.
+Only applicable when the Layout default table selects `side-by-side` and the capture environments are independent. Serialize shared-desktop captures. For a single interactive desktop task, keep control in the parent.
 
 For before/after comparison demos, launch both capture workers simultaneously:
 
@@ -158,7 +159,7 @@ For before/after comparison demos, launch both capture workers simultaneously:
 
 ## Shared tooling
 
-Terminal drivers use the unified `tctl` wrapper. agent-browser and desktop-control have their own CLIs (`agent-browser`, `cua-driver`) and do not use `tctl`.
+Terminal drivers use the unified `tctl` wrapper. Browser-use and desktop-use have their own CLIs (`agent-browser`, `cua-driver`) and do not use `tctl`.
 
 Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-browser` for a web UI it interacts with.
 
@@ -204,12 +205,12 @@ Deterministic recipe for reproducing degraded transcript tails in the droid CLI 
 
 | Stage | Platform | Required | Optional |
 |---|---|---|---|
-| tuistory | All | `tuistory`, `asciinema`, `agg` | `tmux` |
+| terminal-use (tuistory) | All | `tuistory`, `asciinema`, `agg` | `tmux` |
 | true-input | Linux/Wayland | `cage`, `wtype`, Wayland terminal, `/dev/dri/*` | `grim`, `wf-recorder` |
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SPICE + SSH, `DROID_VM_*` env vars | `virt-manager` |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH, `DROID_MAC_*` env vars | — |
-| agent-browser | All | `agent-browser` (+ `agent-browser install`) | — |
-| desktop-control | All | `cua-driver` (+ daemon via `cua-driver serve`; macOS also `cua-driver permissions grant`) | upstream skill pack (`cua-driver skills install`) |
+| browser-use | All | `agent-browser` (+ `agent-browser install`) | — |
+| desktop-use | All | `cua-driver` in the intended graphical session; approved OS permissions | Documentation is bundled; no separate skill install |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` | — |
 | showcase | All | Node.js (>= 18), Chrome/Chromium | — |
 
@@ -228,9 +229,8 @@ sudo apt-get install -y grim wf-recorder             # optional: screenshots + v
 # agent-browser driver
 agent-browser install                                # one-time: downloads bundled Chromium
 
-# desktop-control driver (Windows hosts: irm .../scripts/install.ps1 | iex)
-curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash
-cua-driver skills install                            # upstream skill pack (deep tool reference)
+# desktop-use: follow its setup instructions only if the binary
+# is missing and installation is approved. No separate skill install.
 
 # compose + showcase (video rendering)
 sudo apt-get install -y ffmpeg                       # video processing (includes ffprobe)

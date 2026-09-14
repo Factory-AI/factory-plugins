@@ -12,7 +12,7 @@ The plugin is designed to keep a droid focused while it operates real software:
 
 - **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and Remotion internals.
 - **Evidence-first workflows:** every command starts by making commitments, then ends by verifying the artifact against those commitments.
-- **Parallel execution:** before/after captures and render jobs can run in worker droids without sharing session names or output paths.
+- **Parallel execution:** independent capture environments and render jobs can run in workers. Shared desktop input stays serialized; session names do not isolate focus.
 - **Clear ownership:** commands decide *what* must be produced; atom skills decide *how* to execute their slice.
 - **Platform specificity:** OS-specific mechanics live in platform subdocuments, not in global instructions.
 
@@ -24,7 +24,7 @@ The three user-facing commands are deliberately thin:
 |---|---|
 | `/demo` | Turn a PR or feature description into a visible proof story and a video deliverable. |
 | `/verify` | Test a claim as an investigator and report whether the evidence confirms or refutes it. |
-| `/qa-test` | Drive a terminal, browser, or Electron flow and report step-level pass/fail evidence. |
+| `/qa-test` | Drive a terminal, browser, Electron, or native desktop flow and report step-level `PASS` / `FAIL` / `BLOCKED` evidence. |
 
 A command parses arguments into **commitments**: layout, comparison mode, evidence type, video/showcase requirements, keystroke overlays, and any user-specified constraints. Those commitments are not suggestions. The `verify` stage later checks them explicitly.
 
@@ -48,7 +48,7 @@ Each atom skill is a self-contained surface the droid reads at a specific point 
 
 | Atom type | Skills | Responsibility |
 |---|---|---|
-| Driver atoms | `tuistory`, `true-input`, `agent-browser`, `desktop-control` | How to drive a class of environment. |
+| Driver atoms | `terminal-use`, `true-input`, `browser-use`, `desktop-use` | How to drive a class of environment. `terminal-use` is the terminal entrypoint; it runs the tuistory backend and routes real-terminal proof to `true-input`. |
 | Target atoms | `droid-cli`, `pty-capture` | Target-specific shortcuts, launch rules, and byte-capture patterns. |
 | Stage atoms | `capture`, `compose`, `verify` | Lifecycle phases with explicit inputs and outputs. |
 | Polish atom | `showcase` | Visual presets and cinematic layer guidance. |
@@ -85,9 +85,10 @@ The parent droid keeps judgment. Workers get exact commands.
 
 | Work | Owner | Reason |
 |---|---|---|
+| Short interactive desktop task | Parent | One controller owns observation, input, permission waits, and cleanup. |
 | Interpret PR / claim / QA goal | Parent | Requires context and judgment. |
 | Write the interaction script | Parent | Defines the proof story. |
-| Capture baseline and candidate branches | Worker droids | Independent, mechanical, parallelizable. |
+| Capture baseline and candidate branches | Workers only for independent environments | A shared desktop must be captured serially. |
 | Render Remotion video | Worker droid | Mechanical once props and clips are fixed. |
 | Verify commitments | Parent | Requires the original contract and evidence judgment. |
 
@@ -95,9 +96,9 @@ This boundary follows the stage handoffs. Capture workers need resolved `tctl` c
 
 ## Runtime artifact pipeline
 
-![droid-control capture compose verify pipeline](diagrams/capture-compose-verify.svg)
+![droid-control terminal comparison pipeline](diagrams/capture-compose-verify.svg)
 
-Editable source: [`diagrams/capture-compose-verify.excalidraw`](diagrams/capture-compose-verify.excalidraw)
+Editable source: [`diagrams/capture-compose-verify.excalidraw`](diagrams/capture-compose-verify.excalidraw). The diagram shows the terminal comparison flow, where each branch has an isolated tuistory environment and can run in its own worker; a shared desktop is captured serially by the parent (see Delegation boundaries).
 
 Every workflow starts by creating a run scope:
 
@@ -125,14 +126,14 @@ Browser/Electron and native-desktop workflows intentionally do **not** go throug
 
 The compose stage uses the Remotion project in `remotion/` as a single video engine. The droid writes a `Showcase` props JSON; `scripts/render-showcase.sh` handles the mechanical rendering pipeline:
 
-1. Normalize props and choose fidelity.
-2. Convert `.cast` recordings through `agg` and `ffmpeg`.
-3. Stage clips into Remotion `public/`.
-4. Auto-detect `clipDuration` with `ffprobe` when omitted.
-5. Render the `Showcase` composition.
-6. Clean staged clips and temporary conversion outputs.
+1. Accept `.cast`, `.mp4`, and `.webm` clips only; normalize props and resolve fidelity (omitted: side-by-side `inspect`, single `standard`).
+2. Convert `.cast` recordings through `agg` and `ffmpeg` at 1x, keeping the recording's timeline.
+3. Stage clips as `clip-<index>` inside a directory created under Remotion `public/` for this render only.
+4. Set `clipDuration` to the longest clip with `ffprobe`.
+5. Render the `Showcase` composition as limited-range `yuv420p`/`bt709` H.264, or one frame with `--still`.
+6. Remove that render's staged directory and conversion outputs on exit.
 
-This keeps droids out of the common failure modes: stale files in `public/`, mismatched `clipDuration`, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
+`remotion/src/lib/duration.ts` owns the timeline: the composition applies `speed` once to every clip, the clips run for `clipDuration / speed`, and the content sequence is padded by one crossfade on each side so the clips start after the title crossfade and the final frame is held through the outro crossfade. Total length is `4s title + clipDuration / speed + 3.5s outro`; a shorter clip holds its final frame. This keeps droids out of the common failure modes: two `recording.mp4` inputs overwriting each other in `public/`, concurrent renders deleting each other's clips, mismatched `clipDuration`, casts sped up twice, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
 
 ### Composition surface
 
@@ -161,12 +162,14 @@ skills/true-input/platforms/macos.md
 skills/pty-capture/platforms/linux.md
 skills/pty-capture/platforms/windows.md
 skills/pty-capture/platforms/macos.md
-skills/desktop-control/platforms/linux.md
-skills/desktop-control/platforms/windows.md
-skills/desktop-control/platforms/macos.md
+skills/desktop-use/SKILL.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
+
+Desktop-use keeps routine setup, target selection, recovery, and recording rules in one compact entrypoint. It includes a host setup table rather than copied platform manuals. No user-home skill dependency or runtime documentation download is required.
+
+For ordinary desktop tasks, the driver verifies each action and reports directly. Capture/verify stages are loaded for formal evidence deliverables, and compose only when a produced artifact was requested. Explicit GUI-only or cua-only constraints take precedence over Electron's default browser route.
 
 ## Extending the plugin
 

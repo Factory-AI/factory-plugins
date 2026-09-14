@@ -1,10 +1,10 @@
 ---
-name: agent-browser
-description: Background knowledge for droid-control workflows -- not invoked directly. Agent-browser driver mechanics for web page and Electron desktop app automation.
+name: browser-use
+description: Background knowledge for droid-control workflows -- not invoked directly. Browser-use driver mechanics for web page and Electron desktop app automation via agent-browser.
 user-invocable: false
 ---
 
-# Agent-Browser Driver
+# Browser Use
 
 The orchestrator routed you here. Execute the browser portion of its action
 flow, put evidence under `${RUN_DIR}`, and return artifacts for Capture and

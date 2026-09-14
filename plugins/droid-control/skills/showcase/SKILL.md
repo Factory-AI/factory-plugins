@@ -82,13 +82,13 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 **Render time**: ~1-3 minutes for a 30-60s video at 1920x1080. Set worker timeouts to 5 minutes.
 
 **Common failure modes**:
-- `clipDuration` mismatch: video has blank frames at end or truncates early. The `render-showcase.sh` script auto-detects duration via ffprobe — prefer using it over manual `npx remotion render`.
-- Missing clips in `public/`: render fails with "Could not read file." The render script handles staging automatically.
+- Content truncated or a panel frozen early: `clipDuration` is the longest clip, probed by `render-showcase.sh`; a shorter clip holds its final frame. Trim or re-record the sources rather than editing `clipDuration`.
+- Missing clips in `public/`: render fails with "Could not read file." The render script stages clips into its own per-render directory; never run `npx remotion render` directly.
 - Missing npm dependencies: run `cd ${REMOTION_DIR} && npm install` if rendering fails on first use.
 
-**Debugging layout**: Use `npx remotion still Showcase --props='...' --frame=30 --scale=0.5 /tmp/check.png` to render a single frame and inspect it visually before committing to a full render.
+**Debugging layout**: `render-showcase.sh --still <frame>` renders one frame through the same normalization and staging as a full render (see compose/SKILL.md Step 3).
 
-**Cleanup**: The `render-showcase.sh` script removes staged clips from `public/` after rendering. If you run `npx remotion render` directly, clean up `public/` manually.
+**Cleanup**: `render-showcase.sh` removes only the staged directory it created, on success, failure, or cancellation via Ctrl-C / process-group signal. A signal to the script's PID alone is deferred until the `npx remotion` child exits.
 
 ## Rendering
 
@@ -97,7 +97,7 @@ Use the render script from **compose** — see compose/SKILL.md Step 3 for full 
 ```bash
 RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh
 
-$RENDER --props /tmp/props.json --output /tmp/showcase.mp4 /tmp/clip.mp4
+$RENDER --props "${RUN_DIR}/props.json" --output "${RUN_DIR}/showcase.mp4" "${RUN_DIR}/clip.mp4"
 ```
 
 ## Advanced: GlitchTitle

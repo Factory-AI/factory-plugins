@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { z } from 'zod';
-import { AbsoluteFill, staticFile, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Sequence, staticFile, useVideoConfig } from 'remotion';
 import { Video } from '@remotion/media';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { getTransitionPresentation } from '../components/ShowcaseTransition';
@@ -16,6 +16,13 @@ import {
 } from '../lib/schema';
 import { getPalette } from '../lib/palettes';
 import { getPresetConfig } from '../lib/presets';
+import {
+  TITLE_DURATION_S,
+  OUTRO_DURATION_S,
+  TRANSITION_FRAMES,
+  contentSequenceFrames,
+  playbackSpeed,
+} from '../lib/duration';
 import { Background } from '../components/Background';
 import { WindowChrome } from '../components/WindowChrome';
 import { TitleCard } from '../components/TitleCard';
@@ -47,9 +54,13 @@ export const showcaseSchema = z.object({
   height: z.number().optional(),
   speedNote: z.string().optional(),
   windowTitle: z.string().optional(),
+  // Longest source clip in source seconds; render-showcase.sh probes it.
   clipDuration: z.number().optional(),
+  // Playback multiplier applied once, here, to every clip. Overlay times
+  // (keys, sections, effects, codeAnnotations) are already output seconds.
   speed: z.number().positive().optional(),
-  fidelity: fidelitySchema.optional(),
+  // Resolved by render-showcase.sh (omitted there => chosen by layout).
+  fidelity: fidelitySchema,
   // How clip video is sized inside its panel.
   // - "contain" (default): preserve aspect ratio, letterbox if needed. Safe default.
   // - "cover": fill the panel, crop overflow. Use when the clip aspect doesn't match the
@@ -65,9 +76,6 @@ export const showcaseSchema = z.object({
   // Defaults to 'motion-blur', which preserves existing aesthetic.
   transitionStyle: transitionStyleSchema.optional(),
 });
-
-const TITLE_DURATION_S = 4;
-const TRANSITION_FRAMES = 15;
 
 // Effect types this composition actually renders. Anything schema-valid but
 // absent from this set is a silent no-op — warn instead of dropping quietly.
@@ -86,24 +94,45 @@ const warnUnrenderedEffects = (effects: z.infer<typeof effectSchema>[]) => {
   }
 };
 
-const resolveFidelity = (
-  props: z.infer<typeof showcaseSchema>
-): 'compact' | 'standard' | 'inspect' =>
-  props.fidelity ?? (props.layout === 'side-by-side' ? 'inspect' : 'standard');
-
 const visualTreatmentByFidelity = {
   compact: { noiseOpacity: 0.03, gradeIntensity: 0.04 },
   standard: { noiseOpacity: 0.02, gradeIntensity: 0.025 },
   inspect: { noiseOpacity: 0.008, gradeIntensity: 0.012 },
 } as const;
 
+type ObjectFit = 'contain' | 'cover' | 'fill';
+
+// One playback contract for every clip: `speed` is applied here and nowhere
+// else, and a clip that ends before the content sequence does not loop -- it
+// holds its last decoded frame, so a shorter comparison panel stays on its
+// final state.
+const ClipVideo: React.FC<{
+  clip: string;
+  speed: number;
+  objectFit: ObjectFit;
+  surface: string;
+}> = ({ clip, speed, objectFit, surface }) => (
+  <Video
+    src={staticFile(clip)}
+    playbackRate={speed}
+    loop={false}
+    objectFit={objectFit}
+    style={{
+      width: '100%',
+      height: '100%',
+      backgroundColor: surface,
+    }}
+  />
+);
+
 const SingleLayout: React.FC<{
   clip: string;
+  speed: number;
   config: ReturnType<typeof getPresetConfig>;
   palette: ReturnType<typeof getPalette>;
   windowTitle?: string;
-  objectFit: 'contain' | 'cover' | 'fill';
-}> = ({ clip, config, palette, windowTitle, objectFit }) => {
+  objectFit: ObjectFit;
+}> = ({ clip, speed, config, palette, windowTitle, objectFit }) => {
   const { width, height } = useVideoConfig();
 
   const frameW = width - 2 * config.margin;
@@ -124,14 +153,11 @@ const SingleLayout: React.FC<{
         height={frameH}
         title={windowTitle}
       >
-        <Video
-          src={staticFile(clip)}
+        <ClipVideo
+          clip={clip}
+          speed={speed}
           objectFit={objectFit}
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: palette.surface,
-          }}
+          surface={palette.surface}
         />
       </WindowChrome>
     </AbsoluteFill>
@@ -141,10 +167,11 @@ const SingleLayout: React.FC<{
 const SideBySideLayout: React.FC<{
   clips: string[];
   labels: string[];
+  speed: number;
   config: ReturnType<typeof getPresetConfig>;
   palette: ReturnType<typeof getPalette>;
-  objectFit: 'contain' | 'cover' | 'fill';
-}> = ({ clips, labels, config, palette, objectFit }) => {
+  objectFit: ObjectFit;
+}> = ({ clips, labels, speed, config, palette, objectFit }) => {
   const { width, height } = useVideoConfig();
 
   const totalW = width - 2 * config.margin;
@@ -173,14 +200,11 @@ const SideBySideLayout: React.FC<{
               animate={false}
               title={labels[i] ?? `Clip ${i + 1}`}
             >
-              <Video
-                src={staticFile(clip)}
+              <ClipVideo
+                clip={clip}
+                speed={speed}
                 objectFit={objectFit}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: palette.surface,
-                }}
+                surface={palette.surface}
               />
             </WindowChrome>
           </div>
@@ -198,11 +222,11 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
   const config = getPresetConfig(props.preset);
   const isFactory =
     props.preset === 'factory' || props.preset === 'factory-hero';
-  const fidelity = resolveFidelity(props);
-  const visualTreatment = visualTreatmentByFidelity[fidelity];
+  const visualTreatment = visualTreatmentByFidelity[props.fidelity];
 
   const titleFrames = TITLE_DURATION_S * fps;
-  const clipFrames = Math.ceil((props.clipDuration ?? 60) * fps);
+  const contentFrames = contentSequenceFrames(props, fps);
+  const speed = playbackSpeed(props);
   const objectFit = props.objectFit ?? 'contain';
   const transition = useMemo(
     () =>
@@ -262,97 +286,105 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
         />
 
         {/* Main content */}
-        <TransitionSeries.Sequence durationInFrames={clipFrames}>
+        <TransitionSeries.Sequence durationInFrames={contentFrames}>
           <AbsoluteFill>
             <Background palette={palette} config={config} />
 
-            {(() => {
-              let content = (
-                <>
-                  {props.layout === 'side-by-side' ? (
-                    <SideBySideLayout
-                      clips={props.clips}
-                      labels={props.labels}
-                      config={config}
-                      palette={palette}
-                      objectFit={objectFit}
-                    />
-                  ) : props.clips[0] ? (
-                    <SingleLayout
-                      clip={props.clips[0]}
-                      config={config}
-                      palette={palette}
-                      windowTitle={props.windowTitle}
-                      objectFit={objectFit}
-                    />
-                  ) : null}
-                </>
-              );
-
-              // Apply zooms by wrapping content
-              zooms.forEach((zoom, i) => {
-                content = (
-                  <ZoomEffect
-                    key={`zoom-${i}`}
-                    startTime={zoom.t}
-                    duration={zoom.dur}
-                    to={zoom.to}
-                  >
-                    {content}
-                  </ZoomEffect>
+            {/* Clips and overlays share one clock that starts after the
+                title crossfade, so overlay `t` is output seconds from the
+                first clip frame. Nothing here ends before the sequence: the
+                clips hold their last frame through the outro crossfade. */}
+            <Sequence from={TRANSITION_FRAMES}>
+              {(() => {
+                let content = (
+                  <>
+                    {props.layout === 'side-by-side' ? (
+                      <SideBySideLayout
+                        clips={props.clips}
+                        labels={props.labels}
+                        speed={speed}
+                        config={config}
+                        palette={palette}
+                        objectFit={objectFit}
+                      />
+                    ) : props.clips[0] ? (
+                      <SingleLayout
+                        clip={props.clips[0]}
+                        speed={speed}
+                        config={config}
+                        palette={palette}
+                        windowTitle={props.windowTitle}
+                        objectFit={objectFit}
+                      />
+                    ) : null}
+                  </>
                 );
-              });
 
-              return content;
-            })()}
+                // Apply zooms by wrapping content
+                zooms.forEach((zoom, i) => {
+                  content = (
+                    <ZoomEffect
+                      key={`zoom-${i}`}
+                      startTime={zoom.t}
+                      duration={zoom.dur}
+                      to={zoom.to}
+                    >
+                      {content}
+                    </ZoomEffect>
+                  );
+                });
 
-            {/* Spotlight overlays */}
-            {spotlights.map((spot, i) => (
-              <SpotlightOverlay
-                key={`spot-${i}`}
-                startTime={spot.t}
-                duration={spot.dur}
-                region={spot.on}
-                dim={spot.dim}
-              />
-            ))}
+                return content;
+              })()}
 
-            {/* Callout annotations: timed text pills at percent positions */}
-            {callouts.length > 0 && (
-              <CalloutOverlay callouts={callouts} palette={palette} />
-            )}
+              {/* Spotlight overlays */}
+              {spotlights.map((spot, i) => (
+                <SpotlightOverlay
+                  key={`spot-${i}`}
+                  startTime={spot.t}
+                  duration={spot.dur}
+                  region={spot.on}
+                  dim={spot.dim}
+                />
+              ))}
 
-            {/* Frosted sweep at section boundaries */}
-            {props.sections && props.sections.length > 1 && (
-              <SectionTransitionOverlay sections={props.sections} />
-            )}
+              {/* Callout annotations: timed text pills at percent positions */}
+              {callouts.length > 0 && (
+                <CalloutOverlay callouts={callouts} palette={palette} />
+              )}
 
-            {/* Section Headers */}
-            {props.sections && props.sections.length > 0 && (
-              <SectionHeaderOverlay
-                sections={props.sections}
-                palette={palette}
-                config={config}
-              />
-            )}
+              {/* Frosted sweep at section boundaries */}
+              {props.sections && props.sections.length > 1 && (
+                <SectionTransitionOverlay sections={props.sections} />
+              )}
 
-            {/* Keystroke overlay */}
-            {props.keys.length > 0 && (
-              <KeystrokeOverlay
-                keys={props.keys}
-                palette={palette}
-                config={config}
-              />
-            )}
+              {/* Section Headers */}
+              {props.sections && props.sections.length > 0 && (
+                <SectionHeaderOverlay
+                  sections={props.sections}
+                  palette={palette}
+                  config={config}
+                />
+              )}
 
-            {/* Code annotations: timed syntax-highlighted overlays */}
-            {props.codeAnnotations && props.codeAnnotations.length > 0 && (
-              <CodeAnnotationOverlay
-                annotations={props.codeAnnotations}
-                palette={palette}
-                config={config}
-              />
-            )}
+              {/* Keystroke overlay */}
+              {props.keys.length > 0 && (
+                <KeystrokeOverlay
+                  keys={props.keys}
+                  palette={palette}
+                  config={config}
+                />
+              )}
+
+              {/* Code annotations: timed syntax-highlighted overlays */}
+              {props.codeAnnotations && props.codeAnnotations.length > 0 && (
+                <CodeAnnotationOverlay
+                  annotations={props.codeAnnotations}
+                  palette={palette}
+                  config={config}
+                />
+              )}
+            </Sequence>
           </AbsoluteFill>
         </TransitionSeries.Sequence>
 
@@ -363,7 +395,7 @@ export const ShowcaseComposition: React.FC<z.infer<typeof showcaseSchema>> = (
         />
 
         {/* Outro card */}
-        <TransitionSeries.Sequence durationInFrames={3.5 * fps}>
+        <TransitionSeries.Sequence durationInFrames={OUTRO_DURATION_S * fps}>
           <DroidOutro
             palette={palette}
           />

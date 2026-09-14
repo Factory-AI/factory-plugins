@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "npx remotion studio",
     "render": "npx remotion render",
-    "still": "npx remotion still"
+    "still": "npx remotion still",
+    "test": "node --test 'tests/**/*.test.mts'"
   },
   "dependencies": {
     "@remotion/cli": "4.0.445",

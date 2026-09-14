@@ -8,7 +8,7 @@ user-invocable: false
 
 The orchestrator routed you here. This atom owns the full recording lifecycle: launch a target, execute an interaction script, collect raw outputs.
 
-You should already have a **driver atom** loaded (tuistory, true-input, agent-browser, or desktop-control) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
+You should already have a **driver atom** loaded (terminal-use, true-input, browser-use, or desktop-use) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
 
 ## Inputs
 
@@ -21,6 +21,8 @@ The command that invoked you should have provided:
 
 ## Recording lifecycle
 
+For desktop-use, follow its [recording contract](../desktop-use/SKILL.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
+
 ### 1. Pre-flight
 
 Before recording anything:
@@ -28,7 +30,7 @@ Before recording anything:
 - Terminal size is consistent across all sessions (`--cols 120 --rows 36`)
 - **Browser viewport size matches the composition layout** (see "Browser viewport sizing" below) — mismatched aspects letterbox in the final video
 - Branch/worktree paths and env vars are correct
-- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser, window PNGs / `recording.mp4` for desktop-control
+- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser, window PNGs / `recording.mp4` for cua-driver
 - If comparing branches, both sessions use identical terminal / viewport dimensions and launch parameters
 - For `droid-dev` captures, `--repo-root` is **mandatory** — `tctl` will refuse to launch without it
 - **Color env vars are set** (see below)
@@ -98,9 +100,9 @@ Film for a viewer with no context. You are a director, not an operator.
 - **Record before setup** -- the baseline state is act 1.
 - **Hold after state changes** -- 2-3 seconds so text is readable. Use `snapshot --trim` as natural verification beats.
 - **Verify between steps** -- `wait` or `snapshot` to confirm state before proceeding. Don't blindly fire the next key.
-- **Verification IS evidence.** A snapshot that shows nothing changed after pressing ESC proves the session is frozen. A snapshot that shows an error message proves the command was blocked. Always snapshot after actions where the *absence* of a response is the point -- the viewer needs to see it too.
+- **Verification IS evidence.** Capture the actual state after actions, including when no change is visible. One unchanged frame alone does not prove a frozen session or a dropped key; check the task's postcondition and timing.
 
-For comparison recordings, both branches run **identical interactions** -- only the behavior differs.
+For comparison recordings, both branches run **identical interactions** -- only the behavior differs. End both at the same script step: compose plays the longest clip in full and holds a shorter clip's final frame until it ends.
 
 ### 4. Keystroke logging
 
@@ -115,12 +117,12 @@ Write each keystroke's timestamp (seconds from recording start) and a human-read
 4.0	Esc
 ```
 
-Use readable key names (`Ctrl+C`, not `\x03`). Save alongside the recording (e.g., `/tmp/keys.tsv`).
+Use readable key names (`Ctrl+C`, not `\x03`). Save alongside the recording (e.g., `${RUN_DIR}/keys.tsv`). Timestamps stay in raw recording seconds; compose converts them to output seconds when it sets `speed`, and any trim applied to the clip afterwards shifts them — trim before logging or note the offset in the handoff.
 
 ### 5. Close and verify raw outputs
 
 ```bash
-$TCTL -s demo close    # finalizes the .cast / stops recording
+$TCTL -s "${RUN_ID}-demo" close    # terminal session owned by this run
 ```
 
 Before handing off, confirm every expected output file exists and is non-empty:
@@ -134,10 +136,10 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Proof type | How to capture |
 |---|---|
 | Functional behavior | Text snapshots: `$TCTL -s <name> snapshot --trim` |
-| Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o /tmp/proof-N.png` |
+| Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o ${RUN_DIR}/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
-| Web/Electron | Screenshots: `agent-browser screenshot --annotate /tmp/proof-N.png` |
-| Native desktop GUI | Window screenshots + AX trees: `cua-driver get_window_state '{...}' --screenshot-out-file ${RUN_DIR}/proof-N.png`; video via `cua-driver recording start/stop` |
+| Web/Electron | Screenshots: `agent-browser screenshot --annotate ${RUN_DIR}/proof-N.png` |
+| Native desktop GUI | Follow **desktop-use** for exact-window or authorized desktop state and recorder ownership |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
 ## Outputs
@@ -146,10 +148,10 @@ Hand these to the **compose** stage:
 
 ```
 ## Capture outputs
-- clips: [/tmp/before.cast, /tmp/after.cast]
-- screenshots: [/tmp/proof-1.png, /tmp/proof-2.png]
-- keys: /tmp/keys.tsv (if keystroke logging was requested)
-- driver: tuistory | true-input | agent-browser | desktop-control
+- clips: [${RUN_DIR}/before.cast, ${RUN_DIR}/after.cast]      # .cast / .mp4 / .webm only
+- screenshots: [${RUN_DIR}/proof-1.png, ${RUN_DIR}/proof-2.png]  # stills go to compose's screenshot path, never as clips
+- keys: ${RUN_DIR}/keys.tsv (if keystroke logging was requested; raw recording seconds)
+- driver: tuistory | true-input | agent-browser | cua-driver
 - terminal_size: 120x36          # for tuistory / true-input
 - viewport: 960x1000             # for agent-browser; report so compose knows the clip aspect
 ```
@@ -164,6 +166,6 @@ $TCTL -s <name> snapshot --trim   # check visible state
 $TCTL -s <name> close             # hard reset
 ```
 
-For browser: `agent-browser close`.
+For an isolated browser owned by this run: `agent-browser close`.
 
-Then re-launch and re-record. Partial recordings are not usable.
+For desktop-use, reacquire state after interruption and coordinate with the recorder owner. Do not stop a shared daemon, close a personal app, or replay an uncertain input to recover a recording. Preserve partial artifacts as diagnostic evidence; label them incomplete rather than claiming they satisfy the deliverable.

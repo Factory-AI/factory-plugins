@@ -2,7 +2,7 @@
 
 Terminal, browser, and computer automation plugin for Droids.
 
-Droids can read and write code. This plugin lets them *operate* it: launch apps, type commands, click buttons, record what happens, and produce polished evidence. No human hands required.
+Droids can read and write code. This plugin lets them *operate* it: launch apps, type commands, click buttons, record what happens, and produce evidence. OS permission grants and consequential actions still require the appropriate user or host authorization.
 
 ## What you get
 
@@ -12,7 +12,7 @@ Droids can read and write code. This plugin lets them *operate* it: launch apps,
 /demo pr-1847
 ```
 
-Droid reads the PR, scripts the interactions that prove the change works, records both branches in parallel, and renders a side-by-side comparison video. Use Factory presets for cinematic warmth or macos/minimal presets for clean utilitarian demos.
+Droid reads the PR, scripts the interactions that prove the change works, records both branches (in parallel when each has its own isolated terminal or browser environment), and renders a side-by-side comparison video. Use Factory presets for cinematic warmth or macos/minimal presets for clean utilitarian demos.
 
 **Verify a behavior claim:**
 
@@ -48,6 +48,10 @@ Or use the `/plugins` UI: Browse tab, select droid-control, install.
 
 Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
+For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-use runs the observe/act/verify loop without loading video-production stages.
+
+The [desktop-use skill](skills/desktop-use/SKILL.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
+
 ## Commands
 
 ### `/demo`
@@ -69,7 +73,7 @@ Runs automated QA against terminal CLIs, web apps, or Electron apps. Accepts a U
 1. **Commands** parse user intent into commitments.
 2. **The orchestrator** routes by target, stage, and artifact needs.
 3. **Atom skills** provide only the mechanics needed right now: drivers, target patterns, capture, compose, verify, and showcase polish.
-4. **Workers** handle mechanical capture/render jobs while the parent droid keeps planning and verification context.
+4. **Workers** handle independent capture/render jobs. The parent keeps short interactive desktop tasks, including observations, input, permission waits, and cleanup.
 5. **Verify** checks the final evidence against the original commitments.
 
 For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -78,18 +82,18 @@ For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTUR
 
 The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, configurable transitions (`motion-blur`, `flash`, `whip-pan`, `light-leak`, `glitch-lite`), zooms, spotlights, callout annotations, keystroke overlays, section headers, and syntax-highlighted code annotations.
 
-The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, clip staging, duration detection, Remotion rendering, and cleanup.
+The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, per-render clip staging, longest-clip duration, Remotion rendering (or a `--still` preview), and cleanup. Playback `speed` is applied once by the composition to every clip.
 
 ## Prerequisites
 
 | Stage | Platform | Required |
 |---|---|---|
-| tuistory | All | `tuistory`, `asciinema`, `agg` |
+| terminal-use (tuistory) | All | `tuistory`, `asciinema`, `agg` |
 | true-input | Linux/Wayland | `cage`, `wtype`, Wayland terminal |
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SSH |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH |
-| agent-browser | All | `agent-browser` |
-| desktop-control | All | `cua-driver` |
+| browser-use | All | `agent-browser` |
+| desktop-use | All | `cua-driver` |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` |
 | showcase | All | Node.js (>= 18), Chrome/Chromium |
 
@@ -103,4 +107,4 @@ curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scr
 cd plugins/droid-control/remotion && npm install      # Remotion video rendering
 ```
 
-Only install what you need for your use case. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation just needs agent-browser. Native desktop GUI automation just needs cua-driver.
+Only install what you need, with approval. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation defaults to browser-use; an explicit cua-only/native-input request uses desktop-use instead. Native desktop automation needs cua-driver plus the graphical session and OS permissions reported by its preflight. Recording and rendering have additional dependencies; they are not required for ordinary desktop tasks.
