@@ -42,7 +42,7 @@ Terminal, browser, and computer automation for Droids. Record demos, verify beha
 
 **Commands:** `/demo`, `/verify`, `/qa-test`
 
-**Skills:** `droid-control` (orchestrator), `tuistory`, `true-input`, `agent-browser`, `desktop-control`, `droid-cli`, `pty-capture`, `capture`, `compose`, `verify`, `showcase`
+**Skills:** `droid-control` (orchestrator), `terminal-use`, `true-input`, `browser-use`, `desktop-use`, `droid-cli`, `pty-capture`, `capture`, `compose`, `verify`, `showcase`
 
 See [plugins/droid-control/README.md](plugins/droid-control/README.md) for details.
 

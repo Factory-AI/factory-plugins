@@ -11,7 +11,7 @@ Automate terminals, browsers, and desktop apps. Route by the user's requested me
 
 1. **Real apps, real environments.** Non-deterministic behavior (LLM responses, network latency, variable output) is expected. Handle it with `wait` / `wait-idle`. Never substitute fixtures or mocked data.
 2. **Recover from evidence.** After a failed or uncertain action, observe current state before retrying. Honor method constraints and permission boundaries; a refusal does not authorize another driver or broader target.
-3. **Atoms include their references.** Load linked material on demand. Desktop-control does not require a separately installed cua skill.
+3. **Atoms include their references.** Load linked material on demand. Desktop-use does not require a separately installed cua skill.
 4. **`tctl` owns recorded terminal sessions.** It wraps `asciinema rec` around the PTY; browser and desktop drivers own their separate lifecycles. Never call `tuistory launch` directly. Resolve `TCTL` to an absolute path only for terminal workflows or worker handoffs.
 5. **Isolate every run.** Multiple droids may be filming simultaneously on the same machine. Session names and output paths share a global namespace (`/tmp/tctl-sessions/`). At the start of every workflow, generate a run ID (`RUN_ID=$(date +%s)-$$` or similar) and use it as a prefix for all session names and a scoped temp directory for all output files:
    ```bash
@@ -31,16 +31,14 @@ Three independent lookups. Do all three, then load the union of skills they prod
 
 | Target | Load these skills |
 |---|---|
-| User explicitly requests cua-only, native GUI input, or desktop control (including Electron) | **desktop-control**; method constraints override the defaults below |
-| Droid CLI (`droid-dev`, `droid exec`) | **droid-cli** + tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
-| Droid CLI (real terminal proof) | **true-input** + **droid-cli** |
-| Other terminal TUI | tuistory backend via `${DROID_PLUGIN_ROOT}/bin/tctl` |
-| Other terminal TUI (real terminal proof) | **true-input** |
-| Web page or Electron app | **agent-browser** |
-| Native desktop GUI app | **desktop-control** |
-| Raw terminal byte sequences | **true-input** + **pty-capture** |
+| User explicitly requests cua-only, native GUI input, or desktop control (including Electron) | **desktop-use**; method constraints override the defaults below |
+| Droid CLI (`droid-dev`, `droid exec`) | **terminal-use** + **droid-cli** |
+| Other terminal TUI | **terminal-use** |
+| Web page or Electron app | **browser-use** |
+| Native desktop GUI app | **desktop-use** |
+| Raw terminal byte sequences | **terminal-use** + **pty-capture** |
 
-**tuistory** is the default for terminal work. Use **true-input** when real terminal rendering evidence is needed. Desktop-control includes compositor-specific guidance; inspect live Cua capabilities rather than assuming all Linux targets are X11-only or abandoning the user's chosen method.
+**terminal-use** selects the terminal backend behind `${DROID_PLUGIN_ROOT}/bin/tctl`: `tuistory` by default, and it loads **true-input** when real terminal rendering or keyboard-encoding evidence is needed. Desktop-use includes compositor-specific guidance; inspect live Cua capabilities rather than assuming all Linux targets are X11-only or abandoning the user's chosen method.
 
 ### 2. Stage route — what does the workflow need?
 
@@ -161,7 +159,7 @@ For before/after comparison demos, launch both capture workers simultaneously:
 
 ## Shared tooling
 
-Terminal drivers use the unified `tctl` wrapper. agent-browser and desktop-control have their own CLIs (`agent-browser`, `cua-driver`) and do not use `tctl`.
+Terminal drivers use the unified `tctl` wrapper. Browser-use and desktop-use have their own CLIs (`agent-browser`, `cua-driver`) and do not use `tctl`.
 
 Drivers can be combined in one workflow — e.g., `tctl` for a CLI and `agent-browser` for a web UI it interacts with.
 
@@ -207,12 +205,12 @@ Deterministic recipe for reproducing degraded transcript tails in the droid CLI 
 
 | Stage | Platform | Required | Optional |
 |---|---|---|---|
-| tuistory | All | `tuistory`, `asciinema`, `agg` | `tmux` |
+| terminal-use (tuistory) | All | `tuistory`, `asciinema`, `agg` | `tmux` |
 | true-input | Linux/Wayland | `cage`, `wtype`, Wayland terminal, `/dev/dri/*` | `grim`, `wf-recorder` |
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SPICE + SSH, `DROID_VM_*` env vars | `virt-manager` |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH, `DROID_MAC_*` env vars | — |
-| agent-browser | All | `agent-browser` (+ `agent-browser install`) | — |
-| desktop-control | All | `cua-driver` in the intended graphical session; approved OS permissions | Documentation is bundled; no separate skill install |
+| browser-use | All | `agent-browser` (+ `agent-browser install`) | — |
+| desktop-use | All | `cua-driver` in the intended graphical session; approved OS permissions | Documentation is bundled; no separate skill install |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` | — |
 | showcase | All | Node.js (>= 18), Chrome/Chromium | — |
 
@@ -231,7 +229,7 @@ sudo apt-get install -y grim wf-recorder             # optional: screenshots + v
 # agent-browser driver
 agent-browser install                                # one-time: downloads bundled Chromium
 
-# desktop-control: follow its setup instructions only if the binary
+# desktop-use: follow its setup instructions only if the binary
 # is missing and installation is approved. No separate skill install.
 
 # compose + showcase (video rendering)

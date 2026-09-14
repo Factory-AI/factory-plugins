@@ -1,23 +1,21 @@
 ---
-name: tuistory
-description: Background knowledge for droid-control workflows -- not invoked directly. Tuistory driver mechanics for terminal TUI automation via virtual PTY.
+name: terminal-use
+description: Background knowledge for droid-control workflows -- not invoked directly. Terminal-use driver mechanics for terminal TUI automation: tuistory virtual PTY by default, true-input for real terminal proof.
 user-invocable: false
 ---
 
-# Tuistory Driver
+# Terminal Use
 
-The orchestrator routed you here. Use these mechanics to execute your plan.
+The orchestrator routed you here for any terminal target. Select the backend, then execute your plan through `tctl`.
 
-Launch a target command in a virtual PTY with Playwright-style CLI for typing, pressing keys, waiting, snapshotting, and recording.
+## Select the backend
 
-## When to use
+| Need | Backend | Mechanics |
+|---|---|---|
+| Routine TUI automation, regression checks, deterministic `wait` / `wait-idle`, text snapshots of what the user would see, demo recordings | `tuistory` (default) | This file |
+| Real terminal rendering, or proof of what Ghostty or Kitty actually emits for a keystroke | `true-input` | Load **true-input**; it owns the compositor, VM, and platform mechanics |
 
-- Routine TUI automation and regression checks
-- Deterministic `wait` / `wait-idle` against the virtual screen buffer
-- Text snapshots of exactly what the user would see
-- Any scenario where you do **not** need to prove real terminal keyboard encoding
-
-If you need to prove what Ghostty or Kitty actually emits for a given keystroke, use **true-input** instead.
+Use `tuistory` unless the claim is about the real terminal itself. The rest of this file is the tuistory backend: a target command in a virtual PTY with Playwright-style CLI for typing, pressing keys, waiting, snapshotting, and recording.
 
 ## Prerequisites
 

@@ -48,9 +48,9 @@ Or use the `/plugins` UI: Browse tab, select droid-control, install.
 
 Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
-For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-control runs the observe/act/verify loop without loading video-production stages.
+For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-use runs the observe/act/verify loop without loading video-production stages.
 
-The [desktop-control skill](skills/desktop-control/SKILL.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
+The [desktop-use skill](skills/desktop-use/SKILL.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
 
 ## Commands
 
@@ -88,12 +88,12 @@ The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `
 
 | Stage | Platform | Required |
 |---|---|---|
-| tuistory | All | `tuistory`, `asciinema`, `agg` |
+| terminal-use (tuistory) | All | `tuistory`, `asciinema`, `agg` |
 | true-input | Linux/Wayland | `cage`, `wtype`, Wayland terminal |
 | true-input | Windows (KVM) | `libvirt`, `qemu`, KVM VM with SSH |
 | true-input | macOS (QEMU) | `qemu`, `socat`, macOS VM with SSH |
-| agent-browser | All | `agent-browser` |
-| desktop-control | All | `cua-driver` |
+| browser-use | All | `agent-browser` |
+| desktop-use | All | `cua-driver` |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` |
 | showcase | All | Node.js (>= 18), Chrome/Chromium |
 
@@ -107,4 +107,4 @@ curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scr
 cd plugins/droid-control/remotion && npm install      # Remotion video rendering
 ```
 
-Only install what you need, with approval. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation defaults to agent-browser; an explicit cua-only/native-input request uses desktop-control instead. Native desktop automation needs cua-driver plus the graphical session and OS permissions reported by its preflight. Recording and rendering have additional dependencies; they are not required for ordinary desktop tasks.
+Only install what you need, with approval. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation defaults to browser-use; an explicit cua-only/native-input request uses desktop-use instead. Native desktop automation needs cua-driver plus the graphical session and OS permissions reported by its preflight. Recording and rendering have additional dependencies; they are not required for ordinary desktop tasks.

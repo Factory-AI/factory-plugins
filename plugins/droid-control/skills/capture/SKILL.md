@@ -8,7 +8,7 @@ user-invocable: false
 
 The orchestrator routed you here. This atom owns the full recording lifecycle: launch a target, execute an interaction script, collect raw outputs.
 
-You should already have a **driver atom** loaded (tuistory, true-input, agent-browser, or desktop-control) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
+You should already have a **driver atom** loaded (terminal-use, true-input, browser-use, or desktop-use) and optionally a **target atom** (droid-cli). This atom layers the recording discipline on top.
 
 ## Inputs
 
@@ -21,7 +21,7 @@ The command that invoked you should have provided:
 
 ## Recording lifecycle
 
-For desktop-control, follow its [recording contract](../desktop-control/SKILL.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
+For desktop-use, follow its [recording contract](../desktop-use/SKILL.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
 
 ### 1. Pre-flight
 
@@ -30,7 +30,7 @@ Before recording anything:
 - Terminal size is consistent across all sessions (`--cols 120 --rows 36`)
 - **Browser viewport size matches the composition layout** (see "Browser viewport sizing" below) — mismatched aspects letterbox in the final video
 - Branch/worktree paths and env vars are correct
-- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser, window PNGs / `recording.mp4` for desktop-control
+- Recording format matches the driver: `.cast` for tuistory, `.mp4` for true-input, screenshots for agent-browser, window PNGs / `recording.mp4` for cua-driver
 - If comparing branches, both sessions use identical terminal / viewport dimensions and launch parameters
 - For `droid-dev` captures, `--repo-root` is **mandatory** — `tctl` will refuse to launch without it
 - **Color env vars are set** (see below)
@@ -139,7 +139,7 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o ${RUN_DIR}/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
 | Web/Electron | Screenshots: `agent-browser screenshot --annotate ${RUN_DIR}/proof-N.png` |
-| Native desktop GUI | Follow **desktop-control** for exact-window or authorized desktop state and recorder ownership |
+| Native desktop GUI | Follow **desktop-use** for exact-window or authorized desktop state and recorder ownership |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
 ## Outputs
@@ -151,7 +151,7 @@ Hand these to the **compose** stage:
 - clips: [${RUN_DIR}/before.cast, ${RUN_DIR}/after.cast]      # .cast / .mp4 / .webm only
 - screenshots: [${RUN_DIR}/proof-1.png, ${RUN_DIR}/proof-2.png]  # stills go to compose's screenshot path, never as clips
 - keys: ${RUN_DIR}/keys.tsv (if keystroke logging was requested; raw recording seconds)
-- driver: tuistory | true-input | agent-browser | desktop-control
+- driver: tuistory | true-input | agent-browser | cua-driver
 - terminal_size: 120x36          # for tuistory / true-input
 - viewport: 960x1000             # for agent-browser; report so compose knows the clip aspect
 ```
@@ -168,4 +168,4 @@ $TCTL -s <name> close             # hard reset
 
 For an isolated browser owned by this run: `agent-browser close`.
 
-For desktop-control, reacquire state after interruption and coordinate with the recorder owner. Do not stop a shared daemon, close a personal app, or replay an uncertain input to recover a recording. Preserve partial artifacts as diagnostic evidence; label them incomplete rather than claiming they satisfy the deliverable.
+For desktop-use, reacquire state after interruption and coordinate with the recorder owner. Do not stop a shared daemon, close a personal app, or replay an uncertain input to recover a recording. Preserve partial artifacts as diagnostic evidence; label them incomplete rather than claiming they satisfy the deliverable.

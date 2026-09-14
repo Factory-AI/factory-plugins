@@ -48,7 +48,7 @@ Each atom skill is a self-contained surface the droid reads at a specific point 
 
 | Atom type | Skills | Responsibility |
 |---|---|---|
-| Driver atoms | `tuistory`, `true-input`, `agent-browser`, `desktop-control` | How to drive a class of environment. |
+| Driver atoms | `terminal-use`, `true-input`, `browser-use`, `desktop-use` | How to drive a class of environment. `terminal-use` is the terminal entrypoint; it runs the tuistory backend and routes real-terminal proof to `true-input`. |
 | Target atoms | `droid-cli`, `pty-capture` | Target-specific shortcuts, launch rules, and byte-capture patterns. |
 | Stage atoms | `capture`, `compose`, `verify` | Lifecycle phases with explicit inputs and outputs. |
 | Polish atom | `showcase` | Visual presets and cinematic layer guidance. |
@@ -162,12 +162,12 @@ skills/true-input/platforms/macos.md
 skills/pty-capture/platforms/linux.md
 skills/pty-capture/platforms/windows.md
 skills/pty-capture/platforms/macos.md
-skills/desktop-control/SKILL.md
+skills/desktop-use/SKILL.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.
 
-Desktop-control keeps routine setup, target selection, recovery, and recording rules in one compact entrypoint. It includes a host setup table rather than copied platform manuals. No user-home skill dependency or runtime documentation download is required.
+Desktop-use keeps routine setup, target selection, recovery, and recording rules in one compact entrypoint. It includes a host setup table rather than copied platform manuals. No user-home skill dependency or runtime documentation download is required.
 
 For ordinary desktop tasks, the driver verifies each action and reports directly. Capture/verify stages are loaded for formal evidence deliverables, and compose only when a produced artifact was requested. Explicit GUI-only or cua-only constraints take precedence over Electron's default browser route.
 

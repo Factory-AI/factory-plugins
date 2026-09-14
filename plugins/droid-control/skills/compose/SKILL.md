@@ -15,7 +15,7 @@ The command or capture stage should have provided a handoff with two sections:
 ### Mechanical (structured)
 
 - **clips**: paths to raw recordings (`.cast`, `.mp4`, `.webm`); stills are not clips — see "Screenshot-only artifacts"
-- **driver**: tuistory | true-input | agent-browser | desktop-control
+- **driver**: tuistory | true-input | agent-browser | cua-driver
 - **layout**: `single` | `side-by-side`
 - **labels**: text for each clip (e.g., "BEFORE (dev)", "AFTER (PR)")
 - **speed**: playback multiplier applied once, by the composition, to every clip (default 1x)

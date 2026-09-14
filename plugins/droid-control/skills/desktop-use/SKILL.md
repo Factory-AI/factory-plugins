@@ -1,10 +1,10 @@
 ---
-name: desktop-control
-description: Background knowledge for droid-control workflows -- not invoked directly. Desktop-control driver mechanics for native GUI app automation via trycua cua-driver.
+name: desktop-use
+description: Background knowledge for droid-control workflows -- not invoked directly. Desktop-use driver mechanics for native GUI app automation via trycua cua-driver.
 user-invocable: false
 ---
 
-# Desktop Control
+# Desktop Use
 
 One controller operates an exact GUI target, observes each effect, and stops when the user's postcondition is proved.
 
