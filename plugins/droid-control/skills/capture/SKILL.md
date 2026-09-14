@@ -102,7 +102,7 @@ Film for a viewer with no context. You are a director, not an operator.
 - **Verify between steps** -- `wait` or `snapshot` to confirm state before proceeding. Don't blindly fire the next key.
 - **Verification IS evidence.** Capture the actual state after actions, including when no change is visible. One unchanged frame alone does not prove a frozen session or a dropped key; check the task's postcondition and timing.
 
-For comparison recordings, both branches run **identical interactions** -- only the behavior differs.
+For comparison recordings, both branches run **identical interactions** -- only the behavior differs. End both at the same script step: compose plays the longest clip in full and holds a shorter clip's final frame until it ends.
 
 ### 4. Keystroke logging
 
@@ -117,7 +117,7 @@ Write each keystroke's timestamp (seconds from recording start) and a human-read
 4.0	Esc
 ```
 
-Use readable key names (`Ctrl+C`, not `\x03`). Save alongside the recording (e.g., `/tmp/keys.tsv`).
+Use readable key names (`Ctrl+C`, not `\x03`). Save alongside the recording (e.g., `${RUN_DIR}/keys.tsv`). Timestamps stay in raw recording seconds; compose converts them to output seconds when it sets `speed`, and any trim applied to the clip afterwards shifts them — trim before logging or note the offset in the handoff.
 
 ### 5. Close and verify raw outputs
 
@@ -136,9 +136,9 @@ Before handing off, confirm every expected output file exists and is non-empty:
 | Proof type | How to capture |
 |---|---|
 | Functional behavior | Text snapshots: `$TCTL -s <name> snapshot --trim` |
-| Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o /tmp/proof-N.png` |
+| Visual rendering | Screenshots: `$TCTL -s <name> screenshot -o ${RUN_DIR}/proof-N.png` |
 | Keyboard encoding | PTY bytes: `${DROID_PLUGIN_ROOT}/scripts/capture-terminal-bytes.py --backend <terminal> --combo <keys>` |
-| Web/Electron | Screenshots: `agent-browser screenshot --annotate /tmp/proof-N.png` |
+| Web/Electron | Screenshots: `agent-browser screenshot --annotate ${RUN_DIR}/proof-N.png` |
 | Native desktop GUI | Follow **desktop-control** for exact-window or authorized desktop state and recorder ownership |
 | Before/after | Run the same sequence on both branches at the same capture points |
 
@@ -148,9 +148,9 @@ Hand these to the **compose** stage:
 
 ```
 ## Capture outputs
-- clips: [/tmp/before.cast, /tmp/after.cast]
-- screenshots: [/tmp/proof-1.png, /tmp/proof-2.png]
-- keys: /tmp/keys.tsv (if keystroke logging was requested)
+- clips: [${RUN_DIR}/before.cast, ${RUN_DIR}/after.cast]      # .cast / .mp4 / .webm only
+- screenshots: [${RUN_DIR}/proof-1.png, ${RUN_DIR}/proof-2.png]  # stills go to compose's screenshot path, never as clips
+- keys: ${RUN_DIR}/keys.tsv (if keystroke logging was requested; raw recording seconds)
 - driver: tuistory | true-input | agent-browser | desktop-control
 - terminal_size: 120x36          # for tuistory / true-input
 - viewport: 960x1000             # for agent-browser; report so compose knows the clip aspect

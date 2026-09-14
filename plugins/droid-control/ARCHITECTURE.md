@@ -24,7 +24,7 @@ The three user-facing commands are deliberately thin:
 |---|---|
 | `/demo` | Turn a PR or feature description into a visible proof story and a video deliverable. |
 | `/verify` | Test a claim as an investigator and report whether the evidence confirms or refutes it. |
-| `/qa-test` | Drive a terminal, browser, or Electron flow and report step-level pass/fail evidence. |
+| `/qa-test` | Drive a terminal, browser, Electron, or native desktop flow and report step-level `PASS` / `FAIL` / `BLOCKED` evidence. |
 
 A command parses arguments into **commitments**: layout, comparison mode, evidence type, video/showcase requirements, keystroke overlays, and any user-specified constraints. Those commitments are not suggestions. The `verify` stage later checks them explicitly.
 
@@ -96,9 +96,9 @@ This boundary follows the stage handoffs. Capture workers need resolved `tctl` c
 
 ## Runtime artifact pipeline
 
-![droid-control capture compose verify pipeline](diagrams/capture-compose-verify.svg)
+![droid-control terminal comparison pipeline](diagrams/capture-compose-verify.svg)
 
-Editable source: [`diagrams/capture-compose-verify.excalidraw`](diagrams/capture-compose-verify.excalidraw)
+Editable source: [`diagrams/capture-compose-verify.excalidraw`](diagrams/capture-compose-verify.excalidraw). The diagram shows the terminal comparison flow, where each branch has an isolated tuistory environment and can run in its own worker; a shared desktop is captured serially by the parent (see Delegation boundaries).
 
 Every workflow starts by creating a run scope:
 
@@ -126,14 +126,14 @@ Browser/Electron and native-desktop workflows intentionally do **not** go throug
 
 The compose stage uses the Remotion project in `remotion/` as a single video engine. The droid writes a `Showcase` props JSON; `scripts/render-showcase.sh` handles the mechanical rendering pipeline:
 
-1. Normalize props and choose fidelity.
-2. Convert `.cast` recordings through `agg` and `ffmpeg`.
-3. Stage clips into Remotion `public/`.
-4. Auto-detect `clipDuration` with `ffprobe` when omitted.
-5. Render the `Showcase` composition.
-6. Clean staged clips and temporary conversion outputs.
+1. Accept `.cast`, `.mp4`, and `.webm` clips only; normalize props and resolve fidelity (omitted: side-by-side `inspect`, single `standard`).
+2. Convert `.cast` recordings through `agg` and `ffmpeg` at 1x, keeping the recording's timeline.
+3. Stage clips as `clip-<index>` inside a directory created under Remotion `public/` for this render only.
+4. Set `clipDuration` to the longest clip with `ffprobe`.
+5. Render the `Showcase` composition as limited-range `yuv420p`/`bt709` H.264, or one frame with `--still`.
+6. Remove that render's staged directory and conversion outputs on exit.
 
-This keeps droids out of the common failure modes: stale files in `public/`, mismatched `clipDuration`, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
+`remotion/src/lib/duration.ts` owns the timeline: the composition applies `speed` once to every clip, the clips run for `clipDuration / speed`, and the content sequence is padded by one crossfade on each side so the clips start after the title crossfade and the final frame is held through the outro crossfade. Total length is `4s title + clipDuration / speed + 3.5s outro`; a shorter clip holds its final frame. This keeps droids out of the common failure modes: two `recording.mp4` inputs overwriting each other in `public/`, concurrent renders deleting each other's clips, mismatched `clipDuration`, casts sped up twice, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
 
 ### Composition surface
 

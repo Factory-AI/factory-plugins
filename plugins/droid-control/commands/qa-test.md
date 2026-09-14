@@ -64,6 +64,8 @@ If a step fails:
 - Continue to the next step for maximum coverage
 - Unless the failure blocks everything downstream (e.g., login failed)
 
+If a step cannot be observed (capture unavailable, permission wait unresolved, missing connection), record it as `BLOCKED` with the blocker named — see the **verify** atom's status vocabulary. Steps that depend on it are `BLOCKED` too, not `FAIL`.
+
 ## Compose (if committed)
 
 Follow the **compose** atom if a video deliverable was committed. Hand it:
@@ -93,7 +95,7 @@ Follow the **verify** atom. It checks the deliverable and QA report completeness
 
 | Step | Status | Notes |
 |------|--------|-------|
-| ... | PASS/FAIL | ... |
+| ... | PASS / FAIL / BLOCKED | ... (BLOCKED: what blocked it, what unblocks it) |
 
 ### Issues Found
 

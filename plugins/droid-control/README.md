@@ -12,7 +12,7 @@ Droids can read and write code. This plugin lets them *operate* it: launch apps,
 /demo pr-1847
 ```
 
-Droid reads the PR, scripts the interactions that prove the change works, records both branches in parallel, and renders a side-by-side comparison video. Use Factory presets for cinematic warmth or macos/minimal presets for clean utilitarian demos.
+Droid reads the PR, scripts the interactions that prove the change works, records both branches (in parallel when each has its own isolated terminal or browser environment), and renders a side-by-side comparison video. Use Factory presets for cinematic warmth or macos/minimal presets for clean utilitarian demos.
 
 **Verify a behavior claim:**
 
@@ -82,7 +82,7 @@ For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTUR
 
 The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, configurable transitions (`motion-blur`, `flash`, `whip-pan`, `light-leak`, `glitch-lite`), zooms, spotlights, callout annotations, keystroke overlays, section headers, and syntax-highlighted code annotations.
 
-The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, clip staging, duration detection, Remotion rendering, and cleanup.
+The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, per-render clip staging, longest-clip duration, Remotion rendering (or a `--still` preview), and cleanup. Playback `speed` is applied once by the composition to every clip.
 
 ## Prerequisites
 

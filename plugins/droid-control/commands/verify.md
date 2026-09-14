@@ -62,6 +62,8 @@ Follow the **capture** atom. Provide:
 
 **If the behavior does not match the claim:** Do not retry the interaction hoping for a different result. Capture a snapshot or screenshot of the actual state. This is evidence. If you suspect your test procedure is wrong (e.g., wrong branch, missing build step), verify the environment first -- but if the environment is correct and the behavior is wrong, that is a finding, not an error on your part.
 
+**If a step cannot be observed** (capture unavailable, permission wait unresolved, missing binary or connection), mark it `BLOCKED` per the **verify** atom's status vocabulary and keep the partial evidence; do not record it as a failed behavior.
+
 ## Compose (if committed)
 
 Follow the **compose** atom if a video deliverable was committed. Hand it:
@@ -98,6 +100,8 @@ Follow the **verify** atom. It checks the deliverable against your commitments.
 <one-paragraph explanation of what the evidence shows>
 ```
 
+The verdict is about evidence sufficiency. Steps carry `PASS` / `FAIL` / `BLOCKED` (verify atom); a `BLOCKED` step the claim depends on forces `INCONCLUSIVE`, and `INCONCLUSIVE` also covers steps that all ran without deciding the claim.
+
 ### When the claim is refuted
 
 If the evidence shows the behavior does not match the claim:
@@ -111,7 +115,7 @@ This is a valuable finding. The user asked you to test this claim precisely beca
 
 ### When the result is inconclusive
 
-If the environment prevented a clean test (e.g., missing dependency, build failure, test infra crash), report what blocked the test and what would be needed to resolve it. Do not guess at the outcome.
+If the environment prevented a clean test (e.g., missing dependency, build failure, test infra crash), list the `BLOCKED` steps, what blocked each, and what would be needed to resolve it. Do not guess at the outcome.
 
 ## Do NOT
 

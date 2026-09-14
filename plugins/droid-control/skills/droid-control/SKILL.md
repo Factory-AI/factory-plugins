@@ -100,7 +100,7 @@ Keep short interactive desktop tasks in the parent: it owns observations, input,
 | **Interactive shared desktop** | NO — parent | One controller owns focus, snapshots, input, permission waits, and cleanup |
 | **Capture clip in an isolated terminal/browser environment** | YES | Worker owns the complete interaction and recording lifecycle |
 | **Capture both clips** (comparison layout) | YES, only with independent environments | Worktrees and session labels alone do not isolate a desktop |
-| **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, fidelity profiles, duration detection, cleanup) |
+| **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, per-render staging, fidelity profiles, longest-clip duration, cleanup) |
 | Planning, interaction scripting | NO — parent | Requires PR context and editorial judgment |
 | Layout and prop construction | NO — parent | Requires editorial decisions about effects, timing, labels |
 | Verification | NO — parent | Requires commitment context |

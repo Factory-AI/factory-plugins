@@ -88,31 +88,26 @@ Provide the capture stage with:
 - The interaction script from above
 - Whether to emit a keystroke TSV
 
-**Delegation:** For before/after comparisons, capture both branches **in parallel** using worker subagents with `run_in_background=true`. Construct the exact `tctl` commands for each worker (see the delegation section in the droid-control skill). Wait for both to complete before proceeding to compose.
+Whether capture runs in the parent or in workers is the **droid-control** skill's delegation decision (independent terminal/browser environments may run in workers; a shared desktop stays in the parent). Wait for every clip before composing.
 
 ## Compose
 
-Follow the **compose** atom. It owns the full video assembly pipeline.
-
-**Delegation:** Launch one worker subagent for the mechanical render:
-- Worker A: render the final video via `render-showcase.sh` directly from `.cast` / `.mp4` inputs
-
-`render-showcase.sh` owns `.cast -> agg -> .mp4`, Remotion composition, fidelity profile selection, duration detection, and cleanup. Wait for the worker to finish, then verify the output.
+Follow the **compose** atom. It owns the full video assembly pipeline; rendering may be delegated per the droid-control delegation table.
 
 Hand compose a hybrid handoff:
 
 ### Mechanical (structured)
 - layout: side-by-side | single
-- fidelity: auto | compact | standard | inspect (optional; auto => side-by-side=inspect, single=standard)
+- fidelity: compact | standard | inspect (optional; omitted => side-by-side=inspect, single=standard)
 - labels: ["BEFORE (<baseline branch>)", "AFTER (<candidate branch or PR>)"]
 - speed: 3x
 - title: "PR #11386 — Add --fork flag"
 - subtitle: "Demo: --fork creates a forked session from current context"
-- clips: [/tmp/before.cast, /tmp/after.cast]
-- keys: /tmp/keys.tsv (if committed)
+- clips: [${RUN_DIR}/before.cast, ${RUN_DIR}/after.cast]
+- keys: ${RUN_DIR}/keys.tsv (if committed)
 - preset: hero | macos | minimal | presentation | factory | factory-hero (if committed)
 - effects tier: utilitarian | full | none
-- output: /tmp/demo-pr-11386.mp4
+- output: ${RUN_DIR}/demo-pr-11386.mp4
 
 ### Creative (natural language)
 What the viewer should take away. Which moments to hold. How to frame the story. Whether phase cards are warranted. The compose atom uses this -- along with the effects tier -- for editorial decisions: title card phrasing, trim points, emphasis, and choosing specific effects to apply.

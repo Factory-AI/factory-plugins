@@ -58,17 +58,20 @@ No separate Cua skill installation is required. Preserve existing executable wra
 
 | Symptom | Next action |
 |---|---|
-| Missing binary, permission, or capability | Stop that route; resolve setup with the user rather than silently installing, restarting, or changing security settings |
+| Missing binary, permission, or capability | Report the step `BLOCKED` (verify vocabulary) and resolve setup with the user rather than silently installing, restarting, or changing security settings |
+| Interrupted `cua-driver` install or update | Before retrying, inspect what exists: `cua-driver --version`, `cua-driver status`, and any running service or wrapper; with approval, retry only the step that did not complete |
 | Sparse tree | Inspect `degraded_reason`; retry once for lazy initialization. Use pixels only if a valid image exists |
-| Missing image / `surface_identity_unproven` | Use returned semantics if sufficient; otherwise request desktop scope or report the blocker. Do not relabel a crop as verified window capture |
-| Permission wait | Let the user approve or deny; after approval reacquire state instead of replaying the timed-out action |
+| Missing image / `surface_identity_unproven` | Use returned semantics if sufficient; otherwise request desktop scope or report the step `BLOCKED`. Do not relabel a crop as verified window capture |
+| Timeout or opaque capture/input failure | Look for a pending permission dialog: read authorized desktop state, or ask the user what appeared. Let them approve or deny; after approval reacquire fresh state instead of replaying the timed-out action |
 | `background_unavailable` | Reobserve; retry only the necessary action with `delivery_mode:"foreground"` if visible control is authorized |
 
 For an authorized desktop loop, use `get_desktop_state` → input with `target:{"kind":"desktop","display_id":"primary"}` → fresh desktop state. Keyboard input follows visible focus: stop if the user or another controller changes it.
 
 ## Recording
 
-Only when requested, use one persistent MCP connection: `get_recording_state({})` → `start_recording({"output_dir":"/absolute/unused/run-dir","record_video":true})` → authorized actions → `stop_recording({})`.
+Only when requested. Preflight the connection first: the recording tools are reachable through `cua-driver call` as well as MCP, but `start_recording` states that video lasts for the client connection that started it, so recording runs on one persistent MCP connection. If no `get_recording_state` MCP tool is callable in this session, the recording step is `BLOCKED`: hand the user the `droid mcp add …` line printed by `cua-driver mcp-config --client droid`, do not add the server or start services yourself, and resume once they reconnect.
+
+On that connection: `get_recording_state({})` → `start_recording({"output_dir":"/absolute/unused/run-dir","record_video":true})` → authorized actions → `stop_recording({})`.
 
 These recording tools have no public `session` parameter. Video is off by default; check `video_active` and `last_error`. The recorder is shared within its runtime, and manual stop is unconditional: coordinate with an existing owner rather than taking over. Finalize before disconnecting; inspect `last_video_path`, decode the video, and check its scope/dimensions/duration. A working PNG does not prove Wayland video support.
 

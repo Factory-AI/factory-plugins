@@ -1,2 +1,4 @@
 .factory/
 node_modules/
+# Per-render clip staging created by render-showcase.sh; only survives a SIGKILL
+plugins/droid-control/remotion/public/render-*/
