@@ -14,6 +14,13 @@ At least one Wayland terminal: `ghostty`, `kitty`, or `alacritty`.
 
 `tctl` launches a headless Wayland compositor (`cage`) with an isolated per-session runtime directory, opens a real terminal emulator inside it, injects keystrokes via `wtype`, and monitors the PTY log stream via `script`. All socket/runtime management is handled by `tctl`.
 
+Literal typing uses one `wtype` invocation per character. Bulk `wtype` assigns
+consecutive native keycodes to distinct characters, including Backspace and Tab;
+Ghostty can interpret those physical codes instead of the supplied text. Fresh
+single-character keymaps avoid this collision. Typing remains native keyboard
+input, not clipboard paste, at the cost of a process per character. Chords still
+use one invocation with explicit modifier release.
+
 ## Core pattern
 
 ```bash
