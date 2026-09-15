@@ -3,6 +3,7 @@ name: droid-control tests
 on:
   pull_request:
     paths:
+      - 'plugins/droid-control/bin/tctl'
       - 'plugins/droid-control/scripts/render-showcase.sh'
       - 'plugins/droid-control/tests/**'
       - 'plugins/droid-control/remotion/**'
@@ -10,6 +11,7 @@ on:
   push:
     branches: [master]
     paths:
+      - 'plugins/droid-control/bin/tctl'
       - 'plugins/droid-control/scripts/render-showcase.sh'
       - 'plugins/droid-control/tests/**'
       - 'plugins/droid-control/remotion/**'

@@ -806,17 +806,20 @@ is_modifier() {
   esac
 }
 
+true_input_type() {
+  local char
+  true_input_env
+  # wtype allocates sequential evdev keycodes for distinct characters. A bulk
+  # keymap can put text at Backspace (14), Tab (15), or other functional keys;
+  # Ghostty's physical-key encoder then drops or rewrites that text. Give each
+  # character its own keymap, as for a single-character press, without pasting.
+  while IFS= read -r -N 1 char; do
+    wtype -- "$char"
+  done < <(printf '%s' "$1")
+}
+
 true_input_press() {
   local keys=("$@")
-  true_input_env
-  if [[ ${#keys[@]} -eq 1 ]]; then
-    local key="${keys[0]}"
-    if [[ ${#key} -eq 1 ]]; then
-      wtype "$key"
-      return
-    fi
-  fi
-
   local mods=()
   local nonmods=()
   local k
@@ -841,7 +844,7 @@ true_input_press() {
 
   local key_name="${nonmods[0]}"
   if [[ ${#mods[@]} -eq 0 && ${#key_name} -eq 1 ]]; then
-    wtype "$key_name"
+    true_input_type "$key_name"
     return
   fi
 
@@ -855,6 +858,7 @@ true_input_press() {
     args+=(-m "${mods[$idx]}")
     idx=$(( idx - 1 ))
   done
+  true_input_env
   wtype "${args[@]}"
 }
 
@@ -1030,8 +1034,7 @@ cmd_type() {
     tuistory -s "$session" type "$1"
   else
     ensure_true_input_warmup "$session"
-    true_input_env
-    wtype "$1"
+    true_input_type "$1"
   fi
 }
 
