@@ -75,6 +75,18 @@ Inspect runtime behavior: HTTP interception, traffic capture, and wire-level deb
 
 - `http-toolkit-intercept` - Intercept and debug HTTP traffic from any CLI, service, or script via HTTP Toolkit (language/runtime agnostic)
 
+### screenpipe
+
+Local-first workflow memory for Droids. Search private screen and audio history,
+reconstruct multi-app work from timestamped evidence, draft cited SOPs, and
+identify automation candidates.
+
+**Skills:**
+
+- `screenpipe` - Query screenpipe carefully and turn real work evidence into traceable workflows and SOPs
+
+**MCP:** `npx -y screenpipe-mcp@0.19.1`
+
 ### code-review
 
 Pull request lifecycle skills: open, triage, and follow up on PRs with consistent conventions.
