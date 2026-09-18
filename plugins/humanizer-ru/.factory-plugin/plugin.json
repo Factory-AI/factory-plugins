@@ -1,0 +1,13 @@
+{
+  "name": "humanizer-ru",
+  "description": "Remove AI-generation markers from Russian text: 64 patterns across 14 categories, 21 hard bans, rewrite / audit / targeted-fix modes, and a deterministic 0-100 scanner",
+  "version": "3.21.0",
+  "author": {
+    "name": "Ilya Utov",
+    "email": "ilyautov@gmail.com"
+  },
+  "homepage": "https://humanizer-ru.aifrontier.tech/",
+  "repository": "https://github.com/ilyautov/humanizer-ru",
+  "license": "MIT",
+  "keywords": ["humanizer", "russian", "writing", "ai-detection", "text", "русский", "очеловечивание"]
+}
