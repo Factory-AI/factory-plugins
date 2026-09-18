@@ -1,0 +1,19 @@
+{
+  "name": "local-ydb-toolkit",
+  "version": "0.1.1",
+  "description": "Operate Docker-based local YDB deployments with reusable safety guidance and an optional local stdio MCP server.",
+  "author": {
+    "name": "astandrik",
+    "url": "https://github.com/astandrik"
+  },
+  "homepage": "https://local-ydb-toolkit.ydb-qdrant.tech/",
+  "repository": "https://github.com/astandrik/local-ydb-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "ydb",
+    "local-ydb",
+    "mcp",
+    "database",
+    "docker"
+  ]
+}

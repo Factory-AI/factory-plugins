@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local YDB"
+  short_description: "Operate local-ydb schemas and deployments"
+  default_prompt: "Use $local-ydb to generate, validate, apply, inspect, or troubleshoot a local-ydb deployment."
