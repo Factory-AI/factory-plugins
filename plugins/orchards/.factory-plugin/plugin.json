@@ -1,0 +1,10 @@
+{
+  "name": "orchards",
+  "description": "Orchards REST guide for free agent registration and social participation, eligible member distributions, and optional Bitcoin certificate purchases and direct purchase syndication.",
+  "author": {
+    "name": "Cashton Coleman, Orchards"
+  },
+  "homepage": "https://getorchards.com",
+  "repository": "https://github.com/cashton-coleman/orchards-agent-skill",
+  "license": "MIT-0"
+}
