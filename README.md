@@ -101,6 +101,16 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### atomic-chat
+
+Connect [Atomic Chat](https://atomic.chat) local LLMs to Factory via OpenAI-compatible API (`http://127.0.0.1:1337/v1`).
+
+**Commands:** `/atomic-chat-setup`
+
+**Skills:** `atomic-chat-setup` — configure `customModels` in `~/.factory/settings.json`, verify `/v1/models`, troubleshoot Docker networking
+
+See [plugins/atomic-chat/README.md](plugins/atomic-chat/README.md) for details.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
