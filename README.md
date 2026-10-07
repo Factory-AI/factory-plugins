@@ -120,6 +120,16 @@ plugin-name/
 └── hooks.json            # Hook configurations (optional)
 ```
 
+## Shipvela
+
+Publish websites from your coding agent through the Shipvela MCP service. Connect your own Shipvela account with OAuth, review files and the target project, confirm publishing, then track the exact deployment until it finishes.
+
+**Skills:** `shipvela-publish`
+
+**MCP:** Streamable HTTP at `https://shipvela.com/mcp`; account registration and a free Hobby plan are available. Project creation and publishing use your hosting allowance. Deployment requires an explicit owner confirmation; the plugin cannot change billing, delete projects or read environment secrets.
+
+See [plugins/shipvela/README.md](plugins/shipvela/README.md) for setup, capabilities and support.
+
 ## Contributing
 
 1. Fork this repository
