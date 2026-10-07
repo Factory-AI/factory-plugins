@@ -13,7 +13,7 @@ The plugin is designed to keep a droid focused while it operates real software:
 - **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and Remotion internals.
 - **Evidence-first workflows:** every command starts by making commitments, then ends by verifying the artifact against those commitments.
 - **Parallel execution:** independent capture environments and render jobs can run in workers. Shared desktop input stays serialized; session names do not isolate focus.
-- **Clear ownership:** commands decide *what* must be produced; atom skills decide *how* to execute their slice.
+- **Clear ownership:** commands decide *what* must be produced; atoms decide *how* to execute their slice.
 - **Platform specificity:** OS-specific mechanics live in platform subdocuments, not in global instructions.
 
 ## Commands are intent contracts
@@ -40,13 +40,15 @@ This is the first guardrail against agent drift. The droid does not start with "
 | **Stage** | What does the workflow need? | capture, compose, verify |
 | **Artifact** | Does compose need polish tools? | showcase presets, effects, keystroke overlays |
 
-The routes compose without a cross-product explosion. Adding a new target means writing one target skill and one routing row; capture, compose, and verify can work with it immediately if the handoff shape is respected.
+The routes compose without a cross-product explosion. Adding a new target means writing one target atom and one routing row; capture, compose, and verify can work with it immediately if the handoff shape is respected.
 
-## Atom skills are runtime surfaces
+## Atoms are runtime surfaces
 
-Each atom skill is a self-contained surface the droid reads at a specific point in the workflow:
+Atoms are plain files under `skills/droid-control/atoms/<atom>/ATOM.md`, not skills. Only `droid-control` appears in a session's skills list; a droid reads an atom only after routing selects it, by the absolute path the orchestrator gives it through `${DROID_PLUGIN_ROOT}`. Every installed droid-control therefore costs one skill entry of context, not eleven.
 
-| Atom type | Skills | Responsibility |
+Each atom is a self-contained surface the droid reads at a specific point in the workflow:
+
+| Atom type | Atoms | Responsibility |
 |---|---|---|
 | Driver atoms | `terminal-use`, `true-input`, `browser-use`, `desktop-use` | How to drive a class of environment. `terminal-use` is the terminal entrypoint; it runs the tuistory backend and routes real-terminal proof to `true-input`. |
 | Target atoms | `droid-cli`, `pty-capture` | Target-specific shortcuts, launch rules, and byte-capture patterns. |
@@ -57,7 +59,7 @@ The important property is not just smaller files. It is temporal relevance: the 
 
 ## Waterfall by handoff, not framework
 
-The workflow is a waterfall because each skill hands the next skill exactly what it needs:
+The workflow is a waterfall because each atom hands the next atom exactly what it needs:
 
 ```text
 command commitments
@@ -156,13 +158,13 @@ The key property is that the main composition is data-driven: the droid never wr
 Platform-specific mechanics live below the atom that needs them:
 
 ```text
-skills/true-input/platforms/linux.md
-skills/true-input/platforms/windows.md
-skills/true-input/platforms/macos.md
-skills/pty-capture/platforms/linux.md
-skills/pty-capture/platforms/windows.md
-skills/pty-capture/platforms/macos.md
-skills/desktop-use/SKILL.md
+skills/droid-control/atoms/true-input/platforms/linux.md
+skills/droid-control/atoms/true-input/platforms/windows.md
+skills/droid-control/atoms/true-input/platforms/macos.md
+skills/droid-control/atoms/pty-capture/platforms/linux.md
+skills/droid-control/atoms/pty-capture/platforms/windows.md
+skills/droid-control/atoms/pty-capture/platforms/macos.md
+skills/droid-control/atoms/desktop-use/ATOM.md
 ```
 
 A Linux droid reads Linux Wayland instructions. A Windows VM byte-capture task reads Windows KVM instructions. The system does not rely on the droid to skim irrelevant sections correctly.

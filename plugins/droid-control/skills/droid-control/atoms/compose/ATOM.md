@@ -1,9 +1,3 @@
----
-name: compose
-description: Background knowledge for droid-control workflows -- not invoked directly. Video assembly via Remotion — title cards, layout, transitions, effects, and showcase polish.
-user-invocable: false
----
-
 # Compose
 
 This atom owns the full video assembly pipeline. You receive raw outputs from the **capture** stage and produce a single polished artifact. Follow the pipeline below step by step.
@@ -286,7 +280,7 @@ Keep it short — aim for ≤ 15 lines per card, hold for 3–6 seconds.
 
 ### Transition styles
 
-`transitionStyle` selects the title→content and content→outro crossfade presentation. Both transitions in one render share the same style. `flash` and `light-leak` derive their tint from the preset palette. Default `motion-blur` is always safe; preset-tier guidance lives in `showcase/SKILL.md`.
+`transitionStyle` selects the title→content and content→outro crossfade presentation. Both transitions in one render share the same style. `flash` and `light-leak` derive their tint from the preset palette. Default `motion-blur` is always safe; preset-tier guidance lives in `../showcase/ATOM.md`.
 
 | Style | Feel | Use when… |
 |---|---|---|

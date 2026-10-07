@@ -50,7 +50,7 @@ Then open a Droid session and run `/demo`, `/verify`, or `/qa-test`.
 
 For ordinary desktop work, ask directly: **“Using only cua, open Calculator and compute 17 × 23.”** Desktop-use runs the observe/act/verify loop without loading video-production stages.
 
-The [desktop-use skill](skills/desktop-use/SKILL.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
+The [desktop-use atom](skills/droid-control/atoms/desktop-use/ATOM.md) includes setup and operating guidance. Install the `cua-driver` executable if missing; no separate Cua skill installation is needed. Installed driver versions and Wayland compositors may support different capabilities.
 
 ## Commands
 
@@ -72,7 +72,7 @@ Runs automated QA against terminal CLIs, web apps, or Electron apps. Accepts a U
 
 1. **Commands** parse user intent into commitments.
 2. **The orchestrator** routes by target, stage, and artifact needs.
-3. **Atom skills** provide only the mechanics needed right now: drivers, target patterns, capture, compose, verify, and showcase polish.
+3. **Atoms** provide only the mechanics needed right now: drivers, target patterns, capture, compose, verify, and showcase polish.
 4. **Workers** handle independent capture/render jobs. The parent keeps short interactive desktop tasks, including observations, input, permission waits, and cleanup.
 5. **Verify** checks the final evidence against the original commitments.
 

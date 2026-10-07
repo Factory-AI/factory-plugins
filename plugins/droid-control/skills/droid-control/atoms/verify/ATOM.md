@@ -1,9 +1,3 @@
----
-name: verify
-description: Background knowledge for droid-control workflows -- not invoked directly. Deliverable verification against commitments.
-user-invocable: false
----
-
 # Verify
 
 The orchestrator routed you here. This atom checks the final deliverable against the commitments made at the start of the workflow.

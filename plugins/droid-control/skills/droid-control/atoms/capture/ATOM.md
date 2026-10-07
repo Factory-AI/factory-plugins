@@ -1,9 +1,3 @@
----
-name: capture
-description: Background knowledge for droid-control workflows -- not invoked directly. Recording lifecycle for terminal and browser sessions.
-user-invocable: false
----
-
 # Capture
 
 The orchestrator routed you here. This atom owns the full recording lifecycle: launch a target, execute an interaction script, collect raw outputs.
@@ -21,7 +15,7 @@ The command that invoked you should have provided:
 
 ## Recording lifecycle
 
-For desktop-use, follow its [recording contract](../desktop-use/SKILL.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
+For desktop-use, follow its [recording contract](../desktop-use/ATOM.md#recording); do not translate the terminal commands below into desktop commands. Routine desktop snapshots stay in the driver's observe/act/verify loop.
 
 ### 1. Pre-flight
 

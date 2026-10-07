@@ -1,12 +1,6 @@
----
-name: droid-cli
-description: Background knowledge for droid-control workflows -- not invoked directly. Droid CLI target patterns, shortcuts, modes, and launch helpers.
-user-invocable: false
----
-
 # Droid CLI Target
 
-The orchestrator routed you here. Layer these target-specific patterns on top of the driver skill you already loaded.
+The orchestrator routed you here. Layer these target-specific patterns on top of the driver atom you already read.
 
 Droid-specific shortcuts, modes, and launch patterns.
 

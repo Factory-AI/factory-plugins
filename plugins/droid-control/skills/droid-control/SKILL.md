@@ -11,7 +11,7 @@ Automate terminals, browsers, and desktop apps. Route by the user's requested me
 
 1. **Real apps, real environments.** Non-deterministic behavior (LLM responses, network latency, variable output) is expected. Handle it with `wait` / `wait-idle`. Never substitute fixtures or mocked data.
 2. **Recover from evidence.** After a failed or uncertain action, observe current state before retrying. Honor method constraints and permission boundaries; a refusal does not authorize another driver or broader target.
-3. **Atoms include their references.** Load linked material on demand. Desktop-use does not require a separately installed cua skill.
+3. **Atoms are files, not skills.** Read each routed atom with the Read tool at `${DROID_PLUGIN_ROOT}/skills/droid-control/atoms/<atom>/ATOM.md` (index under [Atoms](#atoms)); the Skill tool cannot load them. A bold atom name in this plugin's commands and atoms means that file. Atoms link their own references with paths relative to the atom file; read them on demand. Atom files are not expanded, so wherever one writes the DROID_PLUGIN_ROOT variable, substitute this plugin root: `${DROID_PLUGIN_ROOT}` (quote it in shell commands). Desktop-use does not require a separately installed cua skill.
 4. **`tctl` owns recorded terminal sessions.** It wraps `asciinema rec` around the PTY; browser and desktop drivers own their separate lifecycles. Never call `tuistory launch` directly. Resolve `TCTL` to an absolute path only for terminal workflows or worker handoffs.
 5. **Isolate every run.** Multiple droids may be filming simultaneously on the same machine. Session names and output paths share a global namespace (`/tmp/tctl-sessions/`). At the start of every workflow, generate a run ID (`RUN_ID=$(date +%s)-$$` or similar) and use it as a prefix for all session names and a scoped temp directory for all output files:
    ```bash
@@ -23,13 +23,30 @@ Automate terminals, browsers, and desktop apps. Route by the user's requested me
    Never use bare session names like `-s demo`, `-s before`, `-s after` — they will collide with concurrent runs.
    Separate names and paths do not isolate shared desktop focus or keyboard input. Keep one controller for a visible desktop.
 
+## Atoms
+
+Each atom lives at `${DROID_PLUGIN_ROOT}/skills/droid-control/atoms/<atom>/ATOM.md`.
+
+| Atom | Scope |
+|---|---|
+| **terminal-use** | Terminal TUI driver: tuistory virtual PTY by default, true-input for real terminal proof |
+| **true-input** | Real terminal emulator driver via a headless Wayland compositor or VM |
+| **browser-use** | Web page and Electron app driver via agent-browser |
+| **desktop-use** | Native GUI app driver via trycua cua-driver |
+| **droid-cli** | Droid CLI target patterns, shortcuts, modes, and launch helpers |
+| **pty-capture** | Ground-truth byte sequences from real terminal emulators |
+| **capture** | Recording lifecycle for terminal and browser sessions |
+| **compose** | Video assembly via Remotion: title cards, layout, transitions, effects, and showcase polish |
+| **verify** | Deliverable verification against commitments |
+| **showcase** | Visual polish: Remotion window chrome, animations, and branded backgrounds |
+
 ## Routing
 
-Three independent lookups. Do all three, then load the union of skills they produce.
+Three independent lookups. Do all three, then read the union of atoms they produce.
 
 ### 1. Target route — what are you driving?
 
-| Target | Load these skills |
+| Target | Read these atoms |
 |---|---|
 | User explicitly requests cua-only, native GUI input, or desktop control (including Electron) | **desktop-use**; method constraints override the defaults below |
 | Droid CLI (`droid-dev`, `droid exec`) | **terminal-use** + **droid-cli** |
@@ -44,7 +61,7 @@ Three independent lookups. Do all three, then load the union of skills they prod
 
 Every workflow passes through stages. Load the atoms for each stage you'll use.
 
-| Stage | Skill | When to load |
+| Stage | Atom | When to read |
 |---|---|---|
 | Capture | **capture** | Recording, scripted multi-step evidence, or a demo/QA deliverable; ordinary desktop operation uses the driver's observe/verify loop |
 | Compose | **compose** | When the deliverable is a produced artifact (video, annotated screenshots, comparison image) |
