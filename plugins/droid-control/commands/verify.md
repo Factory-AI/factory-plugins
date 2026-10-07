@@ -44,11 +44,11 @@ Determine the single specific behavior to observe. What would a skeptic need to 
 - Visual claim (rendering, layout, colors) → needs screenshot from a real compositor
 - Functional claim (feature works, flow completes) → needs interaction + state verification
 
-## Load Skills
+## Load Atoms
 
 Use the **droid-control** routing tables:
 
-1. **Target route** -- find the row matching your target, load listed driver/target skills
+1. **Target route** -- find the row matching your target, read listed driver/target atoms
 2. **Stage route** -- load **capture** + **verify** always; load **compose** if video proof or showcase was committed
 3. **Artifact route** -- if showcase committed, also load **showcase**
 

@@ -1,9 +1,3 @@
----
-name: pty-capture
-description: Background knowledge for droid-control workflows -- not invoked directly. Capture ground-truth byte sequences from real terminal emulators.
-user-invocable: false
----
-
 # PTY Byte Capture
 
 The orchestrator routed you here. Use these mechanics to execute your plan.

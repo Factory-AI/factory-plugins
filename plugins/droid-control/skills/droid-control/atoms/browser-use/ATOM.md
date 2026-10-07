@@ -1,9 +1,3 @@
----
-name: browser-use
-description: Background knowledge for droid-control workflows -- not invoked directly. Browser-use driver mechanics for web page and Electron desktop app automation via agent-browser.
-user-invocable: false
----
-
 # Browser Use
 
 The orchestrator routed you here. Execute the browser portion of its action

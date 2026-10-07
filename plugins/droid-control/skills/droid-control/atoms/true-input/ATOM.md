@@ -1,9 +1,3 @@
----
-name: true-input
-description: Background knowledge for droid-control workflows -- not invoked directly. True-input driver mechanics for real terminal emulator automation via headless Wayland compositor.
-user-invocable: false
----
-
 # True-Input Driver
 
 The orchestrator routed you here. Use these mechanics to execute your plan.

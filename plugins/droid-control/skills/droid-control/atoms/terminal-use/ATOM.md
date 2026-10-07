@@ -1,9 +1,3 @@
----
-name: terminal-use
-description: Background knowledge for droid-control workflows -- not invoked directly. Terminal-use driver mechanics for terminal TUI automation: tuistory virtual PTY by default, true-input for real terminal proof.
-user-invocable: false
----
-
 # Terminal Use
 
 The orchestrator routed you here for any terminal target. Select the backend, then execute your plan through `tctl`.

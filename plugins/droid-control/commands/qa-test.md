@@ -32,11 +32,11 @@ If showcase is committed, resolve the **preset** using the first matching rule:
 | `minimal`, `inline`, `docs embed` | `minimal` |
 | _(none of the above)_ | `macos` |
 
-## Load Skills
+## Load Atoms
 
 Use the **droid-control** routing tables:
 
-1. **Target route** -- find the row matching your target, load listed driver/target skills
+1. **Target route** -- find the row matching your target, read listed driver/target atoms
 2. **Stage route** -- load **capture** + **verify** always; load **compose** if video recording or showcase was committed
 3. **Artifact route** -- if showcase committed, also load **showcase**
 

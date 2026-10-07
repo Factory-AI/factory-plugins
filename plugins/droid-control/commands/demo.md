@@ -59,11 +59,11 @@ For simple PRs this is one sentence. For complex ones, sketch a brief table:
 |-------|--------------|----------------|
 | ... | ... | ... |
 
-## Load Skills
+## Load Atoms
 
 Use the **droid-control** routing tables. Do all three lookups:
 
-1. **Target route** -- find the row matching your target, load listed driver/target skills
+1. **Target route** -- find the row matching your target, read listed driver/target atoms
 2. **Stage route** -- load **capture** + **compose** + **verify** (demos always need all three)
 3. **Artifact route** -- if showcase or keystroke overlay was committed, also load **showcase**
 

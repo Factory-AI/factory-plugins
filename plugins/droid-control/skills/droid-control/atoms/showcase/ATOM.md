@@ -1,9 +1,3 @@
----
-name: showcase
-description: Background knowledge for droid-control workflows -- not invoked directly. Visual polish for videos via Remotion-powered window chrome, animations, and branded backgrounds.
-user-invocable: false
----
-
 # Showcase Polish
 
 This atom describes the visual polish system. It is invoked by the **compose** atom — you should not need to invoke it directly. Load it when you need to understand what the presets look like and how the cinematic layers work.
@@ -67,7 +61,7 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 
 ## Transition styles
 
-`transitionStyle` selects the crossfade presentation. Schema lives in `compose/SKILL.md`; preset-tier matching:
+`transitionStyle` selects the crossfade presentation. Schema lives in `../compose/ATOM.md`; preset-tier matching:
 
 | Preset | Recommended (default first) | Avoid |
 |---|---|---|
@@ -75,7 +69,7 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 | `hero`, `presentation` | `motion-blur`, `whip-pan`, `flash` | `light-leak` (warm sweep clashes with cool palette) |
 | `macos`, `minimal` | `motion-blur` | `glitch-lite`, `light-leak` (too much personality for utilitarian frames) |
 
-`codeAnnotations` is preset-agnostic — palette and font stack are auto-derived. See `compose/SKILL.md` for schema and authoring rules.
+`codeAnnotations` is preset-agnostic — palette and font stack are auto-derived. See `../compose/ATOM.md` for schema and authoring rules.
 
 ## Operational notes
 
@@ -86,13 +80,13 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 - Missing clips in `public/`: render fails with "Could not read file." The render script stages clips into its own per-render directory; never run `npx remotion render` directly.
 - Missing npm dependencies: run `cd ${REMOTION_DIR} && npm install` if rendering fails on first use.
 
-**Debugging layout**: `render-showcase.sh --still <frame>` renders one frame through the same normalization and staging as a full render (see compose/SKILL.md Step 3).
+**Debugging layout**: `render-showcase.sh --still <frame>` renders one frame through the same normalization and staging as a full render (see `../compose/ATOM.md` Step 3).
 
 **Cleanup**: `render-showcase.sh` removes only the staged directory it created, on success, failure, or cancellation via Ctrl-C / process-group signal. A signal to the script's PID alone is deferred until the `npx remotion` child exits.
 
 ## Rendering
 
-Use the render script from **compose** — see compose/SKILL.md Step 3 for full usage:
+Use the render script from **compose** — see `../compose/ATOM.md` Step 3 for full usage:
 
 ```bash
 RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh
