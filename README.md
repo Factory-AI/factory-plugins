@@ -101,6 +101,10 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### dodopayments
+
+Official [Dodo Payments](https://dodopayments.com) plugin, sourced from [dodopayments/dodo-agent-plugin](https://github.com/dodopayments/dodo-agent-plugin) at a pinned commit. Integration skills for checkout, subscriptions, webhooks, framework adapters, usage- and credit-based billing, license keys, and go-live, plus two hosted MCP servers: `dodopayments-api` (live API, browser OAuth) and `dodo-knowledge` (documentation search, no auth).
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
