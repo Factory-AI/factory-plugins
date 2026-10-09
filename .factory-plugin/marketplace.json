@@ -53,6 +53,17 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "dodopayments",
+      "description": "Dodo Payments integration skills (checkout, subscriptions, webhooks, framework adapters, usage and credit billing, license keys, go-live) plus the Dodo Payments API (OAuth) and documentation MCP servers",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/dodopayments/dodo-agent-plugin.git",
+        "sha": "8616a7c353a2b678936643544ec932d59cf45e4a"
+      },
+      "category": "development",
+      "homepage": "https://docs.dodopayments.com/developer-resources/agent-skills"
     }
   ]
 }
