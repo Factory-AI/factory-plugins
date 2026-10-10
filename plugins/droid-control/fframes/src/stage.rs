@@ -79,7 +79,9 @@ fn run(command: &mut Command, what: &str) -> Result<(), String> {
 }
 
 /// agg renders the cast at its own pace (no idle compression: the composition applies
-/// `speed` to every clip alike), then ffmpeg encodes the GIF.
+/// `speed` to every clip alike), then ffmpeg encodes the GIF losslessly: the composition
+/// decodes it again, so it loses nothing to a second lossy encode, and the fastest preset
+/// costs only file size.
 fn convert_cast(cast: &Path, output: &Path, encoding: &Encoding) -> Result<(), String> {
     let file = fs::File::open(cast).map_err(|err| format!("clip is not readable: {}: {err}", cast.display()))?;
     let mut header = String::new();
@@ -100,8 +102,8 @@ fn convert_cast(cast: &Path, output: &Path, encoding: &Encoding) -> Result<(), S
         Command::new("ffmpeg")
             .args(["-v", "error", "-y", "-i"])
             .arg(&gif)
-            .args(["-movflags", "+faststart", "-pix_fmt", "yuv420p", "-preset", encoding.preset])
-            .args(["-crf", &encoding.crf.to_string(), "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"])
+            .args(["-movflags", "+faststart", "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "ultrafast"])
+            .args(["-qp", "0", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"])
             .arg(output),
         "ffmpeg",
     )?;

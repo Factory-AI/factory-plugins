@@ -7,11 +7,14 @@ description = "droid-control showcase composition, rendered with fframes"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
+fast_image_resize = { version = "6.1", features = ["only_u8x4"] }
 fframes = { version = "=1.2.0", features = ["compile-time-svgtree"] }
+multiversion = "0.9"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_path_to_error = "0.1"
 signal-hook = "0.3"
+svgr = "=0.46.1"
 tempfile = "3"
 syntect = { version = "5.3", default-features = false, features = ["parsing", "default-syntaxes", "regex-fancy"] }
 two-face = { version = "0.5", default-features = false, features = ["syntect-fancy"] }

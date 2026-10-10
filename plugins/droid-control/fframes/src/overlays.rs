@@ -5,6 +5,7 @@ use crate::code::highlight;
 use crate::fonts::Font;
 use crate::motion::{Bezier, interpolate, interpolate_eased};
 use crate::props::{CodeAnnotation, CodePosition, Effect, Keystroke, Section};
+use crate::raster::Backdrop;
 use crate::svg::{Anchor, Card, Edge, Frost, Rect, Rgba, Shadow, Similarity, TextStyle, blur, faded, stops};
 use crate::theme::{Palette, PresetConfig};
 use fframes::{Svgr, svgr};
@@ -16,21 +17,21 @@ fn frame_of(seconds: f32) -> f32 {
     (seconds * 30.).round()
 }
 
-pub struct Overlays<'s, 'a> {
+pub struct Overlays<'s> {
     pub palette: &'s Palette,
     pub config: &'s PresetConfig,
     pub size: (f32, f32),
     /// The scene behind the overlays, for their frosted backdrops.
-    pub backdrop: &'s Svgr<'a>,
+    pub backdrop: &'s Backdrop,
 }
 
-impl<'a> Overlays<'_, 'a> {
-    fn frost(&self, sigma: f32) -> Option<Frost<'_, 'a>> {
-        Some(Frost { scene: self.backdrop, sigma })
+impl<'s> Overlays<'s> {
+    fn frost(&self, sigma: f32) -> Option<Frost<'s>> {
+        Some(Frost { backdrop: self.backdrop, sigma })
     }
 
     /// Text pills centred on percentage positions.
-    pub fn callouts(&self, effects: &[Effect], frame: usize) -> Svgr<'a> {
+    pub fn callouts<'a>(&self, effects: &[Effect], frame: usize) -> Svgr<'a> {
         let (w, h) = self.size;
         let f = frame as f32;
         let style = TextStyle::new(Font::sans(500), 24.);
@@ -81,6 +82,7 @@ impl<'a> Overlays<'_, 'a> {
                     shadows: &[Shadow::new(8., 32., Rgba(0, 0, 0, 0.35))],
                     frost: self.frost(12.),
                     to_screen: place,
+                    screen: self.size,
                 };
                 Some(faded(pop.min(fade), svgr!(<g transform={place.attr()}>{card.draw(text)}</g>)))
             })
@@ -88,7 +90,7 @@ impl<'a> Overlays<'_, 'a> {
     }
 
     /// A frosted band sweeping across the frame at every section boundary after the first.
-    pub fn section_sweeps(&self, sections: &[Section], frame: usize) -> Svgr<'a> {
+    pub fn section_sweeps<'a>(&self, sections: &[Section], frame: usize) -> Svgr<'a> {
         let (w, h) = self.size;
         let f = frame as f32;
         let sweep = 15.;
@@ -108,7 +110,7 @@ impl<'a> Overlays<'_, 'a> {
                 let id = format!("sweep{i}");
                 let clip = format!("url(#{id}-clip)");
                 let sheen = format!("url(#{id}-sheen)");
-                let frost = Frost { scene: self.backdrop, sigma: 28. }.draw(&id, band, Similarity::IDENTITY);
+                let frost = Frost { backdrop: self.backdrop, sigma: 28. }.draw(band, Similarity::IDENTITY);
                 let white = Rgba::WHITE;
                 Some(faded(
                     opacity,
@@ -131,7 +133,7 @@ impl<'a> Overlays<'_, 'a> {
 
     /// Section titles at the top: each slides in and stays until the next one (or the end of
     /// the content, `end` frames on the clip clock).
-    pub fn section_headers(&self, sections: &[Section], frame: usize, end: usize) -> Svgr<'a> {
+    pub fn section_headers<'a>(&self, sections: &[Section], frame: usize, end: usize) -> Svgr<'a> {
         let (w, _) = self.size;
         let f = frame as f32;
         let end = end as f32;
@@ -174,6 +176,7 @@ impl<'a> Overlays<'_, 'a> {
                     shadows: &[Shadow::new(8., 32., Rgba(0, 0, 0, 0.4))],
                     frost: self.frost(12.),
                     to_screen: place,
+                    screen: self.size,
                 };
                 Some(faded(entered * (1. - exited), svgr!(<g transform={place.attr()}>{card.draw(text)}</g>)))
             })
@@ -181,7 +184,7 @@ impl<'a> Overlays<'_, 'a> {
     }
 
     /// Key pills above the bottom edge; a key gives way to the next one early.
-    pub fn keystrokes(&self, keys: &[Keystroke], frame: usize) -> Svgr<'a> {
+    pub fn keystrokes<'a>(&self, keys: &[Keystroke], frame: usize) -> Svgr<'a> {
         let (w, h) = self.size;
         let f = frame as f32;
         let style = TextStyle::new(Font::mono(500), 22.);
@@ -217,17 +220,18 @@ impl<'a> Overlays<'_, 'a> {
                     shadows: &[],
                     frost: self.frost(8.),
                     to_screen: place,
+                    screen: self.size,
                 };
                 Some(faded(pop.min(fade), svgr!(<g transform={place.attr()}>{card.draw(text)}</g>)))
             })
             .collect()
     }
 
-    pub fn code_cards(&self, cards: &[CodeCard], frame: usize) -> Svgr<'a> {
+    pub fn code_cards<'a>(&self, cards: &[CodeCard], frame: usize) -> Svgr<'a> {
         cards.iter().enumerate().map(|(i, card)| self.code_card(i, card, frame as f32)).collect()
     }
 
-    fn code_card(&self, index: usize, card: &CodeCard, f: f32) -> Svgr<'a> {
+    fn code_card<'a>(&self, index: usize, card: &CodeCard, f: f32) -> Svgr<'a> {
         if f < card.enter || f >= card.exit {
             return Svgr::empty();
         }
@@ -307,6 +311,7 @@ impl<'a> Overlays<'_, 'a> {
             shadows: &[Shadow::new(18., 48., Rgba(0, 0, 0, 0.45))],
             frost: self.frost(10.),
             to_screen: place,
+            screen: self.size,
         };
         let drawn = svgr!(
             <g>

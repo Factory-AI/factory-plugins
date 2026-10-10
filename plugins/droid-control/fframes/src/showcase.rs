@@ -1,22 +1,21 @@
 //! The Showcase composition: background and particles under a title card, the clip content
 //! with its overlays and the Droid outro (joined by two transitions), then the watermark,
-//! film grain and colour grade on top.
+//! and the film grain and colour grade. Each frame is composited in layers (see `raster`).
 
 use crate::clips::{self, Clip};
+use crate::composite::Pixels;
 use crate::content::Stage;
 use crate::outro;
 use crate::overlays::{CodeCard, Overlays};
 use crate::props::{Effect, ShowcaseProps};
-use crate::scenery;
+use crate::raster::{self, Backdrop};
+use crate::scenery::{self, Scenery};
 use crate::theme::{Palette, PresetConfig};
 use crate::timing::{self, TITLE_FRAMES, TRANSITION_FRAMES, Timeline};
 use crate::title::{TitleCard, TitleLayout};
 use crate::transition::{Direction, Transition};
-use fframes::media::ImageData;
 use fframes::{AudioMap, Duration, FFramesContext, Frame, Svgr, Video, svgr};
 use std::collections::HashSet;
-
-const HALFTONE: &[u8] = include_bytes!("../media/bg-halftone-rotor.png");
 
 pub struct Showcase {
     props: ShowcaseProps,
@@ -25,7 +24,7 @@ pub struct Showcase {
     palette: &'static Palette,
     config: &'static PresetConfig,
     size: (f32, f32),
-    halftone: ImageData<'static>,
+    scenery: Scenery,
     title: TitleLayout,
     code_cards: Vec<CodeCard>,
 }
@@ -42,8 +41,7 @@ impl Showcase {
         let palette = props.preset.palette();
         let config = props.preset.config();
         let size = (props.width as f32, props.height as f32);
-        let halftone = ImageData::new_from_bytes("bg-halftone-rotor.png", HALFTONE)
-            .map_err(|err| format!("could not decode the embedded halftone texture: {err:?}"))?;
+        let scenery = Scenery::new(palette, config, props.fidelity.treatment(), size)?;
         let code_cards = props.code_annotations.iter().map(|a| CodeCard::new(a, palette, config, size)).collect();
         Ok(Self {
             timeline: Timeline { content: timing::content_frames(clips::longest(&clips), props.speed) },
@@ -53,7 +51,7 @@ impl Showcase {
             palette,
             config,
             size,
-            halftone,
+            scenery,
             code_cards,
         })
     }
@@ -70,8 +68,24 @@ impl Showcase {
         self.timeline
     }
 
-    fn background<'a>(&self, id: &str, frame: usize, total: usize) -> Svgr<'a> {
-        scenery::background(id, self.palette, self.config, &self.halftone, self.size, frame, total)
+    /// The finished frame at `frame.index`, opaque. Between its transitions the content
+    /// paints its own background over the whole frame; around them the background and
+    /// particles show.
+    fn frame(&self, frame: &Frame, ctx: &FFramesContext<'_, '_>) -> Pixels {
+        let f = frame.index;
+        let timeline = self.timeline;
+        let mut canvas = if (timeline.clips_start()..timeline.outro_start()).contains(&f) {
+            self.content(f - timeline.content_start(), frame, ctx)
+        } else {
+            let mut canvas = Pixels::of(&self.scenery.background(f, timeline.total()));
+            canvas.draw(svgr!(<g>{scenery::particles(self.palette.accent, self.size, f)}{self.series(frame, ctx)}</g>));
+            canvas
+        };
+        if self.props.preset.is_factory() {
+            canvas.draw(scenery::watermark(self.size, f));
+        }
+        self.scenery.grade(&mut canvas);
+        canvas
     }
 
     /// Title, content and outro with their transitions at global `frame.index`.
@@ -99,7 +113,7 @@ impl Showcase {
         }
         if (content_start..outro_start + TRANSITION_FRAMES).contains(&f) {
             let local = f - content_start;
-            let content = self.content(local, frame, ctx);
+            let content = raster::image(self.content(local, frame, ctx).into_image());
             scenes.push(if local < TRANSITION_FRAMES {
                 transition.present(Direction::Entering, progress(local), content)
             } else if f >= outro_start {
@@ -121,11 +135,11 @@ impl Showcase {
 
     /// The content segment at `local` frames into it. The clips and every overlay start one
     /// transition in, so overlay times are seconds from the first clip frame.
-    fn content<'a>(&'a self, local: usize, frame: &Frame, ctx: &FFramesContext<'_, '_>) -> Svgr<'a> {
+    fn content(&self, local: usize, frame: &Frame, ctx: &FFramesContext<'_, '_>) -> Pixels {
         let sequence = self.timeline.content_sequence();
-        let background = self.background("content-bg", local, sequence);
+        let mut scene = Pixels::of(&self.scenery.background(local, sequence));
         let Some(clock) = local.checked_sub(TRANSITION_FRAMES) else {
-            return background;
+            return scene;
         };
         let props = &self.props;
         let stage = Stage {
@@ -140,8 +154,8 @@ impl Showcase {
             object_fit: props.object_fit,
             effects: &props.effects,
         };
-        let backdrop: Svgr =
-            [background, stage.layout(clock, frame, ctx), stage.spotlights(clock)].into_iter().collect();
+        stage.compose(&mut scene, clock, frame, ctx);
+        let backdrop = Backdrop::new(scene);
         let overlays = Overlays { palette: self.palette, config: self.config, size: self.size, backdrop: &backdrop };
         let sweeps =
             if props.sections.len() > 1 { overlays.section_sweeps(&props.sections, clock) } else { Svgr::empty() };
@@ -154,7 +168,9 @@ impl Showcase {
                 {overlays.code_cards(&self.code_cards, clock)}
             </g>
         );
-        [backdrop, drawn].into_iter().collect()
+        let mut content = backdrop.into_scene();
+        content.draw(drawn);
+        content
     }
 }
 
@@ -172,19 +188,12 @@ impl Video for Showcase {
         AudioMap::none()
     }
 
+    /// The whole frame, composited and graded: one image, which `render` takes the pixels of.
     fn render_frame<'a>(&'a self, frame: Frame, ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
-        let f = frame.index;
         let (w, h) = self.size;
-        let treatment = self.props.fidelity.treatment();
-        let watermark = if self.props.preset.is_factory() { scenery::watermark(self.size, f) } else { Svgr::empty() };
         svgr!(
             <svg xmlns="http://www.w3.org/2000/svg" viewBox={format!("0 0 {w} {h}")} width={w} height={h}>
-                {self.background("bg", f, self.timeline.total())}
-                {scenery::particles(self.palette.accent, self.size, f)}
-                {self.series(&frame, ctx)}
-                {watermark}
-                {scenery::noise(self.size, treatment.noise_opacity)}
-                {scenery::grade(self.palette, self.size, treatment.grade_intensity)}
+                {raster::image(self.frame(&frame, ctx).into_image())}
             </svg>
         )
     }

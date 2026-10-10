@@ -1,9 +1,13 @@
 //! SVG building blocks shared by the layers: geometry, colours, blur filters and the
 //! rounded "card" every overlay is drawn as.
 
+use crate::composite::{Blend, Pixels};
 use crate::fonts::Font;
+use crate::raster::{self, Backdrop};
+use fframes::usvgr::PreloadedImageData;
 use fframes::{Svgr, svgr};
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Rect {
@@ -40,6 +44,18 @@ impl Rect {
 
     pub fn offset(&self, dx: f32, dy: f32) -> Rect {
         Rect::new(self.x + dx, self.y + dy, self.w, self.h)
+    }
+
+    /// The rect of whole pixels this one touches.
+    pub fn whole_pixels(&self) -> Rect {
+        let (x, y) = (self.x.floor(), self.y.floor());
+        Rect::new(x, y, self.right().ceil() - x, self.bottom().ceil() - y)
+    }
+
+    /// The overlap of two rects; empty ones come out with a negative size.
+    pub fn intersect(&self, other: Rect) -> Rect {
+        let (x, y) = (self.x.max(other.x), self.y.max(other.y));
+        Rect::new(x, y, self.right().min(other.right()) - x, self.bottom().min(other.bottom()) - y)
     }
 }
 
@@ -231,15 +247,13 @@ impl Shadow {
         Self { dy, blur, color }
     }
 
-    pub fn draw<'a>(&self, id: String, rect: Rect, radius: f32) -> Svgr<'a> {
+    /// The shadow of a box at `rect` with corners of `radius`, inside and out, over the whole
+    /// pixels it reaches, and those pixels.
+    pub fn blurred(&self, rect: Rect, radius: f32) -> (Pixels, Rect) {
         let shape = rect.offset(0., self.dy);
-        let filter = format!("url(#{id})");
-        svgr!(
-            <g>
-                {blur(id, self.blur / 2., shape)}
-                <rect x={shape.x} y={shape.y} width={shape.w} height={shape.h} rx={radius} fill={self.color.to_string()} filter={filter} />
-            </g>
-        )
+        let sigma = self.blur / 2.;
+        let drawn = svgr!(<rect x={shape.x} y={shape.y} width={shape.w} height={shape.h} rx={radius} fill={self.color.to_string()} />);
+        raster::blurred(drawn, shape.outset(3. * sigma), sigma)
     }
 }
 
@@ -251,28 +265,23 @@ pub enum Edge {
 
 /// A CSS `backdrop-filter: blur()`: the scene behind an element, blurred and shown through it.
 #[derive(Clone, Copy)]
-pub struct Frost<'s, 'a> {
-    pub scene: &'s Svgr<'a>,
+pub struct Frost<'s> {
+    pub backdrop: &'s Backdrop,
     pub sigma: f32,
 }
 
-impl<'a> Frost<'_, 'a> {
+impl Frost<'_> {
     /// The blurred scene over `area`, in the coordinates of a box placed by `to_screen`.
-    pub fn draw(&self, id: &str, area: Rect, to_screen: Similarity) -> Svgr<'a> {
-        let filter = format!("{id}-frost");
-        let url = format!("url(#{filter})");
-        svgr!(
-            <g transform={to_screen.inverse().attr()}>
-                {blur(filter, self.sigma, to_screen.apply(area))}
-                <g filter={url}>{self.scene.clone()}</g>
-            </g>
-        )
+    pub fn draw<'a>(&self, area: Rect, to_screen: Similarity) -> Svgr<'a> {
+        self.backdrop
+            .frosted(self.sigma, to_screen.apply(area))
+            .map_or_else(Svgr::empty, |(image, at)| raster::on_pixels(image, at, to_screen))
     }
 }
 
 /// A rounded box with a 1px border, optionally one thicker accent edge, shadows and a frosted
 /// backdrop: the shape of the window and of every overlay pill and panel.
-pub struct Card<'s, 'a> {
+pub struct Card<'s> {
     pub id: &'s str,
     pub rect: Rect,
     pub radius: f32,
@@ -281,24 +290,37 @@ pub struct Card<'s, 'a> {
     pub accent: Option<(Edge, f32, Rgba)>,
     /// CSS order: the first shadow is drawn on top.
     pub shadows: &'s [Shadow],
-    pub frost: Option<Frost<'s, 'a>>,
-    /// Where the card is drawn on screen, for the frosted backdrop.
+    pub frost: Option<Frost<'s>>,
+    /// Where the card is drawn on screen, for the frosted backdrop and the shadows.
     pub to_screen: Similarity,
+    /// The screen's size: nothing is drawn outside it.
+    pub screen: (f32, f32),
 }
 
-impl<'a> Card<'_, 'a> {
-    pub fn draw(&self, content: Svgr<'a>) -> Svgr<'a> {
-        let Card { id, rect: r, radius, fill, border, accent, shadows, frost, to_screen } = self;
-        let clip_id = format!("{id}-clip");
-        let clip = format!("url(#{clip_id})");
-        let shadows = if shadows.is_empty() {
-            Svgr::empty()
-        } else {
+impl Card<'_> {
+    pub fn draw<'a>(&self, content: Svgr<'a>) -> Svgr<'a> {
+        let shadows =
+            self.shadows().map_or_else(Svgr::empty, |(image, at)| raster::on_pixels(image, at, self.to_screen));
+        svgr!(<g>{shadows}{self.body(content)}</g>)
+    }
+
+    /// The shadows, resampled to the screen pixels they cover, and those pixels.
+    pub fn shadows(&self) -> Option<(Arc<PreloadedImageData>, Rect)> {
+        let Card { rect: r, radius, shadows, to_screen, screen, .. } = self;
+        if shadows.is_empty() {
+            return None;
+        }
+        // Shadows only depend on the card's size, so each set is baked once.
+        let reach = shadows.iter().map(|s| s.dy.abs() + 1.5 * s.blur).fold(0., f32::max);
+        let outer = r.outset(reach);
+        let (image, pixels) = raster::baked(format!("shadows {} {} {radius} {shadows:?}", r.w, r.h), outer, |pixels| {
+            let mut layer = Pixels::transparent(pixels.w as u32, pixels.h as u32);
+            for shadow in shadows.iter().rev() {
+                let (blurred, at) = shadow.blurred(*r, *radius);
+                let to = ((at.x - pixels.x) as u32, (at.y - pixels.y) as u32);
+                layer.blend(&blurred.into_image(), to, 1., Blend::Over);
+            }
             // A CSS box-shadow is only painted outside the box.
-            let reach = shadows.iter().map(|s| s.dy.abs() + 1.5 * s.blur).fold(0., f32::max);
-            let outer = r.outset(reach);
-            let outside_id = format!("{id}-outside");
-            let outside = format!("url(#{outside_id})");
             let d = format!(
                 "M{} {}H{}V{}H{}Z{}",
                 outer.x,
@@ -308,22 +330,29 @@ impl<'a> Card<'_, 'a> {
                 outer.x,
                 rounded_rect_d(*r, *radius)
             );
-            let drawn: Svgr = shadows
-                .iter()
-                .enumerate()
-                .rev()
-                .map(|(i, shadow)| shadow.draw(format!("{id}-shadow{i}"), *r, *radius))
-                .collect();
-            svgr!(
-                <g>
-                    <clipPath id={outside_id}>
-                        <path d={d} clip-rule="evenodd" />
-                    </clipPath>
-                    <g clip-path={outside}>{drawn}</g>
-                </g>
+            let drawn = raster::on_pixels(layer.into_image(), pixels, Similarity::IDENTITY);
+            raster::rasterize(
+                svgr!(
+                    <g>
+                        <clipPath id="outside">
+                            <path d={d} clip-rule="evenodd" />
+                        </clipPath>
+                        <g clip-path="url(#outside)">{drawn}</g>
+                    </g>
+                ),
+                pixels,
+                1.,
             )
-        };
-        let frost = frost.map_or_else(Svgr::empty, |frost| frost.draw(id, *r, *to_screen));
+        });
+        raster::on_screen(&image, pixels, *to_screen, Rect::new(0., 0., screen.0, screen.1))
+    }
+
+    /// The card without its shadows.
+    pub fn body<'a>(&self, content: Svgr<'a>) -> Svgr<'a> {
+        let Card { id, rect: r, radius, fill, border, accent, frost, to_screen, .. } = self;
+        let clip_id = format!("{id}-clip");
+        let clip = format!("url(#{clip_id})");
+        let frost = frost.map_or_else(Svgr::empty, |frost| frost.draw(*r, *to_screen));
         let accent = match accent {
             Some((Edge::Left, width, color)) => {
                 svgr!(<rect x={r.x} y={r.y} width={*width} height={r.h} fill={color.to_string()} />)
@@ -335,7 +364,6 @@ impl<'a> Card<'_, 'a> {
         };
         svgr!(
             <g>
-                {shadows}
                 <clipPath id={clip_id}>
                     <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={*radius} />
                 </clipPath>

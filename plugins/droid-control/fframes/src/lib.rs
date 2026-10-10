@@ -15,9 +15,11 @@ pub mod svg;
 pub mod theme;
 pub mod timing;
 
+mod composite;
 mod content;
 mod outro;
 mod overlays;
+mod raster;
 mod scenery;
 mod showcase;
 mod title;
