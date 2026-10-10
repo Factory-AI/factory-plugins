@@ -985,7 +985,7 @@
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "compose",
-      "originalText": "Compose\nRemotion props\nrender-showcase",
+      "originalText": "Compose\nShowcase props\nrender-showcase",
       "autoResize": true,
       "lineHeight": 1.25,
       "id": "t_compose",
@@ -993,7 +993,7 @@
       "y": 758,
       "width": 194,
       "height": 104,
-      "text": "Compose\nRemotion props\nrender-showcase"
+      "text": "Compose\nShowcase props\nrender-showcase"
     },
     {
       "angle": 0,
