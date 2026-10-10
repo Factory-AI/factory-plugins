@@ -4,7 +4,7 @@ This atom describes the visual polish system. It is invoked by the **compose** a
 
 ## What you control
 
-You control the visual output by choosing a **preset** and passing **props**. Everything else is automatic — the Remotion components handle all cinematic layers internally based on the preset and palette.
+You control the visual output by choosing a **preset** and passing **props**. Everything else is automatic — the fframes composition renders every cinematic layer internally based on the preset and palette.
 
 ## Presets
 
@@ -73,16 +73,15 @@ Palette is auto-selected based on preset. Factory/factory-hero use the warm pale
 
 ## Operational notes
 
-**Render time**: ~1-3 minutes for a 30-60s video at 1920x1080. Set worker timeouts to 5 minutes.
+**Render time**: about 6-7x the video length on 4 cores at 1920x1080 (a 13.5s video renders in ~90s); it scales with cores and output pixels. Set worker timeouts to 5x that estimate, plus a few minutes for the first-use build.
 
 **Common failure modes**:
-- Content truncated or a panel frozen early: `clipDuration` is the longest clip, probed by `render-showcase.sh`; a shorter clip holds its final frame. Trim or re-record the sources rather than editing `clipDuration`.
-- Missing clips in `public/`: render fails with "Could not read file." The render script stages clips into its own per-render directory; never run `npx remotion render` directly.
-- Missing npm dependencies: run `cd ${REMOTION_DIR} && npm install` if rendering fails on first use.
+- Content truncated or a panel frozen early: the content length is the longest clip, probed by the renderer; a shorter clip holds its final frame. Trim or re-record the sources.
+- First render fails while building: the renderer is compiled from `${DROID_PLUGIN_ROOT}/fframes` on first use and needs Rust, clang/libclang, and libx264 (see Prerequisites). Later renders reuse the binary.
 
-**Debugging layout**: `render-showcase.sh --still <frame>` renders one frame through the same normalization and staging as a full render (see `../compose/ATOM.md` Step 3).
+**Debugging layout**: `render-showcase.sh --still <frame>` renders one frame through the same validation and staging as a full render (see `../compose/ATOM.md` Step 3).
 
-**Cleanup**: `render-showcase.sh` removes only the staged directory it created, on success, failure, or cancellation via Ctrl-C / process-group signal. A signal to the script's PID alone is deferred until the `npx remotion` child exits.
+**Cleanup**: the renderer removes only the work directory it created, on success, failure, or cancellation via Ctrl-C / SIGTERM (to the script's PID or its process group).
 
 ## Rendering
 
@@ -94,16 +93,13 @@ RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh
 $RENDER --props "${RUN_DIR}/props.json" --output "${RUN_DIR}/showcase.mp4" "${RUN_DIR}/clip.mp4"
 ```
 
-## Advanced: GlitchTitle
-
-A stylized glitch title card component exists at `src/components/GlitchTitle.tsx` for edgy/hacker-aesthetic intros (pixel-decay effect with scattered blocks assembling into text). **This is NOT wired into the default Showcase composition.** Using it requires writing a custom Remotion composition. Only pursue this if specifically requested — the standard TitleCard handles all normal use cases.
-
 ## Prerequisites
 
-- **Node.js** (>= 18)
-- **Chrome / Chromium** (Remotion uses headless Chrome)
-- **ffmpeg** and **ffprobe** (Remotion uses these under the hood)
+- **Rust** (stable, via [rustup](https://rustup.rs)), **clang/libclang**, and **libx264** to build the renderer once
+- **ffmpeg** and **ffprobe** (clip probing and the H.264 encode)
+- **agg** for `.cast` clips
 
 ```bash
-cd ${DROID_PLUGIN_ROOT}/remotion && npm install
+sudo apt-get install -y clang libclang-dev libx264-dev   # macOS: xcode-select --install; brew install x264
+cargo build --release --manifest-path ${DROID_PLUGIN_ROOT}/fframes/Cargo.toml
 ```

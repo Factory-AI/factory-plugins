@@ -39,9 +39,9 @@ droid plugin marketplace add https://github.com/Factory-AI/factory-plugins
 # Install the plugin
 droid plugin install droid-control@factory-plugins --scope user
 
-# Install Remotion dependencies (one-time, only needed for video rendering)
+# Build the video renderer (one-time, only needed for video rendering; needs Rust, clang, libx264)
 # Find the plugin install path with: droid plugin list --scope user
-cd <plugin-path>/remotion && npm install
+cargo build --release --manifest-path <plugin-path>/fframes/Cargo.toml
 ```
 
 Or use the `/plugins` UI: Browse tab, select droid-control, install.
@@ -80,9 +80,9 @@ For the full rationale and runtime pipeline, see [`ARCHITECTURE.md`](ARCHITECTUR
 
 ## Video rendering
 
-The compose stage uses [Remotion](https://www.remotion.dev/) for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, configurable transitions (`motion-blur`, `flash`, `whip-pan`, `light-leak`, `glitch-lite`), zooms, spotlights, callout annotations, keystroke overlays, section headers, and syntax-highlighted code annotations.
+The compose stage uses [fframes](https://github.com/dmtrKovalenko/fframes), a Rust SVG video framework, for video compositing. Presets provide window chrome, spacing, palettes, backgrounds, particles, noise, color grading, configurable transitions (`motion-blur`, `flash`, `whip-pan`, `light-leak`, `glitch-lite`), zooms, spotlights, callout annotations, keystroke overlays, section headers, and syntax-highlighted code annotations.
 
-The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, per-render clip staging, longest-clip duration, Remotion rendering (or a `--still` preview), and cleanup. Playback `speed` is applied once by the composition to every clip.
+The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `agg`, per-render clip staging, longest-clip duration, rendering on every core (or a `--still` preview), and cleanup. It builds the `droid-showcase` binary from `fframes/` on first use. Playback `speed` is applied once by the composition to every clip.
 
 ## Prerequisites
 
@@ -95,7 +95,7 @@ The `render-showcase.sh` helper owns the full pipeline: `.cast` conversion via `
 | browser-use | All | `agent-browser` |
 | desktop-use | All | `cua-driver` |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` |
-| showcase | All | Node.js (>= 18), Chrome/Chromium |
+| showcase | All | Rust (stable, via rustup), clang/libclang, libx264 |
 
 ```bash
 npm install -g tuistory                               # virtual PTY driver
@@ -104,7 +104,8 @@ cargo install --git https://github.com/asciinema/agg  # .cast -> .gif converter
 sudo apt-get install -y ffmpeg                        # video processing
 agent-browser install                                 # browser automation (downloads Chromium)
 curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash  # native desktop GUI automation
-cd plugins/droid-control/remotion && npm install      # Remotion video rendering
+sudo apt-get install -y clang libclang-dev libx264-dev  # renderer build deps (macOS: xcode-select --install; brew install x264)
+cargo build --release --manifest-path plugins/droid-control/fframes/Cargo.toml  # video renderer
 ```
 
 Only install what you need, with approval. Terminal demos need tuistory, asciinema, agg, and ffmpeg. Web/Electron automation defaults to browser-use; an explicit cua-only/native-input request uses desktop-use instead. Native desktop automation needs cua-driver plus the graphical session and OS permissions reported by its preflight. Recording and rendering have additional dependencies; they are not required for ordinary desktop tasks.
