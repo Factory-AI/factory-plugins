@@ -36,9 +36,9 @@ Each atom lives at `${DROID_PLUGIN_ROOT}/skills/droid-control/atoms/<atom>/ATOM.
 | **droid-cli** | Droid CLI target patterns, shortcuts, modes, and launch helpers |
 | **pty-capture** | Ground-truth byte sequences from real terminal emulators |
 | **capture** | Recording lifecycle for terminal and browser sessions |
-| **compose** | Video assembly via Remotion: title cards, layout, transitions, effects, and showcase polish |
+| **compose** | Video assembly via the fframes renderer: title cards, layout, transitions, effects, and showcase polish |
 | **verify** | Deliverable verification against commitments |
-| **showcase** | Visual polish: Remotion window chrome, animations, and branded backgrounds |
+| **showcase** | Visual polish: window chrome, animations, and branded backgrounds |
 
 ## Routing
 
@@ -74,7 +74,7 @@ Only relevant when **compose** is loaded.
 | Artifact need | Also load |
 |---|---|
 | Showcase polish (window chrome, branded frame, cinematic background) | **showcase** |
-| Effects and keystroke overlays | (compose handles this — they're fields in the Remotion props JSON) |
+| Effects and keystroke overlays | (compose handles this — they're fields in the Showcase props JSON) |
 
 ## Workflow shape
 
@@ -115,7 +115,7 @@ Keep short interactive desktop tasks in the parent: it owns observations, input,
 | **Interactive shared desktop** | NO — parent | One controller owns focus, snapshots, input, permission waits, and cleanup |
 | **Capture clip in an isolated terminal/browser environment** | YES | Worker owns the complete interaction and recording lifecycle |
 | **Capture both clips** (comparison layout) | YES, only with independent environments | Worktrees and session labels alone do not isolate a desktop |
-| **Remotion render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, per-render staging, fidelity profiles, longest-clip duration, cleanup) |
+| **Showcase render** | YES | Needs only props JSON, clip paths, output path. Runs `render-showcase.sh` (handles .cast conversion, per-render staging, fidelity profiles, longest-clip duration, cleanup) |
 | Planning, interaction scripting | NO — parent | Requires PR context and editorial judgment |
 | Layout and prop construction | NO — parent | Requires editorial decisions about effects, timing, labels |
 | Verification | NO — parent | Requires commitment context |
@@ -151,7 +151,7 @@ Task prompt for a capture worker:
 ```
 
 ```
-Task prompt for a Remotion render worker:
+Task prompt for a render worker:
   "Run this command. Report the output file path and any errors.
    /abs/path/to/scripts/render-showcase.sh \
      --props /tmp/droid-run-1712345678-42-xxxx/showcase-props.json \
@@ -229,7 +229,7 @@ Deterministic recipe for reproducing degraded transcript tails in the droid CLI 
 | browser-use | All | `agent-browser` (+ `agent-browser install`) | — |
 | desktop-use | All | `cua-driver` in the intended graphical session; approved OS permissions | Documentation is bundled; no separate skill install |
 | compose | All | `ffmpeg`, `ffprobe`, `agg` | — |
-| showcase | All | Node.js (>= 18), Chrome/Chromium | — |
+| showcase | All | Rust (stable), clang/libclang, libx264 | — |
 
 ### Install commands
 
@@ -251,6 +251,6 @@ agent-browser install                                # one-time: downloads bundl
 
 # compose + showcase (video rendering)
 sudo apt-get install -y ffmpeg                       # video processing (includes ffprobe)
-cd ${DROID_PLUGIN_ROOT}/remotion && npm install       # Remotion dependencies
-# Chrome or Chromium must be installed for Remotion rendering
+sudo apt-get install -y clang libclang-dev libx264-dev  # renderer build deps (macOS: xcode-select --install; brew install x264)
+cargo build --release --manifest-path ${DROID_PLUGIN_ROOT}/fframes/Cargo.toml  # renderer (render-showcase.sh also builds on first use)
 ```

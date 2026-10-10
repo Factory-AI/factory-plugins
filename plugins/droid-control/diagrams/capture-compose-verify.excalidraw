@@ -970,7 +970,7 @@
       "isDeleted": false,
       "boundElements": [
         {
-          "id": "t_remotion",
+          "id": "t_showcase",
           "type": "text"
         }
       ],
@@ -978,7 +978,7 @@
       "link": null,
       "locked": false,
       "type": "rectangle",
-      "id": "remotion",
+      "id": "showcase",
       "x": 820,
       "y": 620,
       "width": 300,
@@ -1009,16 +1009,16 @@
       "fontSize": 18,
       "textAlign": "center",
       "verticalAlign": "middle",
-      "containerId": "remotion",
-      "originalText": "Remotion Showcase\n\nlayout + presets\nwindow chrome\nparticles / zoom / spotlight",
+      "containerId": "showcase",
+      "originalText": "fframes Showcase\n\nlayout + presets\nwindow chrome\nparticles / zoom / spotlight",
       "autoResize": true,
       "lineHeight": 1.25,
-      "id": "t_remotion",
+      "id": "t_showcase",
       "x": 828,
       "y": 628,
       "width": 284,
       "height": 129,
-      "text": "Remotion Showcase\n\nlayout + presets\nwindow chrome\nparticles / zoom / spotlight"
+      "text": "fframes Showcase\n\nlayout + presets\nwindow chrome\nparticles / zoom / spotlight"
     },
     {
       "angle": 0,
@@ -1135,7 +1135,7 @@
       "link": null,
       "locked": false,
       "type": "arrow",
-      "id": "a_render_remotion",
+      "id": "a_render_showcase",
       "x": 970,
       "y": 550,
       "width": 0,
@@ -1159,7 +1159,7 @@
         ]
       },
       "endBinding": {
-        "elementId": "remotion",
+        "elementId": "showcase",
         "fixedPoint": [
           0.5,
           0
@@ -1329,7 +1329,7 @@
       "link": null,
       "locked": false,
       "type": "arrow",
-      "id": "a_remotion_verify",
+      "id": "a_showcase_verify",
       "x": 1120,
       "y": 692,
       "width": 125,
@@ -1346,7 +1346,7 @@
       ],
       "lastCommittedPoint": null,
       "startBinding": {
-        "elementId": "remotion",
+        "elementId": "showcase",
         "fixedPoint": [
           1,
           0.5

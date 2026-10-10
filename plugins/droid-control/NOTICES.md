@@ -8,10 +8,10 @@ This plugin depends on several third-party tools and libraries. Executables are 
 
 ## Video rendering
 
-- **[Remotion](https://www.remotion.dev/)** -- React-based video renderer used by the compose/showcase pipeline. Remotion is free for individuals, small teams (<=3 employees), and non-profits. Larger companies require a [company license](https://www.remotion.pro/). See the [full license terms](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
-- **[React](https://react.dev/)** -- MIT License
-- **[Zod](https://zod.dev/)** -- MIT License
-- **[prism-react-renderer](https://github.com/FormidableLabs/prism-react-renderer)** -- MIT License. Powers the syntax highlighting in the `CodeAnnotationOverlay` component.
+- **[fframes](https://github.com/dmtrKovalenko/fframes)** (MIT) -- Rust SVG-based video framework that renders the `fframes/` showcase composition. Its SVG stack, [svgr/usvgr](https://github.com/dmtrKovalenko/fframes), is MPL-2.0; its clip decoder statically links [FFmpeg](https://ffmpeg.org/) (LGPL-2.1+) through `ffmpeg-sys-fframes` (WTFPL).
+- **[Geist and Geist Mono](https://github.com/vercel/geist-font)** -- SIL Open Font License 1.1, embedded in the renderer from `fframes/media/` (license text in `fframes/media/GEIST-OFL.txt`).
+- **[syntect](https://github.com/trishume/syntect)** (MIT) and **[two-face](https://github.com/CosmicHorrorDev/two-face)** (MIT OR Apache-2.0) -- syntax highlighting for code annotations.
+- **[clap](https://github.com/clap-rs/clap)**, **[serde](https://serde.rs/)**, **[signal-hook](https://github.com/vorner/signal-hook)**, **[tempfile](https://github.com/Stebalien/tempfile)** -- MIT OR Apache-2.0.
 
 ## Terminal automation
 
@@ -31,4 +31,4 @@ This plugin depends on several third-party tools and libraries. Executables are 
 
 ## Design influences
 
-- **[@hyperframes/shader-transitions](https://github.com/heygen-com/hyperframes/tree/main/packages/shader-transitions)** (Apache-2.0) -- the `transitionStyle` prop's naming and taxonomy (`whip-pan`, `light-leak`, `flash`, `glitch-lite`) was shaped by Hyperframes' shader-transitions catalog. Implementations in `ShowcaseTransition.tsx` are original Remotion-native CSS/SVG overlays, not GLSL ports.
+- **[@hyperframes/shader-transitions](https://github.com/heygen-com/hyperframes/tree/main/packages/shader-transitions)** (Apache-2.0) -- the `transitionStyle` prop's naming and taxonomy (`whip-pan`, `light-leak`, `flash`, `glitch-lite`) was shaped by Hyperframes' shader-transitions catalog. Implementations in `fframes/src/transition.rs` are original SVG filter and overlay effects, not GLSL ports.

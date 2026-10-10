@@ -10,7 +10,7 @@ Editable source: [`diagrams/architecture-routing.excalidraw`](diagrams/architect
 
 The plugin is designed to keep a droid focused while it operates real software:
 
-- **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and Remotion internals.
+- **Low context load:** load the Linux tuistory path without dragging in Windows KVM notes, macOS VM controls, browser automation, and renderer internals.
 - **Evidence-first workflows:** every command starts by making commitments, then ends by verifying the artifact against those commitments.
 - **Parallel execution:** independent capture environments and render jobs can run in workers. Shared desktop input stays serialized; session names do not isolate focus.
 - **Clear ownership:** commands decide *what* must be produced; atoms decide *how* to execute their slice.
@@ -91,7 +91,7 @@ The parent droid keeps judgment. Workers get exact commands.
 | Interpret PR / claim / QA goal | Parent | Requires context and judgment. |
 | Write the interaction script | Parent | Defines the proof story. |
 | Capture baseline and candidate branches | Workers only for independent environments | A shared desktop must be captured serially. |
-| Render Remotion video | Worker droid | Mechanical once props and clips are fixed. |
+| Render showcase video | Worker droid | Mechanical once props and clips are fixed. |
 | Verify commitments | Parent | Requires the original contract and evidence judgment. |
 
 This boundary follows the stage handoffs. Capture workers need resolved `tctl` commands and worktree paths, not PR context. Render workers need a props JSON and clip paths, not a feature explanation.
@@ -126,32 +126,32 @@ Browser/Electron and native-desktop workflows intentionally do **not** go throug
 
 ## Video composition
 
-The compose stage uses the Remotion project in `remotion/` as a single video engine. The droid writes a `Showcase` props JSON; `scripts/render-showcase.sh` handles the mechanical rendering pipeline:
+The compose stage uses the [fframes](https://github.com/dmtrKovalenko/fframes) project in `fframes/` as a single video engine: a Rust crate whose `droid-showcase` binary renders the `Showcase` composition from SVG frames. The droid writes a `Showcase` props JSON; `scripts/render-showcase.sh` builds the binary on first use (cargo) and runs it. The binary owns the mechanical rendering pipeline:
 
-1. Accept `.cast`, `.mp4`, and `.webm` clips only; normalize props and resolve fidelity (omitted: side-by-side `inspect`, single `standard`).
+1. Accept `.cast`, `.mp4`, and `.webm` clips only; validate props and resolve defaults and fidelity (omitted: side-by-side `inspect`, single `standard`).
 2. Convert `.cast` recordings through `agg` and `ffmpeg` at 1x, keeping the recording's timeline.
-3. Stage clips as `clip-<index>` inside a directory created under Remotion `public/` for this render only.
-4. Set `clipDuration` to the longest clip with `ffprobe`.
-5. Render the `Showcase` composition as limited-range `yuv420p`/`bt709` H.264, or one frame with `--still`.
-6. Remove that render's staged directory and conversion outputs on exit.
+3. Stage clips as `clip-<index>` inside a work directory created for this render only.
+4. Probe every clip with `ffprobe`; the longest one sets the content length.
+5. Print the resolved plan (`showcase plan: {...}` on stderr), then render every frame on all cores and encode limited-range `yuv420p`/`bt709` H.264 through `ffmpeg`, or one PNG frame with `--still`.
+6. Remove that render's work directory on exit, failure, or SIGINT/SIGTERM.
 
-`remotion/src/lib/duration.ts` owns the timeline: the composition applies `speed` once to every clip, the clips run for `clipDuration / speed`, and the content sequence is padded by one crossfade on each side so the clips start after the title crossfade and the final frame is held through the outro crossfade. Total length is `4s title + clipDuration / speed + 3.5s outro`; a shorter clip holds its final frame. This keeps droids out of the common failure modes: two `recording.mp4` inputs overwriting each other in `public/`, concurrent renders deleting each other's clips, mismatched `clipDuration`, casts sped up twice, wrong `agg` theme, invalid pixel formats, and hand-written Remotion commands with missing encode flags.
+`fframes/src/timing.rs` owns the timeline: the composition applies `speed` once to every clip, the clips run for `longest clip / speed`, and the content sequence is padded by one crossfade on each side so the clips start after the title crossfade and the final frame is held through the outro crossfade. Total length is `4s title + longest clip / speed + 3.5s outro`; a shorter clip holds its final frame. This keeps droids out of the common failure modes: two `recording.mp4` inputs overwriting each other, concurrent renders deleting each other's clips, a mismatched clip duration, casts sped up twice, wrong `agg` theme, invalid pixel formats, and hand-written encode commands with missing flags.
 
 ### Composition surface
 
-The `Showcase` composition in `remotion/src/compositions/Showcase.tsx` is the only video entry point. Everything else lives in `remotion/src/components/` and is composed by props:
+`fframes/src/showcase.rs` is the only video entry point (`Showcase`, an fframes `Video`). It composes the layer modules by props:
 
-| Layer | Purpose | Controlled by |
-|---|---|---|
-| Background + FloatingParticles | Preset-driven warmth or coolness | `preset` |
-| TitleCard / DroidOutro | Opening and closing cards (outro plays fanning rotor → crossfade → DROID wordmark) | `title`, `subtitle`, `speedNote` |
-| Window chrome + layouts | `SingleLayout` or `SideBySideLayout` | `layout`, `labels`, `objectFit` |
-| ZoomEffect / SpotlightOverlay / KeystrokeOverlay / SectionHeader | Timed in-scene overlays | `effects`, `keys`, `sections` |
-| CodeAnnotationOverlay | Timed syntax-highlighted code cards | `codeAnnotations` |
-| Transition presentation | Title→content and content→outro crossfade | `transitionStyle` (default `motion-blur`) |
-| NoiseOverlay + ColorGradeOverlay + Watermark | Topmost polish pass | `fidelity`, `preset` |
+| Layer | Module | Purpose | Controlled by |
+|---|---|---|---|
+| Background + particles | `scenery.rs` | Preset-driven warmth or coolness | `preset` |
+| Title card / Droid outro | `title.rs`, `outro.rs` | Opening and closing cards (outro plays fanning rotor → crossfade → DROID wordmark) | `title`, `subtitle`, `speedNote` |
+| Window chrome + layouts | `content.rs` | Single or side-by-side windows, panel entrances, zooms, spotlights | `layout`, `labels`, `windowTitle`, `objectFit`, `effects` |
+| Callouts / section sweeps and headers / keystrokes | `overlays.rs` | Timed in-scene overlays | `effects`, `sections`, `keys` |
+| Code cards | `overlays.rs`, `code.rs` | Timed syntax-highlighted code cards | `codeAnnotations` |
+| Transition presentation | `transition.rs` | Title→content and content→outro crossfade | `transitionStyle` (default `motion-blur`) |
+| Noise + colour grade + watermark | `scenery.rs` | Topmost polish pass | `fidelity`, `preset` |
 
-The key property is that the main composition is data-driven: the droid never writes Remotion JSX. Adding a new overlay or transition style is a new component plus a schema field, not a new composition.
+The key property is that the main composition is data-driven: the droid never writes composition code. Adding a new overlay or transition style is a new layer function plus a props field, not a new composition. Fonts (Geist, Geist Mono) are embedded in the binary, so renders look the same on every machine.
 
 ## Platform isolation
 
@@ -182,7 +182,7 @@ Use the same composition rules when adding capability:
 | New user workflow | Add a command that parses arguments into commitments, then routes through existing atoms. |
 | New target type | Add one target atom and one target-route row. |
 | New capture backend | Add a driver atom or extend `tctl` only if it belongs behind the same terminal boundary. |
-| New visual treatment | Add Remotion props/schema support and document compose/showcase behavior. |
+| New visual treatment | Add props support and a layer in `fframes/src/`, then document compose/showcase behavior. |
 | New platform mechanics | Add a `platforms/<os>.md` file under the relevant atom. |
 
 If a change makes every droid read more global instructions, it is probably fighting the architecture. Prefer a new scoped surface over a larger shared surface.

@@ -34,18 +34,17 @@ Free-text guidance on what to emphasize: which moments to hold, what the title c
 3. Finalize      →  verify and output
 ```
 
-Remotion handles all compositing in a single pass — title cards, transitions, window chrome, backgrounds, keystroke overlays, spotlights, particles, noise, and color grading are all automatic. You construct the props JSON; the engine does the rest.
+The fframes renderer handles all compositing in a single pass — title cards, transitions, window chrome, backgrounds, keystroke overlays, spotlights, particles, noise, and color grading are all automatic. You construct the props JSON; the engine does the rest.
 
-## Remotion project & helper script
+## Renderer & helper script
 
 ```bash
-REMOTION_DIR=${DROID_PLUGIN_ROOT}/remotion
-RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh
+RENDER=${DROID_PLUGIN_ROOT}/scripts/render-showcase.sh   # builds and runs ${DROID_PLUGIN_ROOT}/fframes
 ```
 
 ## Showcase mode vs Demo mode
 
-Both use the same Remotion pipeline but target different visual registers.
+Both use the same rendering pipeline but target different visual registers.
 
 | | Showcase | Demo |
 |---|---|---|
@@ -68,15 +67,17 @@ The command stage committed an **effects tier** (utilitarian, full, or none). No
 
 `render-showcase.sh` selects `inspect` for side-by-side and `standard` for single-clip layouts when `fidelity` is omitted; pass `compact`, `standard`, or `inspect` (in props or via `--fidelity`) to override. It is the only place fidelity is resolved.
 
-| Fidelity | Default output size | Remotion encode | Polish overlays | Best for |
+| Fidelity | Default output size | Encode | Polish overlays | Best for |
 |---|---|---|---|---|
-| `compact` | 1920x1080 | H.264 CRF 21, JPEG frames | full grain + grade | Small embeds |
-| `standard` | 1920x1080 | H.264 CRF 18, JPEG frames | reduced grain + grade | Single-panel demos |
-| `inspect` | 2560x1440 | H.264 CRF 14, PNG frames | minimal grain + grade | Side-by-side comparisons / tiny text |
+| `compact` | 1920x1080 | H.264 CRF 21, preset medium | full grain + grade | Small embeds |
+| `standard` | 1920x1080 | H.264 CRF 18, preset slow | reduced grain + grade | Single-panel demos |
+| `inspect` | 2560x1440 | H.264 CRF 14, preset slow | minimal grain + grade | Side-by-side comparisons / tiny text |
+
+Frames are rasterized losslessly and piped straight to the encoder at every fidelity.
 
 ### .cast conversion behavior
 
-`render-showcase.sh` converts `.cast` inputs through `agg -> gif -> ffmpeg -> mp4` before Remotion render, using the asciicast's own cols/rows and fixed font metrics so element positions remain stable across fidelity profiles. Conversion runs at 1x with agg's idle-time compression disabled, so the mp4 keeps the recording's timeline (plus agg's 3s hold on the final frame); `speed` is applied later by the composition, exactly like `.mp4`/`.webm` clips.
+`render-showcase.sh` converts `.cast` inputs through `agg -> gif -> ffmpeg -> mp4` before rendering, using the asciicast's own cols/rows and fixed font metrics so element positions remain stable across fidelity profiles. Conversion runs at 1x with agg's idle-time compression disabled, so the mp4 keeps the recording's timeline (plus agg's 3s hold on the final frame); `speed` is applied later by the composition, exactly like `.mp4`/`.webm` clips.
 
 **CRITICAL: `agg` replaces ALL 16 ANSI colors with its theme palette.** The render script uses a custom Droid CLI theme. If you manually run `agg`, never omit `--theme` and never use built-in themes like `monokai` or `dracula`.
 
@@ -130,7 +131,7 @@ Check whether the planned speed factor produces a final duration within the paci
 final_duration = 4s title + longest_clip_duration / speed_factor + 3.5s outro
 ```
 
-This is the exact length `remotion/src/lib/duration.ts` gives the composition (frames are rounded up to whole frames at 30fps). The content sequence has padding for both 0.5s crossfades: the title crossfade precedes playback; the outro crossfade begins after the frame-rounded playback interval and shows held frames. The window chrome's own 0.5s entrance animation overlaps the first half-second of playback, so open recordings on a settled baseline. Any positive finite `speed` is valid, including one that shrinks the clips below a crossfade length.
+This is the exact length `fframes/src/timing.rs` gives the composition (frames are rounded up to whole frames at 30fps). The content sequence has padding for both 0.5s crossfades: the title crossfade precedes playback; the outro crossfade begins after the frame-rounded playback interval and shows held frames. The window chrome's own 0.5s entrance animation overlaps the first half-second of playback, so open recordings on a settled baseline. Any positive finite `speed` is valid, including one that shrinks the clips below a crossfade length.
 
 The clips run for the longest clip; a shorter clip holds its final frame (it does not loop) until the sequence ends. For comparisons, record both clips to matched endings or the viewer sees one panel frozen while the other continues.
 
@@ -150,7 +151,7 @@ This checkpoint is not optional. A video that lands outside the target range fai
 
 Use `side-by-side` only when the story is fundamentally a comparison: regression (broken vs fixed), behavior-preserving refactor, or an explicit user request. Never fabricate a "before" clip to justify the side-by-side shape.
 
-Save the `showcaseSchema` JSON to a temp file:
+Save the Showcase props JSON to a temp file:
 
 ```bash
 DEMO_TMP="$(mktemp -d /tmp/droid-demo-XXXXXX)"
@@ -158,7 +159,6 @@ PROPS="${DEMO_TMP}/showcase-props.json"
 
 cat > "$PROPS" << 'EOF'
 {
-  "clips": ["demo.cast"],
   "layout": "single",
   "labels": [],
   "speed": 3,
@@ -178,17 +178,16 @@ cat > "$PROPS" << 'EOF'
 EOF
 ```
 
-For a comparison flow, swap `"clips"` to two paths, `"layout"` to `"side-by-side"`, and populate `"labels"` (e.g., `["BEFORE (main)", "AFTER (PR #11621)"]`).
+For a comparison flow, pass two clip paths to the render script, set `"layout"` to `"side-by-side"`, and populate `"labels"` (e.g., `["BEFORE (main)", "AFTER (PR #11621)"]`).
 
 Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-props.json` across rerenders or concurrent demos.
 
-**`clipDuration` is owned by the render script.** It probes every clip with ffprobe and writes the longest duration in source seconds; the composition divides by `speed`. Do not set it by hand — to shorten a video, trim the source clip.
+**Clip duration is owned by the renderer.** It probes every clip with ffprobe and uses the longest duration in source seconds; the composition divides by `speed`. To shorten a video, trim the source clip. Clips come only from the positional arguments; props carry no clip paths or durations.
 
 ### Props reference
 
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `clips` | `string[]` | yes | Overwritten by the render script with staged paths in command-line order; the positional clip arguments are the source of truth |
 | `layout` | `"single" \| "side-by-side"` | yes | Composition layout |
 | `labels` | `string[]` | yes | Labels for each clip (visible in side-by-side; pass `[]` for single) |
 | `fidelity` | `"compact" \| "standard" \| "inspect"` | no | Output quality/compression profile. Omit and the render script chooses by layout. |
@@ -199,11 +198,10 @@ Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-
 | `keys` | `Keystroke[]` | yes | Keystroke overlay events (pass `[]` for none) |
 | `sections` | `Section[]` | no | Section banners to mark chapters (pass `[]` for none) |
 | `effects` | `Effect[]` | yes | Effect timeline (pass `[]` for none) |
-| `clipDuration` | `number` | no | Longest clip in source seconds. **Set by the render script; do not write it by hand.** |
 | `speedNote` | `string` | no | Shown on title card (e.g., `"3x speed"`) |
 | `windowTitle` | `string` | no | Text in the window title bar |
-| `width` | `number` | no | Output width (default: 2560 for inspect, else 1920) |
-| `height` | `number` | no | Output height (default: 1440 for inspect, else 1080) |
+| `width` | `number` | no | Output width, even (default: 2560 for inspect, else 1920) |
+| `height` | `number` | no | Output height, even (default: 1440 for inspect, else 1080) |
 | `objectFit` | `"contain" \| "cover" \| "fill"` | no | How each clip fits its panel. Default `"contain"` (letterbox to preserve aspect). Use `"cover"` when clip aspect doesn't match panel aspect and you'd rather crop than see black bars. See "Clip aspect ratio" below. |
 | `codeAnnotations` | `CodeAnnotation[]` | no | Timed syntax-highlighted code overlays shown during the main content sequence. See "Code annotations" below. |
 | `transitionStyle` | `"motion-blur" \| "flash" \| "whip-pan" \| "light-leak" \| "glitch-lite"` | no | Presentation used for title→content and content→outro transitions. Default `"motion-blur"` preserves existing aesthetic. See "Transition styles" below. |
@@ -270,7 +268,7 @@ Timed syntax-highlighted code card laid over the captured video. Use for PR demo
 | `t` | `number` | yes | Start time in seconds, relative to clip start. Adjust for `speed` factor (same rule as `keys[].t`). |
 | `dur` | `number` | yes | How long the card stays visible, in seconds. |
 | `code` | `string` | yes | Source text; `\n` for multiline; no trailing newline. |
-| `language` | `string` | no | Prism language id (`tsx`, `ts`, `py`, `rust`, `bash`, ...). Default `tsx`. |
+| `language` | `string` | no | Language name or file extension (`tsx`, `ts`, `py`, `rust`, `bash`, ...). Default `tsx`; unknown languages render as plain text. |
 | `title` | `string` | no | Small caption above the code (usually a file path). |
 | `highlight` | `[{start,end}]` | no | 1-based inclusive line ranges with accent background + left border. |
 | `focus` | `[{start,end}]` | no | 1-based inclusive line ranges kept at full opacity; others are dimmed/blurred. |
@@ -302,16 +300,16 @@ $RENDER --props "$PROPS" --output "${RUN_DIR}/demo.mp4" \
   "${RUN_DIR}/before.cast" "${RUN_DIR}/after.cast"
 
 # Or with inline props (useful for simple cases)
-$RENDER --props-inline '{"clips":[],"layout":"single","labels":[],"title":"Demo","subtitle":"Test","preset":"macos","keys":[],"effects":[]}' \
+$RENDER --props-inline '{"layout":"single","labels":[],"title":"Demo","subtitle":"Test","preset":"macos","keys":[],"effects":[]}' \
   --output "${RUN_DIR}/demo.mp4" "${RUN_DIR}/clip.mp4"
 ```
 
-The script:
-1. Accepts `.cast`, `.mp4`, `.webm` only; converts `.cast` to `.mp4` at 1x with the selected fidelity profile
-2. Stages clips as `clip-<index>` inside a directory it creates under `${REMOTION_DIR}/public/` for this render only
-3. Resolves `fidelity`, `width`/`height`, `speed`; sets `clipDuration` to the longest clip (ffprobe)
-4. Runs `npx remotion render Showcase` with profile-specific encode flags plus `--pixel-format=yuv420p --color-space=bt709` (the color space is what keeps the file at limited-range `yuv420p` instead of `yuvj420p`)
-5. Removes its own staged directory on exit and on failure. Cancel it with Ctrl-C or by signalling its process group; a signal sent to the script's PID alone takes effect only after the `npx remotion` child exits
+The script builds the `droid-showcase` binary from `${DROID_PLUGIN_ROOT}/fframes` (a no-op once built) and runs it. The binary:
+1. Accepts `.cast`, `.mp4`, `.webm` only; validates props (an invalid value such as an unknown preset or a non-positive speed fails and names the field) and resolves `fidelity`, `width`/`height`, `speed`
+2. Stages clips as `clip-<index>` inside a work directory it creates for this render only; converts `.cast` to `.mp4` at 1x with the selected fidelity profile
+3. Probes every clip (ffprobe) and prints the resolved plan as `showcase plan: {...}` on stderr: fidelity, size, speed, longest clip, frame count, CRF/preset
+4. Renders every frame on all cores and pipes them to `ffmpeg` (libx264, limited-range `yuv420p`, `bt709` tags, faststart)
+5. Removes its work directory on exit, failure, or Ctrl-C / SIGTERM, then prints the output path on stdout
 
 **Quick frame check** (sanity-check layout before full render; same normalization and staging as a render):
 
@@ -320,7 +318,7 @@ $RENDER --props "$PROPS" --still 150 --output "${RUN_DIR}/check.png" "${RUN_DIR}
 # frame 150 = 5.0s at 30fps; clips start at frame 120, after the title crossfade
 ```
 
-**Render time**: Expect ~1-3 minutes for a 30-60s video at 1920x1080. Set worker timeouts accordingly (5 minutes is safe).
+**Render time**: about 6-7x the video length on 4 cores at 1920x1080 (a 13.5s video renders in ~90s); it scales with cores and output pixels. A still takes about a second. The first render also builds the binary (a few minutes). Set worker timeouts accordingly.
 
 ## Step 4: Finalize
 
@@ -351,7 +349,7 @@ Hand to the **verify** stage:
 - preset: factory
 - keystrokes: 3 events overlaid
 - effects: 1 spotlight
-- engine: remotion
+- engine: fframes
 ```
 
 ## Screenshot-only artifacts (proofs, QA)
