@@ -6,6 +6,7 @@ publish = false
 description = "droid-control showcase composition, rendered with fframes"
 
 [dependencies]
+avt = "0.18"
 clap = { version = "4", features = ["derive"] }
 fast_image_resize = { version = "6.1", features = ["only_u8x4"] }
 fframes = { version = "=1.2.0", features = ["compile-time-svgtree"] }

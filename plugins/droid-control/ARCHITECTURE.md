@@ -146,7 +146,8 @@ The compose stage uses the [fframes](https://github.com/dmtrKovalenko/fframes) p
 | Background + particles | `scenery.rs` | Preset-driven warmth or coolness | `preset` |
 | Title card / Droid outro | `title.rs`, `outro.rs` | Opening and closing cards (outro plays fanning rotor → crossfade → DROID wordmark) | `title`, `subtitle`, `speedNote` |
 | Window chrome + layouts | `content.rs` | Single or side-by-side windows, panel entrances, zooms, spotlights | `layout`, `labels`, `windowTitle`, `objectFit`, `effects` |
-| Callouts / section sweeps and headers / keystrokes | `overlays.rs` | Timed in-scene overlays | `effects`, `sections`, `keys` |
+| Callouts | `callout.rs`, `cast.rs` | Cards pointing at a region or at text found on a cast clip's screen (replayed through avt, the emulator agg renders with) | `effects` |
+| Section sweeps and headers / keystrokes | `overlays.rs` | Timed in-scene overlays | `sections`, `keys` |
 | Code cards | `overlays.rs`, `code.rs` | Timed syntax-highlighted code cards | `codeAnnotations` |
 | Transition presentation | `transition.rs` | Title→content and content→outro crossfade | `transitionStyle` (default `motion-blur`) |
 | Noise + colour grade + watermark | `scenery.rs` | Topmost polish pass | `fidelity`, `preset` |

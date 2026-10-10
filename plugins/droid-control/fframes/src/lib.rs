@@ -4,6 +4,7 @@
 //! overlays (keystrokes, sections, zooms, spotlights, callouts, code), and the Droid outro.
 //! [`Showcase`] draws any frame as SVG; [`render`] rasterises stills and whole videos.
 
+pub mod cast;
 pub mod clips;
 pub mod code;
 pub mod fonts;
@@ -15,6 +16,7 @@ pub mod svg;
 pub mod theme;
 pub mod timing;
 
+mod callout;
 mod composite;
 mod content;
 mod outro;

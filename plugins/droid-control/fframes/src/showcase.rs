@@ -2,6 +2,7 @@
 //! with its overlays and the Droid outro (joined by two transitions), then the watermark,
 //! and the film grain and colour grade. Each frame is composited in layers (see `raster`).
 
+use crate::callout::Callout;
 use crate::clips::{self, Clip};
 use crate::composite::Pixels;
 use crate::content::Stage;
@@ -27,6 +28,7 @@ pub struct Showcase {
     scenery: Scenery,
     title: TitleLayout,
     code_cards: Vec<CodeCard>,
+    callouts: Vec<Callout>,
 }
 
 impl Showcase {
@@ -43,6 +45,18 @@ impl Showcase {
         let size = (props.width as f32, props.height as f32);
         let scenery = Scenery::new(palette, config, props.fidelity.treatment(), size)?;
         let code_cards = props.code_annotations.iter().map(|a| CodeCard::new(a, palette, config, size)).collect();
+        let stage = stage(&props, &clips, palette, config);
+        let callouts = props
+            .effects
+            .iter()
+            .enumerate()
+            .filter_map(|(i, effect)| match effect {
+                Effect::Callout { t, dur, text, at, key } => {
+                    Some(Callout::new(i, *t, *dur, text, at, key.as_deref(), &stage))
+                }
+                _ => None,
+            })
+            .collect::<Result<_, _>>()?;
         Ok(Self {
             timeline: Timeline { content: timing::content_frames(clips::longest(&clips), props.speed) },
             title: TitleLayout::new(&props.title, &props.subtitle, size.0),
@@ -53,6 +67,7 @@ impl Showcase {
             size,
             scenery,
             code_cards,
+            callouts,
         })
     }
 
@@ -142,18 +157,7 @@ impl Showcase {
             return scene;
         };
         let props = &self.props;
-        let stage = Stage {
-            palette: self.palette,
-            config: self.config,
-            size: self.size,
-            layout: props.layout,
-            clips: &self.clips,
-            labels: &props.labels,
-            window_title: &props.window_title,
-            speed: props.speed,
-            object_fit: props.object_fit,
-            effects: &props.effects,
-        };
+        let stage = stage(props, &self.clips, self.palette, self.config);
         stage.compose(&mut scene, clock, frame, ctx);
         let backdrop = Backdrop::new(scene);
         let overlays = Overlays { palette: self.palette, config: self.config, size: self.size, backdrop: &backdrop };
@@ -161,7 +165,7 @@ impl Showcase {
             if props.sections.len() > 1 { overlays.section_sweeps(&props.sections, clock) } else { Svgr::empty() };
         let drawn = svgr!(
             <g>
-                {overlays.callouts(&props.effects, clock)}
+                {overlays.callouts(&self.callouts, &stage.clip_rects(clock), clock)}
                 {sweeps}
                 {overlays.section_headers(&props.sections, clock, sequence - TRANSITION_FRAMES)}
                 {overlays.keystrokes(&props.keys, clock)}
@@ -171,6 +175,21 @@ impl Showcase {
         let mut content = backdrop.into_scene();
         content.draw(drawn);
         content
+    }
+}
+
+fn stage<'s>(props: &'s ShowcaseProps, clips: &'s [Clip], palette: &'s Palette, config: &'s PresetConfig) -> Stage<'s> {
+    Stage {
+        palette,
+        config,
+        size: (props.width as f32, props.height as f32),
+        layout: props.layout,
+        clips,
+        labels: &props.labels,
+        window_title: &props.window_title,
+        speed: props.speed,
+        object_fit: props.object_fit,
+        effects: &props.effects,
     }
 }
 

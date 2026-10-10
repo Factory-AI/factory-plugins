@@ -1,19 +1,19 @@
-//! Timed overlays on the clip clock: callouts, section sweeps and headers, keystrokes and
-//! code annotations. Every panel frosts the scene behind it.
+//! Timed overlays on the clip clock: section sweeps and headers, keystrokes and code
+//! annotations (callouts are in `callout`). Every panel frosts the scene behind it.
 
 use crate::code::highlight;
 use crate::fonts::Font;
 use crate::motion::{Bezier, interpolate, interpolate_eased};
-use crate::props::{CodeAnnotation, CodePosition, Effect, Keystroke, Section};
+use crate::props::{CodeAnnotation, CodePosition, Keystroke, Section};
 use crate::raster::Backdrop;
 use crate::svg::{Anchor, Card, Edge, Frost, Rect, Rgba, Shadow, Similarity, TextStyle, blur, faded, stops};
 use crate::theme::{Palette, PresetConfig};
 use fframes::{Svgr, svgr};
 
-/// Overshooting pop-in shared by callouts and keystrokes.
+/// Overshooting pop-in for keystrokes.
 const POP: Bezier = Bezier(0.34, 1.56, 0.64, 1.);
 
-fn frame_of(seconds: f32) -> f32 {
+pub fn frame_of(seconds: f32) -> f32 {
     (seconds * 30.).round()
 }
 
@@ -26,67 +26,8 @@ pub struct Overlays<'s> {
 }
 
 impl<'s> Overlays<'s> {
-    fn frost(&self, sigma: f32) -> Option<Frost<'s>> {
+    pub fn frost(&self, sigma: f32) -> Option<Frost<'s>> {
         Some(Frost { backdrop: self.backdrop, sigma })
-    }
-
-    /// Text pills centred on percentage positions.
-    pub fn callouts<'a>(&self, effects: &[Effect], frame: usize) -> Svgr<'a> {
-        let (w, h) = self.size;
-        let f = frame as f32;
-        let style = TextStyle::new(Font::sans(500), 24.);
-        let line_height = 24. * 1.4;
-        effects
-            .iter()
-            .enumerate()
-            .filter_map(|(i, effect)| {
-                let Effect::Callout { t, dur, text, at } = effect else { return None };
-                let (enter, exit) = (frame_of(*t), frame_of(t + dur));
-                if f < enter || f >= exit {
-                    return None;
-                }
-                let local = f - enter;
-                let pop = interpolate_eased(local, &[0., 7.5], &[0., 1.], POP.f());
-                let fade = interpolate(local, &[exit - enter - 6., exit - enter], &[1., 0.]);
-
-                // Shrink-to-fit next to `left`, capped at 40% of the width.
-                let (left, top) = (at.x.0 * w, at.y.0 * h);
-                let (border_x, padding_x) = (1. + 3., 48.);
-                let max_content = style.width(text);
-                let min_content = text.split_whitespace().map(|word| style.width(word)).fold(0., f32::max);
-                let available = w - left - padding_x - border_x;
-                let content_w = max_content.min(min_content.max(available)).min(0.4 * w);
-                let lines = style.font.wrap(text, style.size, 0., content_w);
-                let rect_w = content_w + padding_x + border_x;
-                let rect_h = lines.len() as f32 * line_height + 24. + 2.;
-                let rect = Rect::new(left - rect_w / 2., top - rect_h / 2., rect_w, rect_h);
-                let place = Similarity::scale_about(0.85 + 0.15 * pop, left, top);
-
-                let text_x = rect.x + 3. + 24. + content_w / 2.;
-                let fill = Rgba::hex(self.palette.text);
-                let text: Svgr = lines
-                    .into_iter()
-                    .enumerate()
-                    .map(|(row, line)| {
-                        let baseline = style.baseline(rect.y + 1. + 12. + row as f32 * line_height, line_height);
-                        style.draw(line, text_x, baseline, fill, Anchor::Middle)
-                    })
-                    .collect();
-                let card = Card {
-                    id: &format!("callout{i}"),
-                    rect,
-                    radius: 12.,
-                    fill: Rgba::hex(self.palette.surface).a8(0xE6),
-                    border: Rgba::hex(self.palette.border),
-                    accent: Some((Edge::Left, 3., Rgba::hex(self.palette.accent))),
-                    shadows: &[Shadow::new(8., 32., Rgba(0, 0, 0, 0.35))],
-                    frost: self.frost(12.),
-                    to_screen: place,
-                    screen: self.size,
-                };
-                Some(faded(pop.min(fade), svgr!(<g transform={place.attr()}>{card.draw(text)}</g>)))
-            })
-            .collect()
     }
 
     /// A frosted band sweeping across the frame at every section boundary after the first.
