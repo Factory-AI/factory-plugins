@@ -30,7 +30,7 @@ const KEY_MARGIN: f32 = 12.;
 /// Between the keycaps and the text.
 const GUTTER: f32 = 26.;
 /// How far the frame around pointed-at targets darkens.
-const DIM: f32 = 0.5;
+const DIM: f32 = 0.25;
 /// The least space between the target's box and the card.
 const GAP: f32 = 40.;
 /// Between the card and the screen edge.
