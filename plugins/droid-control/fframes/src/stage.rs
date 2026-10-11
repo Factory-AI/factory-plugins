@@ -2,10 +2,9 @@
 //! directory (fframes keys decoders by file name), and asciinema casts become MP4s on their
 //! own timeline.
 
+use crate::cast::Cast;
 use crate::theme::Encoding;
-use serde::Deserialize;
 use std::fs;
-use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -30,16 +29,24 @@ pub fn kind(clip: &Path) -> Result<Kind, String> {
     }
 }
 
-/// Links (or converts) every clip into `work_dir` and returns the staged paths in order.
-pub fn stage(clips: &[PathBuf], work_dir: &Path, encoding: &Encoding) -> Result<Vec<PathBuf>, String> {
+/// A clip as the composition reads it: the staged video, and the recording a cast was
+/// rendered from.
+pub struct Staged {
+    pub path: PathBuf,
+    pub cast: Option<Cast>,
+}
+
+/// Links (or converts) every clip into `work_dir`, in order.
+pub fn stage(clips: &[PathBuf], work_dir: &Path, encoding: &Encoding) -> Result<Vec<Staged>, String> {
     clips
         .iter()
         .enumerate()
         .map(|(index, clip)| match kind(clip)? {
             Kind::Cast => {
-                let staged = work_dir.join(format!("clip-{index}.mp4"));
-                convert_cast(clip, &staged, encoding)?;
-                Ok(staged)
+                let path = work_dir.join(format!("clip-{index}.mp4"));
+                let cast = Cast::read(clip)?;
+                convert_cast(clip, &cast, &path, encoding)?;
+                Ok(Staged { path, cast: Some(cast) })
             }
             Kind::Video => {
                 let ext = clip.extension().and_then(|ext| ext.to_str()).unwrap_or_default();
@@ -48,26 +55,10 @@ pub fn stage(clips: &[PathBuf], work_dir: &Path, encoding: &Encoding) -> Result<
                     fs::canonicalize(clip).map_err(|err| format!("clip is not readable: {}: {err}", clip.display()))?;
                 std::os::unix::fs::symlink(&source, &staged)
                     .map_err(|err| format!("could not stage {}: {err}", clip.display()))?;
-                Ok(staged)
+                Ok(Staged { path: staged, cast: None })
             }
         })
         .collect()
-}
-
-#[derive(Deserialize)]
-struct CastHeader {
-    #[serde(default = "default_cols")]
-    width: u32,
-    #[serde(default = "default_rows")]
-    height: u32,
-}
-
-fn default_cols() -> u32 {
-    120
-}
-
-fn default_rows() -> u32 {
-    36
 }
 
 fn run(command: &mut Command, what: &str) -> Result<(), String> {
@@ -82,19 +73,14 @@ fn run(command: &mut Command, what: &str) -> Result<(), String> {
 /// `speed` to every clip alike), then ffmpeg encodes the GIF losslessly: the composition
 /// decodes it again, so it loses nothing to a second lossy encode, and the fastest preset
 /// costs only file size.
-fn convert_cast(cast: &Path, output: &Path, encoding: &Encoding) -> Result<(), String> {
-    let file = fs::File::open(cast).map_err(|err| format!("clip is not readable: {}: {err}", cast.display()))?;
-    let mut header = String::new();
-    BufReader::new(file).read_line(&mut header).map_err(|err| format!("could not read {}: {err}", cast.display()))?;
-    let header: CastHeader =
-        serde_json::from_str(&header).map_err(|err| format!("not an asciinema cast: {}: {err}", cast.display()))?;
+fn convert_cast(clip: &Path, cast: &Cast, output: &Path, encoding: &Encoding) -> Result<(), String> {
     let gif = output.with_extension("gif");
     run(
         Command::new("agg")
             .args(["--speed", "1", "--idle-time-limit", "1000000000", "--renderer", "fontdue"])
-            .args(["--cols", &header.width.to_string(), "--rows", &header.height.to_string()])
+            .args(["--cols", &cast.cols.to_string(), "--rows", &cast.rows.to_string()])
             .args(["--fps-cap", &encoding.cast_fps_cap.to_string(), "--theme", DROID_CLI_THEME])
-            .arg(cast)
+            .arg(clip)
             .arg(&gif),
         "agg",
     )?;

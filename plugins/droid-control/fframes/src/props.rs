@@ -98,6 +98,18 @@ pub struct Point {
     pub y: Pct,
 }
 
+/// What a callout points at.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Target {
+    /// Boxed, with the card beside it.
+    Region(Region),
+    /// Text on a terminal clip's screen, boxed by its cells and followed as the screen changes.
+    Text { text: String },
+    /// The card centred on it.
+    Point(Point),
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "fx", rename_all = "kebab-case")]
 pub enum Effect {
@@ -125,7 +137,9 @@ pub enum Effect {
         t: f32,
         dur: f32,
         text: String,
-        at: Point,
+        at: Target,
+        /// A shortcut shown as keycaps before the text, e.g. `"shift+tab"`.
+        key: Option<String>,
     },
 }
 
@@ -264,6 +278,12 @@ impl ShowcaseProps {
                 self.width, self.height
             ));
         }
+        let blank_target = self.effects.iter().any(
+            |effect| matches!(effect, Effect::Callout { at: Target::Text { text }, .. } if text.trim().is_empty()),
+        );
+        if blank_target {
+            return Err("invalid props: callout target text must not be blank".to_owned());
+        }
         let ranges = self.code_annotations.iter().flat_map(|a| a.highlight.iter().chain(&a.focus));
         if ranges.clone().any(|range| range.start == 0 || range.end == 0) {
             return Err("invalid props: code line ranges are 1-based (start and end must be positive)".to_owned());
@@ -338,6 +358,28 @@ mod tests {
     }
 
     #[test]
+    fn callouts_point_at_a_region_text_or_point() {
+        let props = parse(
+            r#"{"effects":[
+                {"fx":"callout","t":1,"dur":2,"text":"a","at":{"x":"10%","y":"20%","w":"5%","h":"5%"}},
+                {"fx":"callout","t":1,"dur":2,"text":"b","at":{"text":"Auto (High)"},"key":"shift+tab"},
+                {"fx":"callout","t":1,"dur":2,"text":"c","at":{"x":"50%","y":"50%"}}
+            ]}"#,
+        );
+        let targets: Vec<_> = props
+            .effects
+            .iter()
+            .map(|effect| match effect {
+                Effect::Callout { at, key, .. } => (at, key.as_deref()),
+                _ => panic!("callout"),
+            })
+            .collect();
+        assert!(matches!(targets[0], (Target::Region(Region { w: Pct(0.05), .. }), None)));
+        assert!(matches!(targets[1], (Target::Text { text }, Some("shift+tab")) if text == "Auto (High)"));
+        assert!(matches!(targets[2], (Target::Point(Point { x: Pct(0.5), .. }), None)));
+    }
+
+    #[test]
     fn code_annotations_take_schema_defaults() {
         let props = parse(r#"{"codeAnnotations":[{"t":0,"dur":1,"code":"x"}]}"#);
         let annotation = &props.code_annotations[0];
@@ -359,6 +401,8 @@ mod tests {
             r#"{"fidelity":"ultra"}"#,
             r#"{"effects":[{"fx":"zoom","t":0,"dur":1,"to":{"x":"left","y":"0%","w":"1%","h":"1%"}}]}"#,
             r#"{"codeAnnotations":[{"t":0,"dur":1,"code":"x","highlight":[{"start":0,"end":1}]}]}"#,
+            r#"{"effects":[{"fx":"callout","t":0,"dur":1,"text":"x","at":{"text":" "}}]}"#,
+            r#"{"effects":[{"fx":"callout","t":0,"dur":1,"text":"x","at":{"y":"1%"}}]}"#,
         ] {
             assert!(ShowcaseProps::from_json(json, None).is_err(), "{json} must be rejected");
         }

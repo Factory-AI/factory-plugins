@@ -156,9 +156,12 @@ pub fn resample(data: &[u8], size: (u32, u32), crop: Rect, (width, height): (u32
     let source = TypedImageRef::<U8x4>::from_buffer(size.0, size.1, data).expect("images hold their size in pixels");
     let mut resampled = vec![0; width as usize * height as usize * 4];
     let mut target = TypedImage::<U8x4>::from_buffer(width, height, &mut resampled).expect("sized for the target");
+    // A crop worked out in f32 can overrun the source by a rounding error.
+    let (x, y) = (f64::from(crop.x), f64::from(crop.y));
+    let (w, h) = (f64::from(crop.w).min(f64::from(size.0) - x), f64::from(crop.h).min(f64::from(size.1) - y));
     let options = ResizeOptions::new()
         .resize_alg(ResizeAlg::Convolution(FilterType::Mitchell))
-        .crop(f64::from(crop.x), f64::from(crop.y), f64::from(crop.w), f64::from(crop.h))
+        .crop(x, y, w, h)
         // Premultiplied already.
         .use_alpha(false);
     RESIZER

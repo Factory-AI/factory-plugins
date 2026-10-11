@@ -60,6 +60,30 @@ impl Stage<'_> {
     /// Composites the windows with their clips at `frame` on the clip clock, inside every
     /// zoom, and the spotlights over them onto `canvas`.
     pub fn compose(&self, canvas: &mut Pixels, frame: usize, video: &Frame, ctx: &FFramesContext<'_, '_>) {
+        for (window, clip) in self.windows(frame) {
+            self.window(canvas, &window, clip, frame, video, ctx);
+        }
+        canvas.draw(self.spotlights(frame));
+    }
+
+    /// The frame of `clip` shown `frame` frames after playback started: `speed` source frames
+    /// per output frame, holding the last frame once the clip ends.
+    pub fn source_frame(&self, clip: &Clip, frame: usize) -> usize {
+        ((frame as f64 * self.speed + 1e-9).floor() as usize).min(clip.last_frame)
+    }
+
+    /// Where each shown clip's whole frame lands on screen at `frame`, in clip order.
+    pub fn clip_rects(&self, frame: usize) -> Vec<Rect> {
+        self.windows(frame)
+            .into_iter()
+            .map(|(window, clip)| {
+                window.to_screen.apply(fitted(clip.size, self.content_box(window.inner), self.object_fit))
+            })
+            .collect()
+    }
+
+    /// The windows at `frame`, inside every zoom, with the clips they show.
+    fn windows(&self, frame: usize) -> Vec<(Window, &Clip)> {
         let (w, h) = self.size;
         let m = self.config.margin;
         let f = frame as f32;
@@ -72,16 +96,19 @@ impl Stage<'_> {
             _ => zoom,
         });
         match self.layout {
-            Layout::Single => {
-                if let Some(clip) = self.clips.first() {
+            Layout::Single => self
+                .clips
+                .first()
+                .map(|clip| {
                     let inner = Rect::new(m, m, w - 2. * m, h - 2. * m);
                     let progress = entrance(0.);
                     let place = Similarity::scale_about(0.92 + 0.08 * progress, inner.cx(), inner.cy());
-                    let title = (!self.window_title.is_empty()).then_some(self.window_title);
-                    let window = Window { id: "window0", inner, title, to_screen: place.then(zoom), opacity: progress };
-                    self.window(canvas, &window, clip, frame, video, ctx);
-                }
-            }
+                    let title = (!self.window_title.is_empty()).then(|| self.window_title.to_owned());
+                    let id = "window0".to_owned();
+                    (Window { id, inner, title, to_screen: place.then(zoom), opacity: progress }, clip)
+                })
+                .into_iter()
+                .collect(),
             Layout::SideBySide => {
                 let shown = &self.clips[..self.clips.len().min(2)];
                 let panel_w = ((w - 2. * m - SIDE_BY_SIDE_GAP) / 2.).floor();
@@ -89,28 +116,29 @@ impl Stage<'_> {
                 // Panels are content-box: the 1px border sits outside the panel size.
                 let row = shown.len() as f32 * (panel_w + 2.) + (shown.len().max(1) - 1) as f32 * SIDE_BY_SIDE_GAP;
                 let left = (w - row) / 2.;
-                for (i, clip) in shown.iter().enumerate() {
-                    let inner = Rect::new(
-                        left + i as f32 * (panel_w + 2. + SIDE_BY_SIDE_GAP) + 1.,
-                        (h - panel_h) / 2.,
-                        panel_w,
-                        panel_h,
-                    );
-                    let progress = entrance(i as f32 * 6.);
-                    let place = Similarity::translate(0., 12. * (1. - progress)).then(Similarity::scale_about(
-                        0.92 + 0.08 * progress,
-                        inner.cx(),
-                        inner.cy(),
-                    ));
-                    let label = self.labels.get(i).cloned().unwrap_or_else(|| format!("Clip {}", i + 1));
-                    let id = format!("window{i}");
-                    let window =
-                        Window { id: &id, inner, title: Some(&label), to_screen: place.then(zoom), opacity: progress };
-                    self.window(canvas, &window, clip, frame, video, ctx);
-                }
+                shown
+                    .iter()
+                    .enumerate()
+                    .map(|(i, clip)| {
+                        let inner = Rect::new(
+                            left + i as f32 * (panel_w + 2. + SIDE_BY_SIDE_GAP) + 1.,
+                            (h - panel_h) / 2.,
+                            panel_w,
+                            panel_h,
+                        );
+                        let progress = entrance(i as f32 * 6.);
+                        let place = Similarity::translate(0., 12. * (1. - progress)).then(Similarity::scale_about(
+                            0.92 + 0.08 * progress,
+                            inner.cx(),
+                            inner.cy(),
+                        ));
+                        let label = self.labels.get(i).cloned().unwrap_or_else(|| format!("Clip {}", i + 1));
+                        let id = format!("window{i}");
+                        (Window { id, inner, title: Some(label), to_screen: place.then(zoom), opacity: progress }, clip)
+                    })
+                    .collect()
             }
         }
-        canvas.draw(self.spotlights(frame));
     }
 
     /// Dimmed frame with a rounded cutout around each active spotlight region.
@@ -141,23 +169,23 @@ impl Stage<'_> {
             .collect()
     }
 
-    /// The clip frame shown `frame` frames after playback started (`speed` source frames per
-    /// output frame, holding the last frame once the clip ends), fitted into `window` as drawn
+    /// The clip frame shown `frame` frames after playback started (see `source_frame`), fitted
+    /// into `window` as drawn
     /// on screen: its visible part resampled to the whole screen pixels it
     /// covers inside the content box, and those pixels. A partly covered edge pixel keeps the
     /// window fill. A frame identical to the last one the window showed at the same place
     /// keeps its image, so a screen recording holding still is resampled once.
     fn clip_frame(
         &self,
-        window: &Window<'_>,
+        window: &Window,
         clip: &Clip,
         frame: usize,
         video: &Frame,
         ctx: &FFramesContext<'_, '_>,
     ) -> Option<Layer> {
-        let &Window { id, inner, to_screen, .. } = window;
+        let Window { ref id, inner, to_screen, .. } = *window;
         let mut at = video.clone();
-        at.index = ((frame as f64 * self.speed + 1e-9).floor() as usize).min(clip.last_frame);
+        at.index = self.source_frame(clip, frame);
         let input = SyncVideoFrameInput { start_from: 0., looping: false, editor_fallback_image: None };
         let decoded = at.get_synced_video_frame(ctx, &clip.name, &input)?.into_image().href();
         let size = (decoded.width as f32, decoded.height as f32);
@@ -225,13 +253,13 @@ impl Stage<'_> {
     fn window(
         &self,
         canvas: &mut Pixels,
-        window: &Window<'_>,
+        window: &Window,
         clip: &Clip,
         frame: usize,
         video: &Frame,
         ctx: &FFramesContext<'_, '_>,
     ) {
-        let &Window { id, inner, title, to_screen, opacity } = window;
+        let Window { ref id, inner, ref title, to_screen, opacity } = *window;
         if opacity <= 0. {
             return;
         }
@@ -265,10 +293,10 @@ impl Stage<'_> {
                         }
                     })
                     .collect();
-                let label = title.map_or_else(Svgr::empty, |title| {
+                let label = title.as_ref().map_or_else(Svgr::empty, |title| {
                     let style = TextStyle::new(Font::sans(400), 13.);
                     style.draw(
-                        title.to_owned(),
+                        title.clone(),
                         inner.cx(),
                         style.baseline(inner.y, BAR_HEIGHT),
                         Rgba::hex(palette.muted),
@@ -311,10 +339,10 @@ impl Stage<'_> {
 
 /// A window as laid out at a frame: its content rect (the 1px border lies outside it), bar
 /// title, where it is drawn on screen and how faded in it is.
-struct Window<'s> {
-    id: &'s str,
+struct Window {
+    id: String,
     inner: Rect,
-    title: Option<&'s str>,
+    title: Option<String>,
     to_screen: Similarity,
     opacity: f32,
 }

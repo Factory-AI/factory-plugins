@@ -88,7 +88,7 @@ fn run(cli: &Cli, work_dir: &Path) -> Result<(), String> {
     let encoding = props.fidelity.encoding();
 
     let staged = stage::stage(&cli.clips, work_dir, &encoding)?;
-    let clips = Clip::probe_all(&staged)?;
+    let clips = Clip::probe_all(staged)?;
     let showcase = Showcase::new(props, clips)?;
 
     let props = showcase.props();

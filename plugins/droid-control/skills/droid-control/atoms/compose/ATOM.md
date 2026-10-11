@@ -244,9 +244,27 @@ Use a run-scoped props path like `$PROPS`; do not reuse a global `/tmp/showcase-
 | `fade-out` | `t`, `dur` | Fade to black (schema-valid but not yet rendered by Showcase — emits a render-time warning) |
 | `zoom` | `t`, `dur`, `to: {x,y,w,h}` | Directed zoom to a target region (30% in, 40% hold, 30% out) |
 | `spotlight` | `t`, `dur`, `on: {x,y,w,h}`, `dim?` | Dim everything except a region (`dim`: 0–1, default 0.6) |
-| `callout` | `t`, `dur`, `text`, `at: {x,y}` | Text overlay anchored to a point |
+| `callout` | `t`, `dur`, `text`, `at`, `key?` | Card pointing at its target, or centred on a point (see below) |
 
 Regions use percentage strings (e.g., `"25%"`) relative to the video dimensions.
+
+#### Callout targets
+
+`at` takes one of three shapes:
+
+| `at` | Draws |
+|---|---|
+| `{ "text": "Auto (High)" }` | An accent box around that text on a `.cast` clip's screen, with a line to the card; the rest of the frame dims. The box sits on the text's terminal cells and follows the text while the callout shows (scrolling, redraws). |
+| `{ "x", "y", "w", "h" }` | An accent box around a region of the video (any clip type), with a line to the card; the rest of the frame dims. |
+| `{ "x", "y" }` | The card alone, centred on the point. |
+
+`key` (optional) shows a shortcut as keycaps before the text, under a `SHORTCUT` tag: `"shift+tab"` draws `Shift` and `Tab` caps, which press once as the card settles.
+
+```json
+{ "fx": "callout", "t": 3.7, "dur": 2.4, "text": "Cycle the autonomy level", "key": "shift+tab", "at": { "text": "Auto (High)" } }
+```
+
+Prefer text targets for terminal clips. Measured coordinates drift, but the cells don't. The composition places the card itself: it picks the side and distance where the card and its line cover the least text while the callout shows. Matching is case-sensitive and takes the first occurrence on screen, top to bottom, so pick text that's unique on screen at `t`. The render fails if no shown `.cast` clip has that text on screen at `t`. Write `t` in output seconds, like every other overlay time.
 
 ### When to use effects
 

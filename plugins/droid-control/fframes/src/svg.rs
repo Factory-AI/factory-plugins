@@ -260,6 +260,7 @@ impl Shadow {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Edge {
     Left,
+    Top,
     Bottom,
 }
 
@@ -356,6 +357,9 @@ impl Card<'_> {
         let accent = match accent {
             Some((Edge::Left, width, color)) => {
                 svgr!(<rect x={r.x} y={r.y} width={*width} height={r.h} fill={color.to_string()} />)
+            }
+            Some((Edge::Top, width, color)) => {
+                svgr!(<rect x={r.x} y={r.y} width={r.w} height={*width} fill={color.to_string()} />)
             }
             Some((Edge::Bottom, width, color)) => {
                 svgr!(<rect x={r.x} y={r.bottom() - width} width={r.w} height={*width} fill={color.to_string()} />)
