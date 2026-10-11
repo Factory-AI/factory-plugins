@@ -26,7 +26,7 @@ pub struct Overlays<'s> {
 }
 
 impl<'s> Overlays<'s> {
-    pub fn frost(&self, sigma: f32) -> Option<Frost<'s>> {
+    fn frost(&self, sigma: f32) -> Option<Frost<'s>> {
         Some(Frost { backdrop: self.backdrop, sigma })
     }
 

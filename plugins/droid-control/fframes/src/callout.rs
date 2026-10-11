@@ -1,32 +1,43 @@
 //! Callouts: a card of text, with optional keycaps, pointing at a frame region or at text on a
-//! terminal clip's screen, or centred on a point. A pointing callout stages in (its box draws
-//! around the target, the leader extends, the card slides in) and leaves in reverse.
+//! terminal clip's screen, or centred on a point. A pointing callout dims the frame around an
+//! orange box on its target and grows a line from the card to the box; keycaps press once as
+//! the card settles.
 
 use crate::cast::{Cast, Span};
 use crate::content::Stage;
 use crate::fonts::Font;
-use crate::motion::{cubic_out, interpolate_eased};
+use crate::motion::{cubic_out, interpolate_eased, quad_in, smoothstep};
 use crate::overlays::{Overlays, frame_of};
 use crate::props::Target;
-use crate::svg::{Anchor, Card, Edge, Rect, Rgba, Shadow, Similarity, TextStyle, faded, rounded_rect_d};
+use crate::svg::{Anchor, Card, Edge, Rect, Rgba, Similarity, TextStyle, faded, rounded_rect_d};
 use crate::timing::FPS;
 use fframes::{Svgr, svgr};
 use std::collections::HashSet;
 
-const TEXT: TextStyle = TextStyle::new(Font::sans(500), 22.);
-const LINE_HEIGHT: f32 = 31.;
-const KEY: TextStyle = TextStyle::new(Font::mono(500), 16.);
-const KEY_HEIGHT: f32 = 27.;
-const KEY_PADDING: f32 = 8.;
-const KEY_GAP: f32 = 6.;
-const PADDING: (f32, f32) = (18., 12.);
-const ACCENT: f32 = 3.;
+const TEXT: TextStyle = TextStyle::new(Font::sans(300), 30.);
+const LINE_HEIGHT: f32 = 38.;
+const TAG: TextStyle = TextStyle::new(Font::mono(400), 12.).spaced(0.25);
+const TAG_HEIGHT: f32 = 24.;
+const KEY: TextStyle = TextStyle::new(Font::mono(400), 30.);
+const KEY_HEIGHT: f32 = 2.4 * KEY.size;
+const KEY_GAP: f32 = 10.;
+/// Around the card's content.
+const PADDING: (f32, f32) = (30., 20.);
+/// Between the keycaps and the text.
+const GUTTER: f32 = 26.;
+/// How far the frame around pointed-at targets darkens.
+const DIM: f32 = 0.5;
 /// The least space between the target's box and the card.
 const GAP: f32 = 40.;
 /// Between the card and the screen edge.
 const EDGE: f32 = 24.;
+/// The least distance from where the pointer leaves the card to the card's corners.
+const INSET: f32 = 40.;
 /// Frames a box takes to follow its text to a new place.
 const GLIDE: f32 = 8.;
+/// Frames into a callout when its keycaps press, and how long they stay lit.
+const PRESS: f32 = 18.;
+const LIT: f32 = 18.;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Side {
@@ -76,8 +87,9 @@ impl Callout {
         let keys: Vec<String> = key.into_iter().flat_map(|key| key.split('+')).filter_map(keycap).collect();
         let lines = TEXT.font.wrap(text, TEXT.size, 0., (0.3 * w).max(240.));
         let text_w = lines.iter().map(|line| TEXT.width(line)).fold(0., f32::max);
-        let size =
-            (2. * PADDING.0 + ACCENT + keys_width(&keys) + text_w, 2. * PADDING.1 + lines.len() as f32 * LINE_HEIGHT);
+        let keyed = !keys.is_empty();
+        let height = (text_height(keyed, lines.len()) + 2. * PADDING.1).max(if keyed { KEY_HEIGHT + 24. } else { 0. });
+        let size = (2. * PADDING.0 + keys_width(&keys) + text_w, height);
         let (enter, exit) = (frame_of(t), frame_of(t + dur));
         let pointing = |clip: Option<usize>, track: Vec<(f32, Rect)>, ink: Vec<Rect>| {
             let rects = stage.clip_rects(enter as usize);
@@ -149,12 +161,23 @@ fn keycap(name: &str) -> Option<String> {
     Some(first.to_uppercase().chain(chars).collect())
 }
 
+fn cap_width(key: &str) -> f32 {
+    1.6 * KEY.size + KEY.width(key)
+}
+
+/// The keycaps and the gutter after them.
 fn keys_width(keys: &[String]) -> f32 {
     if keys.is_empty() {
         return 0.;
     }
-    let caps: f32 = keys.iter().map(|key| KEY.width(key) + 2. * KEY_PADDING).sum();
-    caps + KEY_GAP * (keys.len() - 1) as f32 + 12.
+    let caps: f32 = keys.iter().map(|key| cap_width(key)).sum();
+    caps + KEY_GAP * (keys.len() - 1) as f32 + GUTTER
+}
+
+/// The text column: a tag over the wrapped text when there are keycaps.
+fn text_height(keyed: bool, lines: usize) -> f32 {
+    let tag = if keyed { TAG_HEIGHT } else { 0. };
+    tag + lines as f32 * LINE_HEIGHT
 }
 
 /// A run of cells as fractions of an agg frame: agg pads the grid by one cell on the left and
@@ -180,7 +203,7 @@ fn area(r: Rect) -> f32 {
 
 /// The box drawn around a target.
 fn boxed(target: Rect) -> Rect {
-    Rect::new(target.x - 6., target.y - 2., target.w + 12., target.h + 4.)
+    Rect::new(target.x - 7., target.y - 1., target.w + 14., target.h + 2.)
 }
 
 /// Where the target is at `f`: easing from where it was to where it moved.
@@ -193,13 +216,15 @@ fn glide(track: &[(f32, Rect)], f: f32) -> Rect {
     }
 }
 
-/// The card `gap` away from `target` on `side`, unclamped.
+/// The card `gap` away from `target` on `side`, unclamped: level with the target beside it,
+/// and above or below it no further left than lets the pointer drop straight down or up.
 fn beside(side: Side, gap: f32, target: Rect, (w, h): (f32, f32)) -> Rect {
+    let x = target.x.min(target.cx() - INSET.min(w / 2.));
     let (x, y) = match side {
         Side::Right => (target.right() + gap, target.cy() - h / 2.),
         Side::Left => (target.x - gap - w, target.cy() - h / 2.),
-        Side::Below => (target.x, target.bottom() + gap),
-        Side::Above => (target.x, target.y - gap - h),
+        Side::Below => (x, target.bottom() + gap),
+        Side::Above => (x, target.y - gap - h),
     };
     Rect::new(x, y, w, h)
 }
@@ -213,8 +238,8 @@ fn place(side: Side, gap: f32, target: Rect, size: (f32, f32), (sw, sh): (f32, f
 }
 
 /// Where the card goes: the side and distance from the target that keep it on screen and
-/// clear of the target while covering, and leading across, the least `ink`. Covered text
-/// weighs most, then crossed text, then leader length; ties go to the nearer card and to
+/// clear of the target while covering, and pointing across, the least `ink`. Covered text
+/// weighs most, then crossed text, then pointer length; ties go to the nearer card and to
 /// the earlier of right, below, left, above.
 fn placement(target: Rect, size: (f32, f32), ink: &[Rect], screen: (f32, f32)) -> (Side, f32) {
     let safe = Rect::new(EDGE, EDGE, screen.0 - 2. * EDGE, screen.1 - 2. * EDGE);
@@ -223,13 +248,8 @@ fn placement(target: Rect, size: (f32, f32), ink: &[Rect], screen: (f32, f32)) -
         let wanted = beside(side, gap, target, size);
         let card = place(side, gap, target, size, screen);
         let clear = area(card.intersect(target.outset(GAP / 2.))) <= 0.;
-        let crossed: f32 = leader(target, card, side)
-            .windows(2)
-            .map(|pair| {
-                let ((ax, ay), (bx, by)) = (pair[0], pair[1]);
-                inked(Rect::new(ax.min(bx), ay.min(by), (bx - ax).abs(), (by - ay).abs()).outset(2.))
-            })
-            .sum();
+        let [(ax, ay), (bx, by)] = pointer(target, card, side);
+        let crossed = inked(Rect::new(ax.min(bx), ay.min(by), (bx - ax).abs(), (by - ay).abs()).outset(2.));
         let offscreen = area(wanted) - area(wanted.intersect(safe));
         (clear, offscreen + 4. * inked(card) + 10. * crossed + 8. * (gap - GAP))
     };
@@ -245,157 +265,161 @@ fn placement(target: Rect, size: (f32, f32), ink: &[Rect], screen: (f32, f32)) -
         .expect("four sides")
 }
 
-/// The leader from the box to the card: straight across the gap, or with one jog where the
-/// card was pushed off the target's line by the screen edge.
-fn leader(target: Rect, card: Rect, side: Side) -> Vec<(f32, f32)> {
-    let horizontal = matches!(side, Side::Right | Side::Left);
-    let (from, to, along) = match side {
-        Side::Right => (target.right(), card.x, target.cy()),
-        Side::Left => (target.x, card.right(), target.cy()),
-        Side::Below => (target.bottom(), card.y, target.cx()),
-        Side::Above => (target.y, card.bottom(), target.cx()),
+/// The pointer from the card to the box: it leaves the card's edge facing the box, as near
+/// the box's middle as `INSET` from the card's corners allows, and ends at the middle of the
+/// box's facing edge.
+fn pointer(target: Rect, card: Rect, side: Side) -> [(f32, f32); 2] {
+    let along = |from: f32, length: f32, to: f32| {
+        let inset = INSET.min(length / 2.);
+        to.clamp(from + inset, from + length - inset)
     };
-    let (lo, hi) = if horizontal { (card.y + 14., card.bottom() - 14.) } else { (card.x + 20., card.right() - 20.) };
-    let landing = along.clamp(lo, hi.max(lo));
-    let point = |a: f32, b: f32| if horizontal { (a, b) } else { (b, a) };
-    if (landing - along).abs() < 0.5 {
-        return vec![point(from, along), point(to, along)];
+    match side {
+        Side::Right => [(card.x, along(card.y, card.h, target.cy())), (target.right(), target.cy())],
+        Side::Left => [(card.right(), along(card.y, card.h, target.cy())), (target.x, target.cy())],
+        Side::Below => [(along(card.x, card.w, target.cx()), card.y), (target.cx(), target.bottom())],
+        Side::Above => [(along(card.x, card.w, target.cx()), card.bottom()), (target.cx(), target.y)],
     }
-    let middle = (from + to) / 2.;
-    vec![point(from, along), point(middle, along), point(middle, landing), point(to, landing)]
 }
 
-/// The first `fraction` of a polyline's length.
-fn partial(points: &[(f32, f32)], fraction: f32) -> Vec<(f32, f32)> {
-    let length = |(ax, ay): (f32, f32), (bx, by): (f32, f32)| (bx - ax).hypot(by - ay);
-    let mut left = fraction * points.windows(2).map(|pair| length(pair[0], pair[1])).sum::<f32>();
-    let mut drawn = vec![points[0]];
-    for pair in points.windows(2) {
-        let (a, b) = (pair[0], pair[1]);
-        let segment = length(a, b);
-        if left >= segment {
-            drawn.push(b);
-            left -= segment;
-        } else {
-            let t = if segment > 0. { left / segment } else { 0. };
-            drawn.push((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t));
-            break;
-        }
-    }
-    drawn
+/// Progress through `frames` frames from `start`, shaped by `easing`.
+fn eased(x: f32, start: f32, frames: f32, easing: fn(f32) -> f32) -> f32 {
+    interpolate_eased(x, &[start, start + frames], &[0., 1.], easing)
 }
 
-/// Progress through frames `a..b` of a stage, eased.
-fn staged(x: f32, a: f32, b: f32) -> f32 {
-    interpolate_eased(x, &[a, b], &[0., 1.], cubic_out)
-}
+/// A drawn callout and, when it points at a target, the box the frame stays bright around
+/// and how far the rest is dimmed for it.
+type Drawn<'a> = (Option<(Rect, f32)>, Svgr<'a>);
 
 impl Overlays<'_> {
-    /// Every callout showing at `frame`; `clips` are where the shown clips are on screen.
+    /// Every callout showing at `frame`, over one dimmed frame with a hole at each target's
+    /// box; `clips` are where the shown clips are on screen.
     pub fn callouts<'a>(&self, callouts: &[Callout], clips: &[Rect], frame: usize) -> Svgr<'a> {
-        callouts.iter().map(|callout| self.callout(callout, clips, frame as f32)).collect()
+        let (w, h) = self.size;
+        let drawn: Vec<Drawn<'a>> =
+            callouts.iter().filter_map(|callout| self.callout(callout, clips, frame as f32)).collect();
+        let holes: Vec<(Rect, f32)> = drawn.iter().filter_map(|(hole, _)| *hole).collect();
+        let dim = holes.iter().map(|(_, dim)| *dim).fold(0., f32::max);
+        let mut d = format!("M0 0H{w}V{h}H0Z");
+        for (hole, _) in &holes {
+            d.push_str(&rounded_rect_d(*hole, 5.));
+        }
+        let callouts: Svgr = drawn.into_iter().map(|(_, drawn)| drawn).collect();
+        let dimmed = faded(DIM * dim, svgr!(<path d={d} fill="black" fill-rule="evenodd" />));
+        svgr!(<g>{dimmed}{callouts}</g>)
     }
 
-    fn callout<'a>(&self, callout: &Callout, clips: &[Rect], f: f32) -> Svgr<'a> {
+    fn callout<'a>(&self, callout: &Callout, clips: &[Rect], f: f32) -> Option<Drawn<'a>> {
         if f < callout.enter || f >= callout.exit {
-            return Svgr::empty();
+            return None;
         }
-        let (local, remain) = (f - callout.enter, callout.exit - 1. - f);
+        let (local, total) = (f - callout.enter, callout.exit - callout.enter);
+        let shown = eased(local, 0., 9., smoothstep) * (1. - eased(local, total - 10.5, 10.5, quad_in));
         let (w, h) = callout.size;
         let (clip, track, side, gap) = match &callout.aim {
             Aim::Point(x, y) => {
-                let shown = staged(local, 0., 10.).min(staged(remain, 0., 8.));
                 let rect = Rect::new(x - w / 2., y - h / 2., w, h);
-                return faded(shown, self.card(callout, rect, Similarity::scale_about(0.96 + 0.04 * shown, *x, *y)));
+                return Some((None, self.card(callout, rect, local, shown)));
             }
             Aim::Target { clip, track, side, gap } => (clip, track, *side, *gap),
         };
         let target = glide(track, f);
         let target = boxed(clip.map_or(target, |i| within(target, clips[i])));
-        let rect = place(side, gap, target, callout.size, self.size);
-        let accent = Rgba::hex(self.palette.accent);
-
-        let drawn = staged(local, 0., 9.).min(staged(remain, 0., 7.));
-        let radius = 6_f32.min(target.h / 2.);
-        let perimeter = 2. * (target.w + target.h) - (8. - 2. * std::f32::consts::PI) * radius;
-        let outline = svgr!(
-            <path d={rounded_rect_d(target, radius)} fill={accent.alpha(0.1 * drawn).to_string()} stroke={accent.to_string()}
-                stroke-width="2" stroke-dasharray={format!("{} {perimeter}", perimeter * drawn)} />
-        );
-
-        let extended = staged(local, 6., 14.).min(staged(remain, 5., 11.));
-        let route = partial(&leader(target, rect, side), extended);
-        let points = route.iter().map(|(x, y)| format!("{x},{y}")).collect::<Vec<_>>().join(" ");
-        let (dot_x, dot_y) = route[0];
-        let line = faded(
-            4. * extended,
+        let card = place(side, gap, target, callout.size, self.size);
+        let pointed = eased(local, 3., 9., smoothstep) * (1. - eased(local, total - 10.5, 9., quad_in));
+        let grow = eased(local, 4.5, 12., smoothstep);
+        let [from, to] = pointer(target, card, side);
+        let end = (from.0 + (to.0 - from.0) * grow, from.1 + (to.1 - from.1) * grow);
+        let accent = Rgba::hex(self.palette.accent).to_string();
+        let pointing = faded(
+            pointed,
             svgr!(
                 <g>
-                    <polyline points={points} fill="none" stroke={accent.to_string()} stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <circle cx={dot_x} cy={dot_y} r="3.5" fill={accent.to_string()} />
+                    <path d={rounded_rect_d(target, 5.)} fill={accent.clone()} fill-opacity="0.12" stroke={accent.clone()} stroke-width="2" />
+                    <path d={format!("M{} {}L{} {}", from.0, from.1, end.0, end.1)} stroke={accent.clone()} stroke-width="2" />
+                    <circle cx={from.0} cy={from.1} r="4" fill={accent.clone()} />
+                    <circle cx={end.0} cy={end.1} r={(4. * grow).max(0.5)} fill={accent} />
                 </g>
             ),
         );
-
-        let slid = staged(local, 10., 20.).min(staged(remain, 9., 16.));
-        let back = 10. * (1. - slid);
-        let (dx, dy) = match side {
-            Side::Right => (-back, 0.),
-            Side::Left => (back, 0.),
-            Side::Below => (0., -back),
-            Side::Above => (0., back),
-        };
-        let card = faded(slid, self.card(callout, rect, Similarity::translate(dx, dy)));
-        svgr!(<g>{faded(drawn, outline)}{line}{card}</g>)
+        let card = self.card(callout, card, local, shown);
+        Some((Some((target, pointed)), svgr!(<g>{pointing}{card}</g>)))
     }
 
-    /// The card at `rect`, drawn on screen by `place`: keycaps, then the wrapped text.
-    fn card<'a>(&self, callout: &Callout, rect: Rect, place: Similarity) -> Svgr<'a> {
+    /// The card at `rect`, `opacity` shown and `local` frames into its callout: a solid panel
+    /// under an accent bar, holding the keycaps, then a tag over the wrapped text. It pops up
+    /// to full size as it fades in.
+    fn card<'a>(&self, callout: &Callout, rect: Rect, local: f32, opacity: f32) -> Svgr<'a> {
+        if opacity <= 0. {
+            return Svgr::empty();
+        }
         let palette = self.palette;
-        let text = Rgba::hex(palette.text);
-        let top = rect.y + PADDING.1;
-        let mut x = rect.x + ACCENT + PADDING.0;
-        let key_y = top + (LINE_HEIGHT - KEY_HEIGHT) / 2.;
+        let (ink, muted) = (Rgba::hex(palette.text), Rgba::hex(palette.muted));
+        let keyed = !callout.keys.is_empty();
+        let lit = (PRESS..PRESS + LIT).contains(&local);
+        let press = if lit { (1. - (local - PRESS) / 7.5).max(0.) } else { 0. };
+        let mut x = rect.x + PADDING.0;
         let caps: Svgr = callout
             .keys
             .iter()
             .map(|key| {
-                let cap = Rect::new(x, key_y, KEY.width(key) + 2. * KEY_PADDING, KEY_HEIGHT - 2.);
-                x = cap.right() + KEY_GAP;
-                let baseline = KEY.baseline(cap.y, cap.h);
-                svgr!(
-                    <g>
-                        <rect x={cap.x} y={cap.y + 2.} width={cap.w} height={cap.h} rx="5" fill={Rgba::BLACK.alpha(0.45).to_string()} />
-                        <rect x={cap.x + 0.5} y={cap.y + 0.5} width={cap.w - 1.} height={cap.h - 1.} rx="4.5" fill={Rgba::hex(palette.surface).to_string()}
-                            stroke={Rgba::WHITE.alpha(0.22).to_string()} stroke-width="1" />
-                        {KEY.draw(key.clone(), cap.cx(), baseline, text, Anchor::Middle)}
-                    </g>
-                )
+                let cap = self.keycap(key, x, rect.cy(), lit, press);
+                x += cap_width(key) + KEY_GAP;
+                cap
             })
             .collect();
-        let text_x = rect.x + ACCENT + PADDING.0 + keys_width(&callout.keys);
+        let text_x = rect.x + PADDING.0 + keys_width(&callout.keys);
+        let mut top = rect.cy() - text_height(keyed, callout.lines.len()) / 2.;
+        let tag = if keyed {
+            let tag = TAG.draw("SHORTCUT".to_owned(), text_x, TAG.baseline(top, TAG_HEIGHT - 8.), muted, Anchor::Start);
+            top += TAG_HEIGHT;
+            tag
+        } else {
+            Svgr::empty()
+        };
         let lines: Svgr = callout
             .lines
             .iter()
             .enumerate()
             .map(|(row, line)| {
                 let baseline = TEXT.baseline(top + row as f32 * LINE_HEIGHT, LINE_HEIGHT);
-                TEXT.draw(line.clone(), text_x, baseline, text, Anchor::Start)
+                TEXT.draw(line.clone(), text_x, baseline, ink, Anchor::Start)
             })
             .collect();
+        let place = Similarity::scale_about(0.96 + 0.04 * eased(local, 0., 12., smoothstep), rect.cx(), rect.cy());
         let card = Card {
             id: &format!("callout{}", callout.id),
             rect,
-            radius: 10.,
-            fill: Rgba::hex(palette.surface).a8(0xE6),
+            radius: 6.,
+            fill: Rgba::hex(palette.surface).alpha(0.96),
             border: Rgba::hex(palette.border),
-            accent: Some((Edge::Left, ACCENT, Rgba::hex(palette.accent))),
-            shadows: &[Shadow::new(8., 32., Rgba(0, 0, 0, 0.35))],
-            frost: self.frost(12.),
+            accent: Some((Edge::Top, 2., Rgba::hex(palette.accent))),
+            shadows: &[],
+            frost: None,
             to_screen: place,
             screen: self.size,
         };
-        svgr!(<g transform={place.attr()}>{card.draw(svgr!(<g>{caps}{lines}</g>))}</g>)
+        faded(opacity, svgr!(<g transform={place.attr()}>{card.draw(svgr!(<g>{caps}{tag}{lines}</g>))}</g>))
+    }
+
+    /// A keycap of `key` from `x`, centred on `cy`: a cap on a slab it is pushed `press` of
+    /// the way down onto, outlined and labelled in the accent while `lit`.
+    fn keycap<'a>(&self, key: &str, x: f32, cy: f32, lit: bool, press: f32) -> Svgr<'a> {
+        let palette = self.palette;
+        let (surface, border) = (Rgba::hex(palette.surface).to_string(), Rgba::hex(palette.border));
+        let (edge, label) = if lit {
+            (Rgba::hex(palette.accent), Rgba::hex(palette.accent))
+        } else {
+            (border, Rgba::hex(palette.text))
+        };
+        let slab = Rect::new(x, cy - KEY_HEIGHT / 2. + 4., cap_width(key), KEY_HEIGHT);
+        let cap = Rect::new(x, cy - KEY_HEIGHT / 2. + 3. * press, cap_width(key), KEY_HEIGHT);
+        svgr!(
+            <g>
+                <path d={rounded_rect_d(slab, 4.)} fill={border.to_string()} opacity={1. - press} />
+                <path d={rounded_rect_d(cap, 4.)} fill={surface} stroke={edge.to_string()} stroke-width="1" />
+                {KEY.draw(key.to_owned(), cap.cx(), KEY.baseline(cap.y, cap.h), label, Anchor::Middle)}
+            </g>
+        )
     }
 }
 
@@ -418,17 +442,18 @@ mod tests {
     }
 
     #[test]
-    fn leaders_run_straight_and_jog_only_when_the_card_is_pushed_off_line() {
+    fn pointers_run_straight_and_slant_only_when_the_card_is_pushed_off_line() {
         let target = Rect::new(100., 500., 200., 40.);
-        let card = place(Side::Right, GAP, target, (300., 52.), SCREEN);
-        assert_eq!(leader(target, card, Side::Right), [(300., 520.), (340., 520.)]);
+        let card = place(Side::Right, GAP, target, (300., 100.), SCREEN);
+        assert_eq!(pointer(target, card, Side::Right), [(340., 520.), (300., 520.)]);
+        // A narrow target: the card shifts left so the pointer still drops straight down.
+        let narrow = Rect::new(500., 500., 30., 20.);
+        let card = place(Side::Below, GAP, narrow, (300., 100.), SCREEN);
+        assert_eq!(pointer(narrow, card, Side::Below), [(515., 560.), (515., 520.)]);
         let low = Rect::new(100., 1040., 200., 30.);
-        let card = place(Side::Right, GAP, low, (300., 52.), SCREEN);
+        let card = place(Side::Right, GAP, low, (300., 100.), SCREEN);
         assert_eq!(card.bottom(), SCREEN.1 - EDGE);
-        let route = leader(low, card, Side::Right);
-        assert_eq!(route, [(300., 1055.), (320., 1055.), (320., card.bottom() - 14.), (340., card.bottom() - 14.)]);
-        assert_eq!(partial(&route, 0.), [(300., 1055.), (300., 1055.)]);
-        assert_eq!(partial(&route, 1.), route);
+        assert_eq!(pointer(low, card, Side::Right), [(340., card.bottom() - INSET), (300., 1055.)]);
     }
 
     #[test]

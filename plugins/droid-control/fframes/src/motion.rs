@@ -77,6 +77,16 @@ pub fn back_out(s: f32) -> impl Fn(f32) -> f32 {
     }
 }
 
+/// Hermite smoothstep: eases in and out.
+pub fn smoothstep(t: f32) -> f32 {
+    t * t * (3. - 2. * t)
+}
+
+/// `Easing.in(Easing.quad)`.
+pub fn quad_in(t: f32) -> f32 {
+    t * t
+}
+
 /// `Easing.out(Easing.cubic)`.
 pub fn cubic_out(t: f32) -> f32 {
     1. - (1. - t).powi(3)

@@ -254,17 +254,17 @@ Regions use percentage strings (e.g., `"25%"`) relative to the video dimensions.
 
 | `at` | Draws |
 |---|---|
-| `{ "text": "Auto (High)" }` | A box around that text on a `.cast` clip's screen, with a leader to the card. The box sits on the text's terminal cells and follows the text while the callout shows (scrolling, redraws). |
-| `{ "x", "y", "w", "h" }` | A box around a region of the video (any clip type), with a leader to the card. |
+| `{ "text": "Auto (High)" }` | An accent box around that text on a `.cast` clip's screen, with a line to the card; the rest of the frame dims. The box sits on the text's terminal cells and follows the text while the callout shows (scrolling, redraws). |
+| `{ "x", "y", "w", "h" }` | An accent box around a region of the video (any clip type), with a line to the card; the rest of the frame dims. |
 | `{ "x", "y" }` | The card alone, centred on the point. |
 
-`key` (optional) shows a shortcut as keycaps before the text: `"shift+tab"` draws `Shift` and `Tab` caps.
+`key` (optional) shows a shortcut as keycaps before the text, under a `SHORTCUT` tag: `"shift+tab"` draws `Shift` and `Tab` caps, which press once as the card settles.
 
 ```json
 { "fx": "callout", "t": 3.7, "dur": 2.4, "text": "Cycle the autonomy level", "key": "shift+tab", "at": { "text": "Auto (High)" } }
 ```
 
-Prefer text targets for terminal clips. Measured coordinates drift, but the cells don't. The composition places the card itself: it picks the side and distance where the card and leader cover the least text while the callout shows. Matching is case-sensitive and takes the first occurrence on screen, top to bottom, so pick text that's unique on screen at `t`. The render fails if no shown `.cast` clip has that text on screen at `t`. Write `t` in output seconds, like every other overlay time.
+Prefer text targets for terminal clips. Measured coordinates drift, but the cells don't. The composition places the card itself: it picks the side and distance where the card and its line cover the least text while the callout shows. Matching is case-sensitive and takes the first occurrence on screen, top to bottom, so pick text that's unique on screen at `t`. The render fails if no shown `.cast` clip has that text on screen at `t`. Write `t` in output seconds, like every other overlay time.
 
 ### When to use effects
 
