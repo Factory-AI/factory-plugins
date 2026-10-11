@@ -7,22 +7,26 @@ use crate::cast::{Cast, Span};
 use crate::content::Stage;
 use crate::fonts::Font;
 use crate::motion::{cubic_out, interpolate_eased, quad_in, smoothstep};
-use crate::overlays::{Overlays, frame_of};
+use crate::overlays::Overlays;
 use crate::props::Target;
 use crate::svg::{Anchor, Card, Edge, Rect, Rgba, Similarity, TextStyle, faded, rounded_rect_d};
-use crate::timing::FPS;
+use crate::timing::{FPS, frame_of};
 use fframes::{Svgr, svgr};
 use std::collections::HashSet;
 
 const TEXT: TextStyle = TextStyle::new(Font::sans(300), 30.);
 const LINE_HEIGHT: f32 = 38.;
 const TAG: TextStyle = TextStyle::new(Font::mono(400), 12.).spaced(0.25);
-const TAG_HEIGHT: f32 = 24.;
+const TAG_LINE_HEIGHT: f32 = 16.;
+/// Between the tag and the text under it.
+const TAG_GAP: f32 = 8.;
 const KEY: TextStyle = TextStyle::new(Font::mono(400), 30.);
 const KEY_HEIGHT: f32 = 2.4 * KEY.size;
 const KEY_GAP: f32 = 10.;
 /// Around the card's content.
 const PADDING: (f32, f32) = (30., 20.);
+/// Above and below the keycaps, which run taller than the text beside them.
+const KEY_MARGIN: f32 = 12.;
 /// Between the keycaps and the text.
 const GUTTER: f32 = 26.;
 /// How far the frame around pointed-at targets darkens.
@@ -35,9 +39,11 @@ const EDGE: f32 = 24.;
 const INSET: f32 = 40.;
 /// Frames a box takes to follow its text to a new place.
 const GLIDE: f32 = 8.;
-/// Frames into a callout when its keycaps press, and how long they stay lit.
+/// Frames into a callout when its keycaps press, how long they stay lit, and how long they
+/// take to rise back up.
 const PRESS: f32 = 18.;
 const LIT: f32 = 18.;
+const RELEASE: f32 = 7.5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Side {
@@ -84,15 +90,19 @@ impl Callout {
         stage: &Stage<'_>,
     ) -> Result<Self, String> {
         let (w, h) = stage.size;
-        let keys: Vec<String> = key.into_iter().flat_map(|key| key.split('+')).filter_map(keycap).collect();
+        let keys: Vec<String> = key.into_iter().flat_map(|key| key.split('+')).filter_map(cap_label).collect();
         let lines = TEXT.font.wrap(text, TEXT.size, 0., (0.3 * w).max(240.));
         let text_w = lines.iter().map(|line| TEXT.width(line)).fold(0., f32::max);
         let keyed = !keys.is_empty();
-        let height = (text_height(keyed, lines.len()) + 2. * PADDING.1).max(if keyed { KEY_HEIGHT + 24. } else { 0. });
+        let height = (text_height(keyed, lines.len()) + 2. * PADDING.1).max(if keyed {
+            KEY_HEIGHT + 2. * KEY_MARGIN
+        } else {
+            0.
+        });
         let size = (2. * PADDING.0 + keys_width(&keys) + text_w, height);
         let (enter, exit) = (frame_of(t), frame_of(t + dur));
+        let rects = stage.clip_rects(enter as usize);
         let pointing = |clip: Option<usize>, track: Vec<(f32, Rect)>, ink: Vec<Rect>| {
-            let rects = stage.clip_rects(enter as usize);
             let to_screen = |r: Rect| clip.map_or(r, |i| within(r, rects[i]));
             let target = boxed(to_screen(track[0].1));
             let ink: Vec<Rect> = ink.into_iter().map(to_screen).collect();
@@ -106,17 +116,15 @@ impl Callout {
                 pointing(None, vec![(enter, rect)], Vec::new())
             }
             Target::Text { text: needle } => {
-                let shown = stage.clip_rects(enter as usize).len();
-                let casts = stage.clips[..shown]
+                let casts = stage.clips[..rects.len()]
                     .iter()
                     .enumerate()
                     .filter_map(|(i, clip)| Some((i, clip, clip.cast.as_ref()?)));
                 let found = casts.clone().find_map(|(i, clip, cast)| {
-                    // The clip frame shown at `f` (see `Stage::clip_frame`), in cast seconds.
-                    let time =
-                        |f: f32| (f64::from(f) * stage.speed + 1e-9).floor().min(clip.last_frame as f64) / FPS as f64;
+                    // The clip frame shown at `f`, in cast seconds.
+                    let time = |f: usize| stage.source_frame(clip, f) as f64 / FPS as f64;
                     let mut replay = cast.replay();
-                    replay.advance(time(enter));
+                    replay.advance(time(enter as usize));
                     let first = replay.find(needle)?;
                     // Text where it is relative to the target (the card moves with the target);
                     // text that would sit off the grid is out of the card's reach anyway.
@@ -132,7 +140,7 @@ impl Callout {
                     seen(first, replay.ink());
                     let mut track = vec![(enter, first)];
                     for f in (enter as usize + 1)..exit as usize {
-                        if !replay.advance(time(f as f32)) {
+                        if !replay.advance(time(f)) {
                             continue;
                         }
                         let at = replay.find(needle).unwrap_or(track[track.len() - 1].1);
@@ -155,7 +163,7 @@ impl Callout {
 }
 
 /// A key name as its cap reads, e.g. `"shift"` -> `"Shift"`, `"k"` -> `"K"`.
-fn keycap(name: &str) -> Option<String> {
+fn cap_label(name: &str) -> Option<String> {
     let mut chars = name.trim().chars();
     let first = chars.next()?;
     Some(first.to_uppercase().chain(chars).collect())
@@ -176,7 +184,7 @@ fn keys_width(keys: &[String]) -> f32 {
 
 /// The text column: a tag over the wrapped text when there are keycaps.
 fn text_height(keyed: bool, lines: usize) -> f32 {
-    let tag = if keyed { TAG_HEIGHT } else { 0. };
+    let tag = if keyed { TAG_LINE_HEIGHT + TAG_GAP } else { 0. };
     tag + lines as f32 * LINE_HEIGHT
 }
 
@@ -356,7 +364,7 @@ impl Overlays<'_> {
         let (ink, muted) = (Rgba::hex(palette.text), Rgba::hex(palette.muted));
         let keyed = !callout.keys.is_empty();
         let lit = (PRESS..PRESS + LIT).contains(&local);
-        let press = if lit { (1. - (local - PRESS) / 7.5).max(0.) } else { 0. };
+        let press = if lit { (1. - (local - PRESS) / RELEASE).max(0.) } else { 0. };
         let mut x = rect.x + PADDING.0;
         let caps: Svgr = callout
             .keys
@@ -370,8 +378,8 @@ impl Overlays<'_> {
         let text_x = rect.x + PADDING.0 + keys_width(&callout.keys);
         let mut top = rect.cy() - text_height(keyed, callout.lines.len()) / 2.;
         let tag = if keyed {
-            let tag = TAG.draw("SHORTCUT".to_owned(), text_x, TAG.baseline(top, TAG_HEIGHT - 8.), muted, Anchor::Start);
-            top += TAG_HEIGHT;
+            let tag = TAG.draw("SHORTCUT".to_owned(), text_x, TAG.baseline(top, TAG_LINE_HEIGHT), muted, Anchor::Start);
+            top += TAG_LINE_HEIGHT + TAG_GAP;
             tag
         } else {
             Svgr::empty()

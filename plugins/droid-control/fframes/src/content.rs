@@ -66,6 +66,12 @@ impl Stage<'_> {
         canvas.draw(self.spotlights(frame));
     }
 
+    /// The frame of `clip` shown `frame` frames after playback started: `speed` source frames
+    /// per output frame, holding the last frame once the clip ends.
+    pub fn source_frame(&self, clip: &Clip, frame: usize) -> usize {
+        ((frame as f64 * self.speed + 1e-9).floor() as usize).min(clip.last_frame)
+    }
+
     /// Where each shown clip's whole frame lands on screen at `frame`, in clip order.
     pub fn clip_rects(&self, frame: usize) -> Vec<Rect> {
         self.windows(frame)
@@ -163,8 +169,8 @@ impl Stage<'_> {
             .collect()
     }
 
-    /// The clip frame shown `frame` frames after playback started (`speed` source frames per
-    /// output frame, holding the last frame once the clip ends), fitted into `window` as drawn
+    /// The clip frame shown `frame` frames after playback started (see `source_frame`), fitted
+    /// into `window` as drawn
     /// on screen: its visible part resampled to the whole screen pixels it
     /// covers inside the content box, and those pixels. A partly covered edge pixel keeps the
     /// window fill. A frame identical to the last one the window showed at the same place
@@ -177,10 +183,9 @@ impl Stage<'_> {
         video: &Frame,
         ctx: &FFramesContext<'_, '_>,
     ) -> Option<Layer> {
-        let Window { id, inner, to_screen, .. } = window;
-        let (inner, to_screen) = (*inner, *to_screen);
+        let Window { ref id, inner, to_screen, .. } = *window;
         let mut at = video.clone();
-        at.index = ((frame as f64 * self.speed + 1e-9).floor() as usize).min(clip.last_frame);
+        at.index = self.source_frame(clip, frame);
         let input = SyncVideoFrameInput { start_from: 0., looping: false, editor_fallback_image: None };
         let decoded = at.get_synced_video_frame(ctx, &clip.name, &input)?.into_image().href();
         let size = (decoded.width as f32, decoded.height as f32);
@@ -254,8 +259,7 @@ impl Stage<'_> {
         video: &Frame,
         ctx: &FFramesContext<'_, '_>,
     ) {
-        let Window { id, inner, title, to_screen, opacity } = window;
-        let (inner, to_screen, opacity) = (*inner, *to_screen, *opacity);
+        let Window { ref id, inner, ref title, to_screen, opacity } = *window;
         if opacity <= 0. {
             return;
         }

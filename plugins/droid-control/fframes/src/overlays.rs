@@ -8,14 +8,11 @@ use crate::props::{CodeAnnotation, CodePosition, Keystroke, Section};
 use crate::raster::Backdrop;
 use crate::svg::{Anchor, Card, Edge, Frost, Rect, Rgba, Shadow, Similarity, TextStyle, blur, faded, stops};
 use crate::theme::{Palette, PresetConfig};
+use crate::timing::frame_of;
 use fframes::{Svgr, svgr};
 
 /// Overshooting pop-in for keystrokes.
 const POP: Bezier = Bezier(0.34, 1.56, 0.64, 1.);
-
-pub fn frame_of(seconds: f32) -> f32 {
-    (seconds * 30.).round()
-}
 
 pub struct Overlays<'s> {
     pub palette: &'s Palette,

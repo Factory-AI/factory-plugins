@@ -1,6 +1,11 @@
 //! The showcase timeline: title card, clip content, outro, joined by two transitions.
 
 pub const FPS: usize = 30;
+
+/// The frame nearest `seconds`.
+pub fn frame_of(seconds: f32) -> f32 {
+    (seconds * FPS as f32).round()
+}
 pub const TITLE_FRAMES: usize = 4 * FPS;
 /// 3.5 s.
 pub const OUTRO_FRAMES: usize = 7 * FPS / 2;
