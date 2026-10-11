@@ -53,6 +53,18 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "looot",
+      "description": "Search, price and run 2,500+ data API endpoints (work emails, phones, company and people search, web search, LinkedIn) from one prepaid balance, through the hosted looot MCP server",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/loootai/looot-plugin.git",
+        "path": "plugins/claude-code/looot",
+        "sha": "2fc14ec20a5e0cdc981f816257a65daf42c35294"
+      },
+      "category": "data",
+      "homepage": "https://docs.looot.ai"
     }
   ]
 }

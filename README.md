@@ -101,6 +101,10 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### looot
+
+[looot](https://looot.ai) plugin, sourced from [loootai/looot-plugin](https://github.com/loootai/looot-plugin) (`plugins/claude-code/looot`) at a pinned commit. One skill and the hosted `looot` MCP server (`https://api.looot.ai/mcp`, browser sign-in) for finding, pricing and running data API endpoints on a prepaid balance. A failed call is not charged and there is no subscription.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
