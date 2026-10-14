@@ -1,0 +1,10 @@
+{
+  "name": "pixel-perfect",
+  "description": "Browser-native visual QA, design skills, and anti-pattern detection for frontend interfaces. Leverages real screenshots, Lighthouse audits, and multi-viewport testing to catch what code review can't.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Factory",
+    "email": "support@factory.ai"
+  },
+  "license": "Apache-2.0"
+}
