@@ -1,0 +1,12 @@
+{
+  "name": "atomic-chat",
+  "description": "Use Atomic Chat local LLMs with Factory via OpenAI-compatible API and setup skills",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanalialiuk",
+    "email": "ylialuke@gmail.com"
+  },
+  "homepage": "https://atomic.chat",
+  "repository": "https://github.com/AtomicBot-ai/Atomic-Chat",
+  "license": "MIT"
+}
