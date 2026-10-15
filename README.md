@@ -101,6 +101,15 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### firecrawl
+
+Official [Firecrawl](https://firecrawl.dev) plugin. It connects the hosted Firecrawl MCP server (`https://mcp.firecrawl.dev/v2/mcp-oauth`, browser sign-in from `/mcp`) for web search, page scraping, site mapping and crawling, browser interaction, document parsing, change monitoring, Alexandria data providers, and research over developer docs, US government sources, and scientific papers.
+
+**Skills:**
+
+- `firecrawl` - Choose the right Firecrawl operation for a request: search, scrape, map, crawl, interact, parse, monitor, Alexandria providers, and developer, government, and paper research
+- `firecrawl-deep-research` - Investigate complex questions across many sources and return a cited answer, report, or table
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
