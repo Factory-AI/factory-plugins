@@ -56,7 +56,7 @@
     },
     {
       "name": "firecrawl",
-      "description": "Official Firecrawl plugin: search the web, read pages, and research developer docs, US government sources, and scientific papers through Firecrawl's hosted MCP server, with browser sign-in from /mcp",
+      "description": "Official Firecrawl plugin: search the web, scrape pages into clean Markdown or structured data, crawl and map sites, interact with dynamic pages, monitor changes, and research code, US law, and scientific papers through Firecrawl's hosted MCP server, with browser sign-in from /mcp",
       "source": "./plugins/firecrawl",
       "category": "research",
       "homepage": "https://docs.firecrawl.dev"

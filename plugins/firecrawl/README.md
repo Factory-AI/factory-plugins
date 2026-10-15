@@ -1,6 +1,6 @@
 # firecrawl
 
-Official [Firecrawl](https://firecrawl.dev) plugin for Droid. It connects Firecrawl's hosted MCP server for web search, page reading, structured data from data providers, developer docs and repository search, US government sources, and scientific papers.
+Official [Firecrawl](https://firecrawl.dev) plugin for Droid. It connects Firecrawl's hosted MCP server, which gives the agent the full Firecrawl toolset: web search, page scraping into clean Markdown or structured data, site mapping and crawling, browser interaction on dynamic pages, local document parsing, change monitoring, Alexandria data providers, and dedicated search over developer docs and repositories, US government sources, and scientific papers.
 
 ## Install
 
@@ -12,18 +12,17 @@ Then connect your Firecrawl account: open `/mcp`, select the `firecrawl` server,
 
 ## Skills
 
-- `firecrawl` - Search the web, read a supplied URL, and retrieve structured records from data providers
-- `firecrawl-developer-index` - Find documentation, issues, and pull requests for library behavior, API contracts, and error messages
-- `firecrawl-research-index` - Find scientific papers, follow citations, and verify claims against paper passages
+- `firecrawl` - Choose the right Firecrawl operation for a request: search, scrape, map, crawl, interact, parse, monitor, Alexandria providers, and developer, government, and paper research
+- `firecrawl-deep-research` - Investigate complex questions across many sources and return a cited answer, report, or table
 
 ## MCP server
 
-`mcp.json` registers one HTTP server, `firecrawl`, at `https://mcp.firecrawl.dev/v2/mcp-search`. It uses OAuth: authenticate it from `/mcp`, and use `/mcp` again to clear or redo the sign-in.
+`mcp.json` registers one HTTP server, `firecrawl`, at `https://mcp.firecrawl.dev/v2/mcp-oauth`. It uses OAuth: authenticate it from `/mcp`, and use `/mcp` again to clear or redo the sign-in.
 
 ## Resources
 
 - [Firecrawl documentation](https://docs.firecrawl.dev)
-- [Report a problem](https://github.com/firecrawl/firecrawl-claude-plugin/issues)
+- Support: hello@firecrawl.dev
 
 ## License
 

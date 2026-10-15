@@ -1,9 +1,11 @@
 {
   "name": "firecrawl",
-  "description": "Search the web, read pages, and research developer docs, US government sources, and scientific papers with Firecrawl",
-  "version": "2.0.0",
+  "description": "Search the web, scrape pages into clean Markdown or structured data, crawl and map sites, interact with dynamic pages, monitor changes, and research code, US law, and scientific papers with Firecrawl",
+  "version": "0.4.0",
   "author": {
-    "name": "Firecrawl"
+    "name": "Firecrawl",
+    "email": "hello@firecrawl.dev"
   },
+  "homepage": "https://firecrawl.dev",
   "license": "MIT"
 }
