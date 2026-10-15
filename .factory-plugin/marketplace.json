@@ -53,6 +53,17 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "firecrawl",
+      "description": "Official Firecrawl plugin: search the web, read pages, and research developer docs, US government sources, and scientific papers through Firecrawl's hosted MCP server, with browser sign-in from /mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/firecrawl/firecrawl-claude-plugin.git",
+        "sha": "3e1fb0c319d71b067906b8b602208dded3932cdb"
+      },
+      "category": "research",
+      "homepage": "https://docs.firecrawl.dev"
     }
   ]
 }
