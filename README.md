@@ -103,7 +103,7 @@ Autonomous experiment loop for optimization research. Try an idea, measure it, k
 
 ### firecrawl
 
-Official [Firecrawl](https://firecrawl.dev) plugin, sourced from [firecrawl/firecrawl-claude-plugin](https://github.com/firecrawl/firecrawl-claude-plugin) at a pinned commit. It connects the hosted Firecrawl MCP server (`https://mcp.firecrawl.dev/v2/mcp-search`, browser sign-in from `/mcp`) for web search, page scraping, developer docs and repository search, US government sources, and scientific papers.
+Official [Firecrawl](https://firecrawl.dev) plugin. It connects the hosted Firecrawl MCP server (`https://mcp.firecrawl.dev/v2/mcp-search`, browser sign-in from `/mcp`) for web search, page scraping, developer docs and repository search, US government sources, and scientific papers.
 
 **Skills:**
 

@@ -1,0 +1,9 @@
+{
+  "name": "firecrawl",
+  "description": "Search the web, read pages, and research developer docs, US government sources, and scientific papers with Firecrawl",
+  "version": "2.0.0",
+  "author": {
+    "name": "Firecrawl"
+  },
+  "license": "MIT"
+}
