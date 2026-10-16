@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "screenpipe",
+      "description": "Local-first workflow memory for reconstructing real work, drafting cited SOPs, and finding automation candidates",
+      "source": "./plugins/screenpipe",
+      "category": "productivity"
     }
   ]
 }
