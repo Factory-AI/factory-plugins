@@ -101,6 +101,18 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### npmscan
+
+[NPMScan](https://npmscan.com) plugin, sourced from [salemalem/npmscan-mcp-plugin](https://github.com/salemalem/npmscan-mcp-plugin) at a pinned commit. It connects the hosted, read-only `npmscan` MCP server (`https://npmscan.com/api/mcp`, no sign-in or API key) for npm supply-chain checks: malware, known vulnerabilities (OSV.dev, GitHub Security Advisories, NVD), typosquats, maintainer takeovers, install scripts and publish provenance.
+
+**Skills:**
+
+- `dependency-audit` - Audit a package.json, lockfile or SBOM for vulnerable and risky dependencies
+- `package-trust-check` - Check whether one package is trustworthy: maintainer changes, provenance and install scripts
+- `new-dependency-evaluation` - Compare candidate packages before adding a new dependency
+- `incident-response` - Turn a flagged or suspicious package into concrete remediation steps
+- `ci-pr-gate` - Give a PASS/WARN/FAIL verdict for a dependency change in a PR
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

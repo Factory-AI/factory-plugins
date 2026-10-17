@@ -53,6 +53,17 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "npmscan",
+      "description": "Check npm packages for malware, known vulnerabilities, typosquats, maintainer takeovers and risky install scripts before installing, and audit a package.json, lockfile, SBOM or GitHub repo, through NPMScan's hosted, read-only MCP server",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/salemalem/npmscan-mcp-plugin.git",
+        "sha": "e83bfb4235ffd6037c47e6198e1ee7bbc33f5333"
+      },
+      "category": "security",
+      "homepage": "https://npmscan.com/docs/mcp"
     }
   ]
 }
