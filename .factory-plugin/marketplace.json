@@ -53,6 +53,17 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "sonarqube",
+      "description": "Official SonarQube plugin: the SonarQube MCP server, sonar-* skills for analysis, issues and fixes, quality gates, coverage, duplication, dependency risks and their triage, and a sonarqube-reviewer droid. Works with SonarQube Cloud and SonarQube Server",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
+        "sha": "32ca01408a48691f57ec0ca8d8f896a42f38ec74"
+      },
+      "category": "quality",
+      "homepage": "https://github.com/SonarSource/sonarqube-agent-plugins"
     }
   ]
 }
