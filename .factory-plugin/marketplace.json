@@ -56,11 +56,11 @@
     },
     {
       "name": "sonarqube",
-      "description": "Official SonarQube plugin: the SonarQube MCP server, sonar-* skills for analysis, issues and fixes, quality gates, coverage, duplication and dependency risks, and a sonarqube-reviewer droid. Works with SonarQube Cloud and SonarQube Server",
+      "description": "Official SonarQube plugin: the SonarQube MCP server, sonar-* skills for analysis, issues and fixes, quality gates, coverage, duplication, dependency risks and their triage, and a sonarqube-reviewer droid. Works with SonarQube Cloud and SonarQube Server",
       "source": {
         "source": "url",
         "url": "https://github.com/SonarSource/sonarqube-agent-plugins.git",
-        "sha": "4d58dcb12e803175bb644ca9bb581b3d43d608c0"
+        "sha": "32ca01408a48691f57ec0ca8d8f896a42f38ec74"
       },
       "category": "quality",
       "homepage": "https://github.com/SonarSource/sonarqube-agent-plugins"

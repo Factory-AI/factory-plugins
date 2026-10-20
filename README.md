@@ -103,7 +103,7 @@ Autonomous experiment loop for optimization research. Try an idea, measure it, k
 
 ### sonarqube
 
-Official [SonarQube](https://www.sonarsource.com/products/sonarqube/) plugin, sourced from [SonarSource/sonarqube-agent-plugins](https://github.com/SonarSource/sonarqube-agent-plugins) at a pinned commit. It ships the SonarQube MCP server (run locally by the `sonar` CLI), `sonar-*` skills for analysis, issues and fixes, quality gates, coverage, duplication and dependency risks, and a `sonarqube-reviewer` droid with no edit tools. Works with SonarQube Cloud and SonarQube Server. Requires the [`sonar` CLI](https://github.com/SonarSource/sonarqube-cli), a container runtime, and `sonar auth login`.
+Official [SonarQube](https://www.sonarsource.com/products/sonarqube/) plugin, sourced from [SonarSource/sonarqube-agent-plugins](https://github.com/SonarSource/sonarqube-agent-plugins) at a pinned commit. It ships the SonarQube MCP server (run locally by the `sonar` CLI), `sonar-*` skills for analysis, issues and fixes, quality gates, coverage, duplication, dependency risks and their triage, and a `sonarqube-reviewer` droid with no edit tools. Works with SonarQube Cloud and SonarQube Server. Requires the [`sonar` CLI](https://github.com/SonarSource/sonarqube-cli), a container runtime, and `sonar auth login`.
 
 ## Plugin Structure
 
