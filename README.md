@@ -101,6 +101,10 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### testmu-ai
+
+Official [TestMu AI](https://www.testmuai.com) (formerly LambdaTest) plugin. It connects TestMu AI's hosted MCP server for HyperExecute jobs, automation failure triage from logs, SmartUI visual regressions, flaky-test analytics, accessibility reports and Test Manager. Sign in with your TestMu AI account from `/mcp`; there is no API key to paste.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

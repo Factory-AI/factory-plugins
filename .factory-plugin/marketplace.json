@@ -53,6 +53,13 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "testmu-ai",
+      "description": "Official TestMu AI (formerly LambdaTest) plugin: run, debug and triage tests through TestMu AI's hosted MCP server, covering HyperExecute jobs, automation failure triage from logs, SmartUI visual regressions, flaky-test analytics, accessibility reports and Test Manager, with browser sign-in from /mcp",
+      "source": "./plugins/testmu-ai",
+      "category": "quality",
+      "homepage": "https://www.testmuai.com/mcp/"
     }
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "name": "testmu-ai",
+  "description": "Run, debug and triage tests on the TestMu AI (formerly LambdaTest) cloud: HyperExecute jobs, automation failure triage from logs, SmartUI visual regressions, flaky-test analytics, accessibility reports and Test Manager",
+  "version": "1.1.0",
+  "author": {
+    "name": "TestMu AI",
+    "url": "https://www.testmuai.com"
+  },
+  "homepage": "https://www.testmuai.com/mcp/",
+  "repository": "https://github.com/LambdaTest/mcp-server-guide",
+  "license": "MIT",
+  "keywords": [
+    "testing",
+    "test automation",
+    "visual regression",
+    "accessibility",
+    "test management",
+    "mcp"
+  ]
+}
