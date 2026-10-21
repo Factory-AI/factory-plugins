@@ -101,6 +101,24 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### apify
+
+[Apify](https://apify.com) plugin, sourced from the `apify/` subdirectory of [apify/apify-factory-plugin](https://github.com/apify/apify-factory-plugin) at a pinned commit. It connects the hosted Apify MCP server (`https://mcp.apify.com/`, OAuth for authenticated tools) to search the Apify Store, run ready-made Actors, and read the Apify docs, and adds workflows for building and publishing your own Actors.
+
+**Droid:** `apify` - Routes Apify requests to the right skill, MCP tool, or CLI path
+
+**Commands:** `/apify`, `/create-actor`
+
+**Skills:**
+
+- `apify-actor-development` - Create, debug, and deploy a new Apify Actor
+- `apify-actorization` - Convert an existing JS/TS, Python, or CLI project into an Actor
+- `apify-generate-output-schema` - Generate dataset, output, and key-value store schemas for an existing Actor
+- `apify-sdk-integration` - Add Actor execution to an existing application via `apify-client`
+- `apify-ultimate-scraper` - CLI-driven data extraction with pre-built Actors across 15+ platforms
+
+The CLI-based skills need the `apify` CLI (`npm install -g apify-cli`).
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
