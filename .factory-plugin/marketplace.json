@@ -61,7 +61,7 @@
         "source": "git-subdir",
         "url": "https://github.com/Shaisolaris/solaris-dev-shop-plugins",
         "path": "copilot/plugin",
-        "sha": "53009f7ade20264183e8fa4ef3bc739a72299389"
+        "sha": "c69fbcf49e46da3837fcf75420b9914705b2eab7"
       },
       "category": "productivity",
       "homepage": "https://github.com/Shaisolaris/solaris-dev-shop-plugins"
