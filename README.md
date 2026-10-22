@@ -101,6 +101,10 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### solaris-dev-shop
+
+61 specialist workflows plus a chief-of-staff coordinator, with complete contained Python helpers. The catalog pins an external public Git subdirectory. See [source, prerequisites and boundaries](plugins/solaris-dev-shop/README.md).
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
