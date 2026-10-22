@@ -101,6 +101,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### easygerber
+
+AI PCB design, layout, and routing
+
+**Skills:** `easygerber` — board workflow through EasyGerber’s hosted MCP service.
+
+See [plugins/easygerber/README.md](plugins/easygerber/README.md) for setup and account access.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
