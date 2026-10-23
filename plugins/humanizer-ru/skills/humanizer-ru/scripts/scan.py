@@ -3,7 +3,7 @@
 
 Использование (из корня репо; у установленного скилла путь: <папка скилла>/scripts/scan.py):
     python skills/humanizer-ru/scripts/scan.py path/to/text.txt
-    echo "ваш текст" | python skills/humanizer-ru/scripts/scan.py -
+    python skills/humanizer-ru/scripts/scan.py - <<'EOF'   (текст на stdin)
     python skills/humanizer-ru/scripts/scan.py text.txt --json
 
 Это машинная половина режима «Аудит». Для полного очеловечивания (семантика,
@@ -15,37 +15,64 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 try:
-    from humanizer_metrics import analyze, cleanliness_score, diff_facts, facts_verdict
+    from humanizer_metrics import diff_facts, facts_verdict, scan_report
     from humanizer_metrics.burstiness import rhythm_verdict
-    from humanizer_metrics.markers import (GENRE_MUTED_BANS, GENRE_MUTED_CATEGORIES,
-                                            GENRES, effective_hard_bans, marker_verdict,
-                                            mute_by_genre)
+    from humanizer_metrics.lexical import LEX_MIN_TOKENS
+    from humanizer_metrics.score import LEX_MUTED_GENRES, LEX_THRESHOLD
+    from humanizer_metrics.markers import GENRE_MUTED_BANS, GENRES, marker_verdict
     from humanizer_metrics.morphology import morph_verdict
+    from humanizer_metrics.repeats import REPEAT_MAX_TOKENS, REPEAT_N
     from humanizer_metrics.structure import structure_verdict
 except ImportError as exc:
-    print(f"[ошибка] не хватает зависимостей сканера ({exc.name}).\n"
-          "Поставьте один раз: pip install razdel pymorphy3", file=sys.stderr)
+    print(f"[ошибка] не хватает зависимостей сканера ({exc.name}); балла не будет.\n"
+          "Поставьте один раз любым способом:\n"
+          "  uvx ru-humanizer файл.txt        (без установки, нужен uv)\n"
+          "  pipx install ru-humanizer        (даёт команду ru-humanizer)\n"
+          "  отдельный venv с razdel и pymorphy3 (команды в README, раздел про зависимости)\n"
+          "Системный pip на macOS с Homebrew и на Debian/Ubuntu падает с\n"
+          "externally-managed-environment (PEP 668): системный Python закрыт для pip.",
+          file=sys.stderr)
     raise SystemExit(2)
 
 
 def _read(src: str) -> str:
+    """Текст из файла или stdin. BOM в начале снимается: иначе U+FEFF
+    считается невидимым символом и роняет балл чистого текста."""
     if src == "-":
-        return sys.stdin.read()
+        try:
+            return sys.stdin.read().lstrip("\ufeff")
+        except UnicodeDecodeError:
+            print("[ошибка] stdin не в кодировке UTF-8, передайте текст в UTF-8", file=sys.stderr)
+            raise SystemExit(2)
     try:
-        return Path(src).read_text(encoding="utf-8")
+        return Path(src).read_text(encoding="utf-8-sig")
     except FileNotFoundError:
         print(f"[ошибка] файл не найден: {src}", file=sys.stderr)
         raise SystemExit(2)
-    except (IsADirectoryError, UnicodeDecodeError) as exc:
-        print(f"[ошибка] не могу прочитать {src}: {exc}", file=sys.stderr)
+    except UnicodeDecodeError:
+        print(f"[ошибка] {src} не в кодировке UTF-8, сохраните файл в UTF-8", file=sys.stderr)
         raise SystemExit(2)
+    except OSError as exc:
+        print(f"[ошибка] не могу прочитать {src}: {exc.strerror or exc}", file=sys.stderr)
+        raise SystemExit(2)
+
+
+def utf8_console() -> None:
+    """Отчёт с ≥, ⛔ и ✓ в консоли Windows (cp1251, cp866) падал с
+    UnicodeEncodeError при выводе в файл. Пишем UTF-8, непредставимое заменяем.
+    Stdin читаем как UTF-8 строго: иначе на Windows текст из трубы декодируется
+    кодировкой локали, а с заменой ошибок кириллица молча стала бы «�»."""
+    if hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _line_numbers(text: str, positions: list[int], limit: int = 3) -> str:
@@ -57,15 +84,13 @@ def _line_numbers(text: str, positions: list[int], limit: int = 3) -> str:
     return f"стр. {shown}{more}"
 
 
-def _cyrillic_share(text: str) -> float:
-    letters = re.findall(r"[^\W\d_]", text)
-    if not letters:
-        return 0.0
-    cyr = sum(1 for ch in letters if "а" <= ch.lower() <= "я" or ch.lower() == "ё")
-    return cyr / len(letters)
-
-
 def main() -> int:
+    utf8_console()
+    # `ru-humanizer mcp` поднимает MCP-сервер той же командой, что и сканер:
+    # так карточка в реестре MCP запускает пакет как `uvx ru-humanizer mcp`.
+    if sys.argv[1:2] == ["mcp"]:
+        from humanizer_metrics.mcp_server import main as mcp_main
+        return mcp_main()
     ap = argparse.ArgumentParser(description="Детерминированный сканер AI-маркеров (humanizer-ru)")
     ap.add_argument("source", help="файл с текстом или '-' для stdin")
     ap.add_argument("--json", action="store_true", help="вывод в JSON")
@@ -75,7 +100,7 @@ def main() -> int:
                          "Новый факт, которого не было в исходнике, даёт exit 2")
     ap.add_argument("--genre", choices=GENRES, default="marketing",
                     help="жанр текста: снимает маркеры, законные для регистра "
-                         "(academic, legal, fiction). По умолчанию marketing: "
+                         "(academic, legal, fiction, news). По умолчанию marketing: "
                          "строгий режим, под него откалиброваны пороги")
     args = ap.parse_args()
 
@@ -88,38 +113,18 @@ def main() -> int:
             print("Текст пуст, сканировать нечего.")
         return 0
 
-    rep = analyze(text)
     genre = args.genre
-    sc = cleanliness_score(rep, genre)
+    sr = scan_report(text, genre)
+    rep, sc, bans, soft = sr.report, sr.score, sr.hard_bans, sr.markers
     before_text = _read(args.before) if args.before else None
-    before_sc = cleanliness_score(analyze(before_text), genre) if before_text else None
+    before_sc = scan_report(before_text, genre).score if before_text is not None else None
     fdiff = diff_facts(before_text, text) if before_text is not None else None
-    # Частотные баны («Является» до порога 1/500 слов) не валят exit и не
-    # показываются как ⛔ — они остаются в мягких маркерах.
-    bans = effective_hard_bans(rep.hard_bans, rep.rhythm.words)
-    # Жанровый фильтр: в научном, юридическом и художественном регистре часть
-    # банов законна. Замер на AINL-Eval показал, что без фильтра сканер ловит
-    # людей чаще, чем модели (см. markers.GENRE_MUTED_BANS).
-    bans = mute_by_genre(bans, genre, GENRE_MUTED_BANS)
-    soft = mute_by_genre(rep.markers, genre, GENRE_MUTED_CATEGORIES)
-    muted_bans = len(effective_hard_bans(rep.hard_bans, rep.rhythm.words)) - len(bans)
-    muted_soft = len(rep.markers) - len(soft)
     EM_DASH_MUTED = "Длинное тире" in GENRE_MUTED_BANS.get(genre, set())
 
     if args.json:
-        out = rep.as_dict()
-        out["score"] = sc.as_dict()
-        # Ключи те же, что без жанра: меняется только состав после фильтра.
-        out["genre"] = genre
-        out["hard_bans"] = [(h.marker, h.count) for h in bans]
-        out["hard_ban_count"] = sum(h.count for h in bans)
-        out["markers"] = [(h.category, h.marker, h.count) for h in soft]
-        out["marker_count"] = sum(h.count for h in soft)
-        out["muted_by_genre"] = {"hard_bans": muted_bans, "markers": muted_soft}
-        if _cyrillic_share(text) < 0.3:
-            out["warning"] = "текст не похож на русский, метрики не применимы"
+        out = sr.as_dict()
         if fdiff is not None:
-            out["before"] = {"source": args.before, "score": before_sc.as_dict()}
+            out["before"] = {"source": args.before, "score": before_sc.score, "band": before_sc.band}
             out["facts"] = fdiff.as_dict()
         print(json.dumps(out, ensure_ascii=False, indent=2))
         if fdiff is not None and not fdiff.ok:
@@ -129,10 +134,10 @@ def main() -> int:
     print(f"=== humanizer-ru scan: {args.source} ===")
     if genre != "marketing":
         print(f"жанр: {genre} (снято маркеров по жанру: "
-              f"{muted_bans} банов, {muted_soft} мягких)")
+              f"{sr.muted_bans} банов, {sr.muted_markers} мягких)")
     print()
 
-    if _cyrillic_share(text) < 0.3:
+    if sr.non_russian:
         print("⚠ Текст не похож на русский: скилл и метрики рассчитаны на русский "
               "язык, отчёт ниже не показателен.\n")
 
@@ -173,6 +178,14 @@ def main() -> int:
           f"(min {rep.rhythm.min_len} / max {rep.rhythm.max_len}), CV: {rep.rhythm.cv_len}")
     print(f"  многоточий: {rep.rhythm.ellipsis}, скобок: {rep.rhythm.parentheses}, "
           f"вопросов: {rep.rhythm.questions}")
+    if rep.lexical.tokens >= LEX_MIN_TOKENS:
+        rule = (f"в жанре {genre} не штрафуется" if genre in LEX_MUTED_GENRES
+                else f"штраф выше {LEX_THRESHOLD}")
+        print(f"  лексическое разнообразие: MATTR {rep.lexical.mattr:.3f} "
+              f"(у людей обычно 0.90 ± 0.04, {rule})")
+    else:
+        print(f"  лексическое разнообразие: не считается, словоформ {rep.lexical.tokens} "
+              f"(нужно от {LEX_MIN_TOKENS})")
     print()
 
     print("Морфология:")
@@ -183,6 +196,16 @@ def main() -> int:
 
     print("Структура (уровень документа):")
     print(f"  {structure_verdict(rep.structure)}")
+    phrases = rep.repeats.phrases
+    if phrases:
+        print(f"  повтор фраз между абзацами: {len(phrases)} (цепочки от {REPEAT_N} слов в первых "
+              f"{REPEAT_MAX_TOKENS} словоформах, в счёт не входит)")
+        for ph in phrases[:5]:
+            print(f"    «{ph}»")
+        if len(phrases) > 5:
+            print(f"    … и ещё {len(phrases) - 5}")
+    else:
+        print(f"  повторов фраз между абзацами нет (цепочки от {REPEAT_N} слов)")
 
     if fdiff is not None:
         print()
@@ -194,6 +217,8 @@ def main() -> int:
             print(f"  ⚠ потеряно: {x}")
         for x in fdiff.claims_added:
             print(f"  ⚠ утверждение появилось: {x}")
+        for x in fdiff.emphasis_lost:
+            print(f"  ℹ снято {x} (шаблонный жирный снимают нарочно, смысловой проверьте)")
         if fdiff.soft_added:
             print(f"  ℹ мелкие количества появились: {', '.join(fdiff.soft_added)} "
                   "(идиомы и пересказ чисел не считаются, проверьте глазами)")

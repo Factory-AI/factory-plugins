@@ -107,7 +107,7 @@ Remove AI-generation markers from Russian text and make it read like a human wro
 
 **Skills:**
 
-- `humanizer-ru` - 64 AI-text patterns across 14 categories, 21 hard bans, rewrite / audit / targeted-fix modes, optional deterministic 0-100 scanner (`scripts/scan.py`)
+- `humanizer-ru` - 67 AI-text patterns across 14 categories, 21 hard bans, rewrite / audit / targeted-fix modes, optional deterministic 0-100 scanner (`scripts/scan.py`)
 
 See [plugins/humanizer-ru/README.md](plugins/humanizer-ru/README.md) for details.
 

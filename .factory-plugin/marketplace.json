@@ -56,7 +56,7 @@
     },
     {
       "name": "humanizer-ru",
-      "description": "Remove AI-generation markers from Russian text: 64 patterns, 21 hard bans, rewrite / audit / targeted-fix modes, and a deterministic scanner",
+      "description": "Remove AI-generation markers from Russian text: 67 patterns, 21 hard bans, rewrite / audit / targeted-fix modes, and a deterministic scanner",
       "source": "./plugins/humanizer-ru",
       "category": "writing"
     }
