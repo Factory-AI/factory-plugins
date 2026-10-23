@@ -1,0 +1,8 @@
+{
+  "name": "ux3-product-design-harness",
+  "description": "Review product changes and validate implementation handoffs against an approved execution boundary.",
+  "author": {
+    "name": "CIS2042"
+  },
+  "license": "MIT"
+}
