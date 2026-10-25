@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "shipvela",
+      "description": "Publish websites with owner confirmation, deployment status, logs and hosting usage through Shipvela OAuth.",
+      "source": "./plugins/shipvela",
+      "category": "development"
     }
   ]
 }
