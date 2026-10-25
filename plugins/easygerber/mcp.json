@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "easygerber": {
+      "type": "http",
+      "url": "https://www.easygerber.com/api/mcp"
+    }
+  }
+}

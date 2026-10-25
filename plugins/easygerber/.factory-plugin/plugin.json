@@ -1,0 +1,28 @@
+{
+  "name": "easygerber",
+  "displayName": "EasyGerber",
+  "version": "0.3.4",
+  "description": "AI PCB design, layout, and routing",
+  "author": {
+    "name": "EasyGerber",
+    "url": "https://easygerber.com"
+  },
+  "homepage": "https://easygerber.com/agents",
+  "license": "MIT",
+  "keywords": [
+    "easygerber",
+    "ai pcb design",
+    "pcb design",
+    "circuit board design",
+    "printed circuit board design",
+    "circuit design",
+    "schematic design",
+    "pcb layout",
+    "automatic pcb routing",
+    "electronic component search",
+    "3d pcb preview",
+    "gerber export",
+    "pcb manufacturing files",
+    "bill of materials"
+  ]
+}

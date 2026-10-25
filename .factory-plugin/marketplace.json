@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "easygerber",
+      "description": "AI PCB design, layout, and routing",
+      "source": "./plugins/easygerber",
+      "homepage": "https://easygerber.com/agents"
     }
   ]
 }
