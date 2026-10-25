@@ -28,10 +28,6 @@ Or browse available plugins via the UI:
 
 Core skills for essential functionalities and integrations. Pre-installed by the Droid CLI.
 
-**Skills:**
-
-- `simplify` - Parallel code review across reuse, quality, and efficiency axes
-
 **Output styles:**
 
 - `Explanatory` - Explains implementation choices and codebase patterns while completing the task
@@ -90,7 +86,6 @@ Skills for continuous learning and improvement.
 
 **Skills:**
 
-- `session-navigation` - Search and navigate past Droid sessions
 - `human-writing` - Remove AI writing patterns, make text sound human
 - `skill-creation` - Create and improve Droid skills
 - `visual-design` - Image generation (nanobanana CLI) and presentations (Slidev)
