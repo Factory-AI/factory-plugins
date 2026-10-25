@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "ux3-product-design-harness",
+      "description": "Product change reviews and deterministic validation of implementation handoffs within an approved execution boundary",
+      "source": "./plugins/ux3-product-design-harness",
+      "category": "productivity"
     }
   ]
 }

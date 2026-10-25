@@ -96,6 +96,15 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### ux3-product-design-harness
+
+Product change reviews with a joint validator that checks implementation
+handoffs preserve the approved execution boundary.
+
+**Skills:** `product-design-harness`, including its complete MIT resources.
+
+See [plugins/ux3-product-design-harness/README.md](plugins/ux3-product-design-harness/README.md) for prerequisites and validation.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
