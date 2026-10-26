@@ -53,6 +53,18 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "apify",
+      "description": "Run ready-made Actors from Apify, the largest marketplace of tools for AI, or build and publish your own, through the Apify MCP server, an apify routing droid, and bundled skills",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/apify/apify-factory-plugin.git",
+        "path": "apify",
+        "sha": "2502ddfa4b19d2422032eb911a846338eb021d65"
+      },
+      "category": "automation",
+      "homepage": "https://apify.com"
     }
   ]
 }
