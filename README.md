@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### property-based-testing
+
+Property-based testing methodology: prove invariants with generated cases.
+
+**Skills:**
+
+- `property-based-testing` - Default to property-based tests for features and bug fixes
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
