@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### prove-it-works
+
+Guardrail skill: verify every task output against the real artifact, not proxies or self-reports.
+
+**Skills:**
+
+- `prove-it-works` - Verify against the real artifact (run the feature, read the actual value, inspect the diff), not a proxy, self-report, or "it compiles"
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
