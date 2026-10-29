@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "fix-root-causes",
+      "description": "Debugging guardrail: fix the fault where the system first went wrong, not where the symptom surfaced",
+      "source": "./plugins/fix-root-causes",
+      "category": "quality"
     }
   ]
 }
