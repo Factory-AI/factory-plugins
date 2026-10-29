@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "interrogate",
+      "description": "Adversarial review where only findings proven by a run against the real code survive",
+      "source": "./plugins/interrogate",
+      "category": "quality"
     }
   ]
 }

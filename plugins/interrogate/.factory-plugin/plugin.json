@@ -1,0 +1,8 @@
+{
+  "name": "interrogate",
+  "description": "Adversarial review where only findings proven by a run against the real code survive",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}
