@@ -1,0 +1,8 @@
+{
+  "name": "subtract-before-you-add",
+  "description": "Simplification guardrail: sequence removal before construction when evolving a system",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}

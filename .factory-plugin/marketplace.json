@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "subtract-before-you-add",
+      "description": "Simplification guardrail: sequence removal before construction when evolving a system",
+      "source": "./plugins/subtract-before-you-add",
+      "category": "quality"
     }
   ]
 }
