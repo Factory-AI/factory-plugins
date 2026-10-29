@@ -1,0 +1,8 @@
+{
+  "name": "fix-root-causes",
+  "description": "Debugging guardrail: fix the fault where the system first went wrong, not where the symptom surfaced",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}

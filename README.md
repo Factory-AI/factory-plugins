@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### fix-root-causes
+
+Debugging guardrail: trace each symptom back to the first place the system went wrong and fix it there.
+
+**Skills:**
+
+- `fix-root-causes` - Fix the fault, not the place where it surfaced
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
