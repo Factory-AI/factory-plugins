@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### interrogate
+
+Adversarial review where a finding survives only when a run proves it.
+
+**Skills:**
+
+- `interrogate` - Fan out adversaries to break a change or design; report only verified findings
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
