@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### correct
+
+Find the mistakes agents keep repeating in a repo and make each one impossible.
+
+**Skills:**
+
+- `correct` - Architecture first, then types, then a lint whose error names the fix, then a test, docs last
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
