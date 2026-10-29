@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### maintain-verification-skill
+
+Keep a project's verification skill and feature map honest as the app changes.
+
+**Skills:**
+
+- `maintain-verification-skill` - Source wave per feature, live pass over every feature, at most one PR of proven corrections
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

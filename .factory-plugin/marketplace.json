@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "maintain-verification-skill",
+      "description": "Keep a project's verification skill and feature map honest as the app changes: source coverage, live pass, one PR of proven corrections",
+      "source": "./plugins/maintain-verification-skill",
+      "category": "automation"
     }
   ]
 }

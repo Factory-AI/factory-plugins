@@ -1,0 +1,8 @@
+{
+  "name": "maintain-verification-skill",
+  "description": "Keep a project's verification skill and feature map honest as the app changes: source coverage, live pass, one PR of proven corrections",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}
