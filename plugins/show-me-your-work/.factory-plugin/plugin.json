@@ -1,0 +1,8 @@
+{
+  "name": "show-me-your-work",
+  "description": "Auditable TSV decision trail for long-running or unattended agent work, with an end-of-run audit",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}

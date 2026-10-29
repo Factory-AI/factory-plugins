@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "show-me-your-work",
+      "description": "Auditable TSV decision trail for long-running or unattended agent work, with an end-of-run audit",
+      "source": "./plugins/show-me-your-work",
+      "category": "quality"
     }
   ]
 }

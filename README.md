@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### show-me-your-work
+
+Keep a reviewable decision trail for long-running or unattended work: a TSV log with one row per decision.
+
+**Skills:**
+
+- `show-me-your-work` - Append-only TSV decision log with evidence pointers and an end-of-run audit
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
