@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "correct",
+      "description": "Find the mistakes agents keep repeating in a repo and make each one impossible, enforced at the highest level that works",
+      "source": "./plugins/correct",
+      "category": "quality"
     }
   ]
 }
