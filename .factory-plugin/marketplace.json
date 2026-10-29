@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "blast-radius",
+      "description": "Find what a change could break beyond the diff and prove the one fact it's safe because of by running real code",
+      "source": "./plugins/blast-radius",
+      "category": "quality"
     }
   ]
 }

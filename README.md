@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### blast-radius
+
+Find what a change could break beyond the diff, and prove the one fact it's safe because of by running real code.
+
+**Skills:**
+
+- `blast-radius` - Assess blast radius before it ships, with the safety fact proven by a run, not a writeup
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
