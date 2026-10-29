@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### subtract-before-you-add
+
+Simplification guardrail: when evolving a system, remove complexity first, then build.
+
+**Skills:**
+
+- `subtract-before-you-add` - Remove dead code, redundant validators, and stub references first, then build on the simpler base
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
