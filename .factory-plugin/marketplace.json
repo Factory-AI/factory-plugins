@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "property-based-testing",
+      "description": "Property-based testing methodology: prove invariants with generated cases instead of example-based tests",
+      "source": "./plugins/property-based-testing",
+      "category": "quality"
     }
   ]
 }

@@ -1,0 +1,8 @@
+{
+  "name": "property-based-testing",
+  "description": "Property-based testing methodology: prove invariants with generated cases instead of example-based tests",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}
