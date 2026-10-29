@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "create-verification-skill",
+      "description": "Generate a project-local verification skill and feature map that drives your app the way a user does",
+      "source": "./plugins/create-verification-skill",
+      "category": "automation"
     }
   ]
 }
