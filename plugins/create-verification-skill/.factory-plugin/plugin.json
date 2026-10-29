@@ -1,0 +1,8 @@
+{
+  "name": "create-verification-skill",
+  "description": "Generate a project-local verification skill and feature map that drives your app the way a user does",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}

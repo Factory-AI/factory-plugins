@@ -96,6 +96,14 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### create-verification-skill
+
+Generate a project-local verification skill and feature map that drives the app the way a user does, any language, framework, or platform.
+
+**Skills:**
+
+- `create-verification-skill` - Scaffold launch, doctor, drive, evidence, and cleanup sections plus a per-feature map, proven end to end
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
