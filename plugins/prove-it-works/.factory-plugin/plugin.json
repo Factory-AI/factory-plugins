@@ -1,0 +1,8 @@
+{
+  "name": "prove-it-works",
+  "description": "Guardrail that verifies task output against the real artifact before declaring done, not proxies or self-reports",
+  "author": {
+    "name": "yifu zuo",
+    "email": "yzuo.2019@gmail.com"
+  }
+}
