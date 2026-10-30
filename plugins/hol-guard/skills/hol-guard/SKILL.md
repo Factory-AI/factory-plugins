@@ -43,6 +43,7 @@ For package or skill scanning:
 
 ```bash
 pipx install plugin-scanner
+plugin-scanner scan .
 plugin-scanner lint .
 plugin-scanner verify .
 ```
@@ -108,13 +109,14 @@ hol-guard explain <artifact-id>
 Run the scanner against the package root without executing the target just to scan it:
 
 ```bash
+plugin-scanner scan <path>
 plugin-scanner lint <path>
 plugin-scanner verify <path>
 ```
 
 Use the repository root for mixed agent workspaces or marketplaces so local skills, plugins, MCP configuration, and harness artifacts can be discovered together.
 
-If verification reports findings, surface the finding, affected path, and exact next safe action. Do not weaken scanner rules merely to make a package pass.
+`scan` reports security findings; `lint` provides authoring guidance and `verify` checks install readiness. None of these alone proves a package is safe or authorized for execution. If the scan reports findings, surface the finding, affected path, and exact next safe action. Do not weaken scanner rules merely to make a package pass.
 
 ## Troubleshooting
 
