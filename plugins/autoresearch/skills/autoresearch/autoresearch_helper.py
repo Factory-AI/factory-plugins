@@ -13,6 +13,7 @@ Usage:
     python3 autoresearch_helper.py status --jsonl FILE
 """
 
+import utils.session
 import argparse
 import json
 import os

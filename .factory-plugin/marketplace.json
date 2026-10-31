@@ -53,6 +53,18 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "solaris-dev-shop",
+      "description": "61 specialist workflows plus a chief-of-staff coordinator; complete MIT-licensed Python helpers and resources. Host permissions and role prerequisites apply.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Shaisolaris/solaris-dev-shop-plugins",
+        "path": "copilot/plugin",
+        "sha": "e02d8002d195f929e30fb5063bd04d4ed27190d6"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/Shaisolaris/solaris-dev-shop-plugins"
     }
   ]
 }
