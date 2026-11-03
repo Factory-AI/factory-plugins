@@ -1,0 +1,10 @@
+{
+  "name": "fly",
+  "version": "1.0.1",
+  "description": "Fly.io operations and persistent Sprite development environments for Factory Droid.",
+  "author": {"name": "Fly.io", "email": "support@fly.io"},
+  "homepage": "https://fly.io",
+  "repository": "https://github.com/superfly/fly-droid-plugin",
+  "license": "MIT",
+  "keywords": ["fly", "sprites", "deployment", "postgres", "remote-development", "mcp"]
+}

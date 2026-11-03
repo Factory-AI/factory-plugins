@@ -96,6 +96,27 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### fly
+
+Fly.io operations and persistent Sprite development environments. Inspect and
+operate authorized resources through Fly MCP, deploy apps with flyctl, and run
+tests remotely in Sprites with checkpoints, authenticated previews, and patch
+export.
+
+**Skills:**
+
+- `fly` - Fly.io apps, Machines, volumes, Managed Postgres, and Sprite workflows
+- `brand` - Fly.io naming and visual guidance
+
+Includes a hosted OAuth MCP connection and confirmation hooks. Requires Factory
+model access and a Fly.io account; Python 3 enables the hooks.
+
+```bash
+droid plugin install fly@factory-plugins
+```
+
+See [plugins/fly/README.md](plugins/fly/README.md) for setup and examples.
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:
