@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "fly",
+      "description": "Deploy and operate Fly.io apps, Machines, volumes, and Managed Postgres; run development workloads in persistent Sprites.",
+      "source": "./plugins/fly",
+      "category": "deployment"
     }
   ]
 }

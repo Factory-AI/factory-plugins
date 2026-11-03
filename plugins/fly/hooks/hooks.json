@@ -1,0 +1,29 @@
+{
+  "description": "Ask before destructive, disruptive, or billable Fly operations",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(mcp__(plugin_fly_fly|fly)__|fly___).*$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fly_guard.py\" 2>/dev/null || { if ! python3 -c pass >/dev/null 2>&1; then printf '%s\\n' '{\"systemMessage\": \"Fly confirmation hook skipped: python3 was not found on PATH or cannot run. Install Python 3 to enable Fly confirmations. Normal client permissions still apply.\"}'; exit 0; fi; printf '%s\\n' 'Fly guard failed to inspect this call. Repair the guard before retrying.' >&2; exit 2; }",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Bash|Execute)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fly_guard.py\" 2>/dev/null || { if ! python3 -c pass >/dev/null 2>&1; then printf '%s\\n' '{\"systemMessage\": \"Fly confirmation hook skipped: python3 was not found on PATH or cannot run. Install Python 3 to enable Fly confirmations. Normal client permissions still apply.\"}'; exit 0; fi; printf '%s\\n' 'Fly guard failed to inspect this call. Repair the guard before retrying.' >&2; exit 2; }",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  }
+}
