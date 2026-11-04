@@ -53,6 +53,13 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "keenable",
+      "description": "Keyless web search and clean Markdown page fetch via Keenable's hosted MCP — no OAuth, signup, or API key required to start",
+      "source": "./plugins/keenable",
+      "category": "research",
+      "homepage": "https://docs.keenable.ai"
     }
   ]
 }
