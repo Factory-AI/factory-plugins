@@ -96,6 +96,17 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
+### keenable
+
+Official [Keenable](https://keenable.ai) plugin. Connects the hosted Keenable MCP server (`https://api.keenable.ai/mcp`) for fast web search and clean Markdown page extraction. **Keyless install:** after `droid plugin install keenable@factory-plugins`, search and fetch work immediately with no OAuth or API key in config. Optional Keenable API keys in Droid MCP settings (`/mcp`) raise rate limits.
+
+**Skills:**
+
+- `keenable-web` — Search the web and read known URLs with `search_web_pages` and `fetch_page_content`
+- `keenable-deep-research` — Multi-source investigations with cited synthesis for reviews, comparisons, and market analysis
+
+See [plugins/keenable/README.md](plugins/keenable/README.md) and [Keenable MCP docs](https://docs.keenable.ai/mcp-server).
+
 ## Plugin Structure
 
 Each plugin follows the Factory plugin format:

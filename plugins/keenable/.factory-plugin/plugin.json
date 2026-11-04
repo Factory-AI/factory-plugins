@@ -1,0 +1,11 @@
+{
+  "name": "keenable",
+  "description": "Keyless web search and clean Markdown page fetch via Keenable's hosted MCP — no OAuth, signup, or API key required to start",
+  "version": "1.0.0",
+  "author": {
+    "name": "Keenable",
+    "email": "hello@keenable.ai"
+  },
+  "homepage": "https://keenable.ai",
+  "license": "MIT"
+}
