@@ -1,0 +1,12 @@
+{
+  "name": "linkbunny",
+  "version": "0.1.0",
+  "description": "Contextual nofollow link exchanges for sites you control, handled with your coding agent and your approval.",
+  "author": {
+    "name": "LinkBunny",
+    "url": "https://getlinkbunny.com"
+  },
+  "homepage": "https://getlinkbunny.com/docs/agents",
+  "repository": "https://github.com/hboon/linkbunny-agent-skill",
+  "license": "MIT-0"
+}
