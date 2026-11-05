@@ -1,6 +1,6 @@
 # Factory Plugins Marketplace
 
-Official Factory plugins marketplace containing curated skills, droids, and tools.
+Factory's official plugin marketplace. Factory builds and maintains every plugin listed here.
 
 ## Installation
 
@@ -26,7 +26,7 @@ Or browse available plugins via the UI:
 
 ### core
 
-Core skills for essential functionalities and integrations. Pre-installed by the Droid CLI.
+Default plugin, pre-installed by the Droid CLI.
 
 **Output styles:**
 
@@ -96,28 +96,16 @@ Skills for continuous learning and improvement.
 
 Autonomous experiment loop for optimization research. Try an idea, measure it, keep what works, discard what doesn't, repeat. Works standalone or as a mission worker.
 
-## Plugin Structure
-
-Each plugin follows the Factory plugin format:
-
-```
-plugin-name/
-├── .factory-plugin/
-│   └── plugin.json       # Plugin metadata
-├── skills/               # Skill definitions
-│   └── skill-name/
-│       └── SKILL.md
-├── output-styles/        # Output style definitions (optional)
-│   └── style-name.md
-├── droids/               # Droid definitions (optional)
-├── commands/             # Custom commands (optional)
-├── mcp.json              # MCP server config (optional)
-└── hooks.json            # Hook configurations (optional)
-```
-
 ## Contributing
 
-1. Fork this repository
-2. Add your plugin under `plugins/`
-3. Update the marketplace.json
-4. Submit a pull request
+We don't accept pull requests or plugin submissions from outside Factory.
+
+To share your own plugins, publish your own marketplace. Any Git repository with a `.factory-plugin/marketplace.json` works, and users add it the same way they add this one:
+
+```bash
+droid plugin marketplace add your-org/your-plugins
+```
+
+The Factory docs cover the [plugin format](https://docs.factory.com/harness/plugins#build-a-plugin) and the [marketplace catalog](https://docs.factory.com/harness/plugins#marketplaces).
+
+To report a bug in one of these plugins, [open an issue](https://github.com/Factory-AI/factory-plugins/issues).
