@@ -13,6 +13,12 @@
       "category": "security"
     },
     {
+      "name": "hol-guard",
+      "description": "HOL Guard security workflows for supported AI harness protection, approval evidence, and pre-trust scanning",
+      "source": "./plugins/hol-guard",
+      "category": "security"
+    },
+    {
       "name": "droid-evolved",
       "description": "Skills for continuous learning and improvement: session navigation, human writing, skill creation, visual design, and browser automation",
       "source": "./plugins/droid-evolved",
