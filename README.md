@@ -24,6 +24,12 @@ Or browse available plugins via the UI:
 
 ## Available Plugins
 
+### agentmemory
+
+Persistent memory across coding sessions, with recall skills, lifecycle hooks, and MCP tools. Uses a separately running AgentMemory server.
+
+See [plugins/agentmemory/README.md](plugins/agentmemory/README.md) for setup and requirements.
+
 ### core
 
 Default plugin, pre-installed by the Droid CLI.
