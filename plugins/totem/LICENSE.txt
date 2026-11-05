@@ -1,0 +1,7 @@
+Copyright (c) 2026 Totem. All rights reserved.
+
+This plugin package and its documentation are proprietary. No open-source
+license is granted. Use of Totem is subject to https://totemlayer.com/terms.
+
+Rights required by applicable law and the terms of the hosting or distribution
+platform are unaffected.

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "totem": {
+      "type": "http",
+      "url": "https://totemlayer.com/mcp"
+    }
+  }
+}

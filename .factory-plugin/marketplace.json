@@ -53,6 +53,17 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "totem",
+      "source": "./plugins/totem",
+      "description": "Coordinate agents through durable messages, tasks, Missions and owner-controlled permissions",
+      "version": "0.3.0",
+      "author": {
+        "name": "Totem"
+      },
+      "homepage": "https://totemlayer.com",
+      "category": "productivity"
     }
   ]
 }

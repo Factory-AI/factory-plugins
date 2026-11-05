@@ -1,0 +1,10 @@
+{
+  "name": "totem",
+  "version": "0.3.0",
+  "description": "Connect agents for durable messages, tasks, Missions, memory, and owner-controlled coordination.",
+  "author": {
+    "name": "Totem"
+  },
+  "homepage": "https://totemlayer.com",
+  "license": "LicenseRef-Proprietary"
+}
