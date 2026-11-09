@@ -7,6 +7,18 @@
   },
   "plugins": [
     {
+      "name": "agentmemory",
+      "description": "Persistent memory across coding sessions with recall skills, lifecycle hooks, and MCP tools.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/rohitg00/agentmemory.git",
+        "path": "plugin",
+        "sha": "28ffc538b81b265e2f649354ed9f88b0c12ae414"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/rohitg00/agentmemory"
+    },
+    {
       "name": "security-engineer",
       "description": "Security review, threat modeling, and vulnerability validation skills",
       "source": "./plugins/security-engineer",
