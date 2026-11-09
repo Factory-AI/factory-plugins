@@ -7,7 +7,7 @@ AgentMemory saves useful project context and retrieves it in later coding sessio
 Requires Node.js 20 or newer, npm, Git, and a running AgentMemory server. Start the server in a separate terminal:
 
 ```bash
-npx -y @agentmemory/agentmemory@0.9.31
+npx -y @agentmemory/agentmemory@0.9.33
 ```
 
 Then install the plugin:
@@ -23,7 +23,7 @@ The default server address is `http://localhost:3111`. Set `AGENTMEMORY_URL` bef
 
 ## What is installed
 
-This catalog references the published AgentMemory 0.9.31 plugin at a fixed Git commit. Droid loads its skills, hooks, and MCP configuration through Claude Code plugin compatibility. The prebuilt scripts are included upstream, so installation requires no build step.
+This catalog references the published AgentMemory 0.9.33 plugin at a fixed Git commit. Droid loads its skills, hooks, and MCP configuration through Claude Code plugin compatibility. The prebuilt scripts are included upstream, so installation requires no build step.
 
 The plugin does not start the memory server. With the server running, the MCP bridge exposes the complete tool set. If the server is unavailable, memory tool calls report that failure; this bridge does not use a fallback store.
 
