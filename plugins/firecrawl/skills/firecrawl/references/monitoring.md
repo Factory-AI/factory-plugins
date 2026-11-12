@@ -4,7 +4,8 @@ Use monitors for a user-requested recurring check or change alert. Identify
 the target URLs or search queries, the change of interest, and the schedule.
 Use only notification destinations the user has supplied or authorized.
 
-- `firecrawl_monitor_list` finds existing monitors.
+- `firecrawl_monitor_list` finds existing monitors. It returns one page; page
+  with `limit` and `offset` until the monitor is found or the list ends.
 - `firecrawl_monitor_get` retrieves one monitor's configuration.
 - `firecrawl_monitor_create` creates a monitor once its target and schedule
   are known. In the simple form, when `queries` and `page`/`pages` are both

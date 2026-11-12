@@ -5,7 +5,12 @@ papers. Ordinary `firecrawl_search` with the research category filters web
 sources; it does not query the same paper index.
 
 - `firecrawl_research_search_papers` finds papers from a natural-language query.
-  Add author, category, or date filters when the request requires them.
+  Add author, category, or date filters when the request requires them. The
+  `from` and `to` filters bound created or updated dates, not publication
+  dates, so check each paper's publication date for a publication window.
+  For recent findings, set `sort` to `date_desc` (default `relevance`) to get
+  the newest of the most relevant matches first; it does not list every paper
+  in a period, so bound it with `from` and `to` date filters.
 - `firecrawl_research_inspect_paper` retrieves canonical metadata for a known
   `paperId`. Reuse identifiers returned by search or supplied by the user.
 - `firecrawl_research_related_papers` expands from `seed_ids` using the requested

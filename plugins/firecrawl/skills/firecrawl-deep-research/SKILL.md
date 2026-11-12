@@ -18,7 +18,7 @@ Start from supplied URLs or reusable evidence. Otherwise use the fitting dedicat
 
 When `firecrawl_search` exposes `objective`, set it to `[deep-research]` followed by the broader research goal, keeping that goal consistent across related searches. Keep `query` focused on the specific evidence needed, without the marker. Omit `objective` if the live schema does not support it, and avoid sensitive information in the goal.
 
-A catalogue suggestion is not retrieved data. Reuse complete contracts; expand incomplete selected suggestions through `firecrawl_find_tools`. Use targeted catalogue discovery when structured evidence is needed and search provides no fitting suggestion. Avoid catalogue walks and unnecessary discovery before known pages or paper tools.
+A catalogue suggestion is not retrieved data. Reuse complete contracts; read the contract of an incomplete selected suggestion through `alexandria_library_search`. Use targeted library discovery when structured evidence is needed and search provides no fitting suggestion. Avoid catalogue walks and unnecessary discovery before known pages or paper tools.
 
 ## Collection and costs
 
@@ -35,8 +35,10 @@ Choose the method most likely to resolve the highest-impact missing fact. Retrie
 | Needed evidence | Method |
 |---|---|
 | Web sources and matching structured capabilities | `firecrawl_search` |
-| Missing contract or targeted capability discovery | `firecrawl_find_tools` |
-| Known page, passage or Alexandria execution | `firecrawl_scrape` |
+| Missing contract or targeted capability discovery | `alexandria_library_search` |
+| People and company records | `people_company_search`, `people_company_enrich`, when exposed |
+| Known page or passage | `firecrawl_scrape` |
+| Alexandria execution | `alexandria_library_read` |
 | Code, repositories and API behavior | `firecrawl_developer_search`, when exposed |
 | Scientific findings | `firecrawl_research_search_papers`, `firecrawl_research_inspect_paper`, `firecrawl_research_read_paper` |
 | Primary US legal/regulatory text | `firecrawl_gov_search`, when exposed |
@@ -50,9 +52,9 @@ Reuse returned full text and directly supporting passages. Search excerpts guide
 
 Prefer fitting records for comparable financial fields and requested enrichment when coverage, access and cost fit. Check entity type, geography, marketplace and date coverage, not merely topic similarity. Discover missing entity IDs instead of guessing them.
 
-Follow selected `nextTool.arguments`, preserving selectors. Expand options and responses when supported, commonly `expand: ["options", "response"]`. A combined catalogue ID is not necessarily an execution selector. Inspect required inputs, `requiresOneOf`, response paths such as `response.key`, pagination, freshness, price and external effects. Catalogue pagination returns contracts, not records.
+Read the selected contract with `alexandria_library_search`, commonly `cat /library/<category>/<provider>/<capability>.md`; the file path gives the provider and capability selectors. A combined catalogue ID is not necessarily an execution selector. Inspect required inputs, `requiresOneOf`, response paths such as `response.key`, pagination, freshness, price and external effects. Library commands return contracts, not records.
 
-Execute returned provider/capability/options through `firecrawl_scrape` Alexandria mode, commonly `alexandria: {provider, capability, options}`. Batch and pin versions only as the live schema permits. Supported payload-bound `requestId` and millisecond `timeout` are separate from URL formats and `maxAge`. Inspect every `data.alexandria` item despite outer success; distinguish errors, empty results, partial output and unknown freshness. Page only with declared inputs, unchanged filters and bounded pages, records and credits.
+Execute the selected provider/capability/options through `alexandria_library_read`, commonly `calls: [{provider, capability, options}]`. Batch and pin versions only as the live schema permits. Its payload-bound `requestId` and millisecond `timeout` cover the whole request. Inspect every `data.alexandria` item despite outer success; distinguish errors, empty results, partial output and unknown freshness. Page only with declared inputs, unchanged filters and bounded pages, records and credits.
 
 For uncertain retries, retain identical request ID and payload; changed inputs require a new ID. Do not duplicate in-flight requests or replay successful batch items to recover failures. Use documented item-specific continuation. Stop unresolved access, terms or budget routes while preserving successes and continuing permitted routes. Provider terms require an organization administrator outside this workflow. Resume retained requests after confirmed acceptance only when contract, access and budget permit. Do not rerun paid work silently when retention expires.
 
@@ -103,20 +105,18 @@ Arguments for `firecrawl_search` when researching a web-policy angle; replace th
 }
 ```
 
-Arguments for `firecrawl_find_tools` only if the report needs structured observations:
+Arguments for `alexandria_library_search` only if the report needs structured observations:
 
 ```json
 {
-  "name": "firecrawl_find_tools",
+  "name": "alexandria_library_search",
   "arguments": {
-    "query": "electricity generation observations by country year with units and source dates",
-    "limit": 3,
-    "expand": []
+    "command": "grep -ril \"electricity generation\" /library | head -20"
   }
 }
 ```
 
-These return evidence candidates or catalogue summaries, not executed provider records. For a selected summary, copy its returned provider and capability IDs into a targeted `firecrawl_find_tools` call with `expand: ["options", "response"]`; build execution options from that contract. Do not invent a provider, capability, or field to make an example executable.
+These return evidence candidates or library file paths, not executed provider records. For a selected capability, read its contract with a targeted `alexandria_library_search` command such as `cat /library/<category>/<provider>/<capability>.md`; build execution options from that contract. Do not invent a provider, capability, or field to make an example executable.
 
 Example PDF read with `firecrawl_scrape`; choose `maxPages` for the evidence needed and any user limit:
 
