@@ -1,6 +1,6 @@
 # Factory Plugins Marketplace
 
-Official Factory plugins marketplace containing curated skills, droids, and tools.
+Factory's official plugin marketplace. Factory builds and maintains every plugin listed here.
 
 ## Installation
 
@@ -26,11 +26,7 @@ Or browse available plugins via the UI:
 
 ### core
 
-Core skills for essential functionalities and integrations. Pre-installed by the Droid CLI.
-
-**Skills:**
-
-- `simplify` - Parallel code review across reuse, quality, and efficiency axes
+Default plugin, pre-installed by the Droid CLI.
 
 **Output styles:**
 
@@ -90,7 +86,6 @@ Skills for continuous learning and improvement.
 
 **Skills:**
 
-- `session-navigation` - Search and navigate past Droid sessions
 - `human-writing` - Remove AI writing patterns, make text sound human
 - `skill-creation` - Create and improve Droid skills
 - `visual-design` - Image generation (nanobanana CLI) and presentations (Slidev)
@@ -103,35 +98,23 @@ Autonomous experiment loop for optimization research. Try an idea, measure it, k
 
 ### firecrawl
 
-Official [Firecrawl](https://firecrawl.dev) plugin. It connects the hosted Firecrawl MCP server (`https://mcp.firecrawl.dev/v2/mcp-oauth`, browser sign-in from `/mcp`) for web search, page scraping, site mapping and crawling, browser interaction, document parsing, change monitoring, Alexandria data providers, and research over developer docs, US government sources, and scientific papers.
+Official [Firecrawl](https://firecrawl.dev) plugin. It connects the hosted Firecrawl MCP server (`https://mcp.firecrawl.dev/v2/mcp-oauth`, browser sign-in from `/mcp`) for web search, page scraping, site mapping and crawling, browser interaction, document parsing, change monitoring, Alexandria data providers, people and company search and enrichment, and research over developer docs, US government sources, and scientific papers.
 
 **Skills:**
 
-- `firecrawl` - Choose the right Firecrawl operation for a request: search, scrape, map, crawl, interact, parse, monitor, Alexandria providers, and developer, government, and paper research
+- `firecrawl` - Choose the right Firecrawl operation for a request: search, scrape, map, crawl, interact, parse, monitor, Alexandria providers, people and company lookups, and developer, government, and paper research
 - `firecrawl-deep-research` - Investigate complex questions across many sources and return a cited answer, report, or table
-
-## Plugin Structure
-
-Each plugin follows the Factory plugin format:
-
-```
-plugin-name/
-├── .factory-plugin/
-│   └── plugin.json       # Plugin metadata
-├── skills/               # Skill definitions
-│   └── skill-name/
-│       └── SKILL.md
-├── output-styles/        # Output style definitions (optional)
-│   └── style-name.md
-├── droids/               # Droid definitions (optional)
-├── commands/             # Custom commands (optional)
-├── mcp.json              # MCP server config (optional)
-└── hooks.json            # Hook configurations (optional)
-```
 
 ## Contributing
 
-1. Fork this repository
-2. Add your plugin under `plugins/`
-3. Update the marketplace.json
-4. Submit a pull request
+We don't accept pull requests or plugin submissions from outside Factory.
+
+To share your own plugins, publish your own marketplace. Any Git repository with a `.factory-plugin/marketplace.json` works, and users add it the same way they add this one:
+
+```bash
+droid plugin marketplace add your-org/your-plugins
+```
+
+The Factory docs cover the [plugin format](https://docs.factory.com/harness/plugins#build-a-plugin) and the [marketplace catalog](https://docs.factory.com/harness/plugins#marketplaces).
+
+To report a bug in one of these plugins, [open an issue](https://github.com/Factory-AI/factory-plugins/issues).
