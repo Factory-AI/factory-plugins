@@ -44,7 +44,7 @@
     },
     {
       "name": "debugging",
-      "description": "Inspect runtime behavior: HTTP interception, traffic capture, and wire-level debugging for CLIs and services",
+      "description": "Inspect runtime behavior and disk usage: HTTP interception, wire-level debugging, and safe local-worktree cleanup",
       "source": "./plugins/debugging",
       "category": "productivity"
     },

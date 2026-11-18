@@ -18,7 +18,7 @@ droid plugin install security-engineer@factory-plugins
 
 Or browse available plugins via the UI:
 
-```
+```text
 /plugins
 ```
 
@@ -65,11 +65,12 @@ Opinionated TypeScript and React patterns for safer, cleaner code.
 
 ### debugging
 
-Inspect runtime behavior: HTTP interception, traffic capture, and wire-level debugging for CLIs and services.
+Inspect runtime behavior and disk usage: HTTP interception, wire-level debugging, and safe local-worktree cleanup.
 
 **Skills:**
 
 - `http-toolkit-intercept` - Intercept and debug HTTP traffic from any CLI, service, or script via HTTP Toolkit (language/runtime agnostic)
+- `disk-cleanup` - Diagnose low disk space and retire explicitly approved disposable outputs or obsolete worktrees with preservation gates and durable receipts
 
 ### code-review
 

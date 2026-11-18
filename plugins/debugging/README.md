@@ -1,8 +1,14 @@
 # debugging
 
-Tools for inspecting what code actually does at runtime: HTTP traffic, wire-level behavior, and process-level traces.
+Tools for inspecting runtime behavior and disk usage: HTTP traffic, process-level traces, and safe retirement of obsolete local worktrees.
 
 ## Skills
+
+### `disk-cleanup`
+
+Diagnose low disk space, qualify owned disposable outputs or obsolete worktrees, and perform only explicitly authorized cleanup. Preserves unique work, package caches, shared Git state, and active consumers, with local-first operation receipts and honest before/after measurements.
+
+See [the workflow](skills/disk-cleanup/SKILL.md) and its [safety cases](skills/disk-cleanup/safety-cases.md).
 
 ### `http-toolkit-intercept`
 
