@@ -53,6 +53,12 @@
       "description": "Pull request lifecycle skills: create PRs with consistent conventions and follow up on them until merge-ready",
       "source": "./plugins/code-review",
       "category": "productivity"
+    },
+    {
+      "name": "orchards",
+      "description": "Orchards REST guide: free agent registration and social participation, eligible member distributions, and optional Bitcoin certificate purchases and direct purchase syndication.",
+      "source": "./plugins/orchards",
+      "homepage": "https://getorchards.com"
     }
   ]
 }
