@@ -1,6 +1,6 @@
-"""tctl's native input boundary.
+"""tctl's native input and session cleanup boundaries.
 
-The default suite runs the real tctl against a recording wtype executable.
+The default suite uses lightweight stand-ins for wtype, tuistory and asciinema.
 TCTL_NATIVE_E2E=1 also checks incoming bytes in real headless Ghostty, without a
 CLI, login fixture, clipboard, or extra script(1) wrapper. TCTL_SH selects an
 alternate tctl for negative controls.
@@ -8,8 +8,10 @@ alternate tctl for negative controls.
 
 import json
 import os
+import select
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -50,6 +52,58 @@ try:
 finally:
     termios.tcsetattr(0, termios.TCSANOW, saved)
 """
+
+
+class TctlCloseTest(unittest.TestCase):
+    def assert_recording_close(self, term_handler, expected_signal):
+        with tempfile.TemporaryDirectory(prefix="tctl-close-test-") as tmp:
+            root = Path(tmp)
+            session = f"close-test-{uuid.uuid4().hex}"
+            session_dir = Path("/tmp/tctl-sessions") / session
+            session_dir.mkdir(parents=True)
+            self.addCleanup(shutil.rmtree, session_dir, ignore_errors=True)
+            tuistory = root / "tuistory"
+            tuistory.write_text(f'#!/bin/sh\n[ "$*" = "-s {session} close" ]\n')
+            tuistory.chmod(0o755)
+            # No GNU coreutils or newer Bash ahead of the stock macOS tools.
+            env = {"PATH": f"{root}:/usr/bin:/bin"}
+            cast = root / "recording.cast"
+            recording = b'{"version": 2, "width": 80, "height": 24}\n'
+            cast.write_bytes(recording)
+            (session_dir / "meta").write_text(
+                f"BACKEND=tuistory\nRECORD_PATH={shlex.quote(str(cast))}\n"
+            )
+            probe = root / "asciinema"
+            probe.write_text(
+                "import signal\n"
+                f"signal.signal(signal.SIGTERM, signal.{term_handler})\n"
+                "print('ready', flush=True)\n"
+                "signal.pause()\n"
+            )
+            with subprocess.Popen(
+                [sys.executable, str(probe), "rec", str(cast)], stdout=subprocess.PIPE,
+            ) as recorder:
+                try:
+                    self.assertTrue(select.select([recorder.stdout], [], [], 5)[0])
+                    self.assertEqual(recorder.stdout.readline(), b"ready\n")
+                    (session_dir / "asciinema.pid").write_text(f"{recorder.pid}\n")
+                    result = subprocess.run(
+                        ["/bin/bash", str(TCTL), "-s", session, "close"],
+                        env=env, capture_output=True, text=True, timeout=10,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(recorder.wait(timeout=5), -expected_signal)
+                    self.assertFalse(session_dir.exists())
+                    self.assertEqual(cast.read_bytes(), recording)
+                finally:
+                    if recorder.poll() is None:
+                        recorder.kill()
+
+    def test_close_cleans_up_active_recorder_and_keeps_cast(self):
+        self.assert_recording_close("SIG_DFL", signal.SIGTERM)
+
+    def test_close_escalates_for_recorder_that_ignores_term(self):
+        self.assert_recording_close("SIG_IGN", signal.SIGKILL)
 
 
 class TctlInputTest(unittest.TestCase):

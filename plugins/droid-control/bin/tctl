@@ -54,6 +54,15 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
 }
 
+now_ms() {
+  if [[ "$OSTYPE" == darwin* ]]; then
+    # macOS date does not support %N. Use the system Perl for millisecond precision.
+    /usr/bin/perl -MTime::HiRes=time -e 'printf "%.0f\n", int(time() * 1000)'
+  else
+    date +%s%3N
+  fi
+}
+
 runtime_dir_value() {
   if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
     printf '%s\n' "$XDG_RUNTIME_DIR"
@@ -74,9 +83,9 @@ wait_for_wayland_socket() {
   local pid="$1"
   local socket_path="$2"
   local timeout_ms="$3"
-  local deadline=$(( $(date +%s%3N) + timeout_ms ))
+  local deadline=$(( $(now_ms) + timeout_ms ))
 
-  while (( $(date +%s%3N) <= deadline )); do
+  while (( $(now_ms) <= deadline )); do
     [[ -S "$socket_path" ]] && return 0
     kill -0 "$pid" >/dev/null 2>&1 || return 1
     sleep 0.05
@@ -124,9 +133,9 @@ terminate_true_input_stack() {
     kill -TERM "$pid" >/dev/null 2>&1 || true
   done
 
-  local deadline=$(( $(date +%s%3N) + grace_ms ))
+  local deadline=$(( $(now_ms) + grace_ms ))
   local alive=1
-  while (( $(date +%s%3N) <= deadline )); do
+  while (( $(now_ms) <= deadline )); do
     alive=0
     kill -0 -- "-$root" >/dev/null 2>&1 && alive=1
     if (( ! alive )); then
@@ -155,8 +164,8 @@ terminate_recorder_pid() {
   local grace_ms="${2:-3000}"
   [[ -n "$pid" ]] || return 0
   kill -INT "$pid" >/dev/null 2>&1 || true
-  local deadline=$(( $(date +%s%3N) + grace_ms ))
-  while kill -0 "$pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+  local deadline=$(( $(now_ms) + grace_ms ))
+  while kill -0 "$pid" >/dev/null 2>&1 && (( $(now_ms) <= deadline )); do
     sleep 0.05
   done
   if kill -0 "$pid" >/dev/null 2>&1; then
@@ -538,8 +547,8 @@ cleanup_tuistory_asciinema() {
   if [[ -n "$pid" ]] && kill -0 "$pid" >/dev/null 2>&1; then
     if pid_is_expected_asciinema_recording "$pid" "$record_path"; then
       kill -TERM "$pid" >/dev/null 2>&1 || true
-      local deadline=$(( $(date +%s%3N) + 2000 ))
-      while kill -0 "$pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+      local deadline=$(( $(now_ms) + 2000 ))
+      while kill -0 "$pid" >/dev/null 2>&1 && (( $(now_ms) <= deadline )); do
         sleep 0.05
       done
       if kill -0 "$pid" >/dev/null 2>&1; then
@@ -562,8 +571,8 @@ cleanup_tuistory_asciinema() {
     [[ "$orphan_args" == *"$record_path"* ]] || continue
 
     kill -TERM "$orphan_pid" >/dev/null 2>&1 || true
-    local deadline=$(( $(date +%s%3N) + 2000 ))
-    while kill -0 "$orphan_pid" >/dev/null 2>&1 && (( $(date +%s%3N) <= deadline )); do
+    local deadline=$(( $(now_ms) + 2000 ))
+    while kill -0 "$orphan_pid" >/dev/null 2>&1 && (( $(now_ms) <= deadline )); do
       sleep 0.05
     done
     if kill -0 "$orphan_pid" >/dev/null 2>&1; then
@@ -708,8 +717,8 @@ wait_for_pattern_in_log() {
   local log_file="$1"
   local pattern="$2"
   local timeout_ms="$3"
-  local deadline=$(( $(date +%s%3N) + timeout_ms ))
-  while (( $(date +%s%3N) <= deadline )); do
+  local deadline=$(( $(now_ms) + timeout_ms ))
+  while (( $(now_ms) <= deadline )); do
     local snapshot
     snapshot="$(strip_log "$log_file")"
     if SNAPSHOT_TEXT="$snapshot" python3 - "$pattern" <<'PY'
@@ -741,10 +750,10 @@ PY
 wait_for_idle_in_log() {
   local log_file="$1"
   local timeout_ms="$2"
-  local deadline=$(( $(date +%s%3N) + timeout_ms ))
+  local deadline=$(( $(now_ms) + timeout_ms ))
   local stable_for=0
   local last_size=-1
-  while (( $(date +%s%3N) <= deadline )); do
+  while (( $(now_ms) <= deadline )); do
     local size=0
     [[ -f "$log_file" ]] && size=$(stat -c %s "$log_file")
     if [[ "$size" == "$last_size" ]]; then
